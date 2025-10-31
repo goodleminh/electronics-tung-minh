@@ -1,59 +1,141 @@
-DROP DATABASE IF EXISTS book_mng_app;
-CREATE DATABASE book_mng_app;
-USE book_mng_app;
+DROP DATABASE IF EXISTS electronics_app;
+CREATE DATABASE electronics_app;
+USE electronics_app;
 
--- Tạo bảng categories
-CREATE TABLE categories
-(
-	category_id VARCHAR(255) PRIMARY KEY,
-	category_name VARCHAR(50)
+-- =========================================================
+-- Bảng Users
+-- =========================================================
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('buyer','seller','admin') NOT NULL DEFAULT 'buyer',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Tạo bảng books
-CREATE TABLE books 
-(
-    book_id VARCHAR(255) PRIMARY KEY,
-    book_name VARCHAR(255) NOT NULL,
-    book_description VARCHAR(255),
-    thumbnail VARCHAR(255),
-    author VARCHAR(255),
-    category_id VARCHAR(255),
-    created_at TIMESTAMP ,
-    updated_at TIMESTAMP ,
-    CONSTRAINT books_fk_categories
-        FOREIGN KEY (category_id) REFERENCES categories(category_id)
-);  
-create table users
-(
-	user_id varchar(255) primary key,
-    username varchar(255) unique,
-    password varchar (255),
-    nick_name varchar(255)
+-- =========================================================
+-- Bảng Stores (Cửa hàng của seller)
+-- =========================================================
+CREATE TABLE stores (
+    store_id INT AUTO_INCREMENT PRIMARY KEY,
+    seller_id INT NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (seller_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
--- Xóa dữ liệu cũ trước khi thêm mới
-SET FOREIGN_KEY_CHECKS = 0;
-TRUNCATE TABLE books;
-TRUNCATE TABLE categories;
-SET FOREIGN_KEY_CHECKS = 1;
+-- =========================================================
+-- Bảng Categories (Danh mục sản phẩm)
+-- =========================================================
+CREATE TABLE categories (
+    category_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
 
--- Thêm dữ liệu vào bảng categories
-INSERT INTO categories (category_id, category_name) VALUES
-('C001', 'Khoa học'),
-('C002', 'Văn học'),
-('C003', 'Công nghệ thông tin'),
-('C004', 'Kinh tế'),
-('C005', 'Tâm lý học');
+-- =========================================================
+-- Bảng Products (Sản phẩm)
+-- =========================================================
+CREATE TABLE products (
+    product_id INT AUTO_INCREMENT PRIMARY KEY,
+    store_id INT NOT NULL,
+    category_id INT DEFAULT NULL,
+    name VARCHAR(150) NOT NULL,
+    description TEXT,
+    price DECIMAL(12,2) NOT NULL,
+    stock INT DEFAULT 0,
+    image VARCHAR(255),
+    status ENUM('pending','approved','rejected') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (store_id) REFERENCES stores(store_id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL
+);
 
--- Thêm dữ liệu vào bảng books
-INSERT INTO books (book_id, book_name, book_description, thumbnail, author, category_id, created_at, updated_at) VALUES
-('B001', 'Vũ trụ trong lòng bàn tay', 'Khám phá bí ẩn của vũ trụ và vật lý hiện đại', 'thumb1.jpg', 'Stephen Hawking', 'C001', NOW(), NOW()),
-('B002', 'Dế mèn phiêu lưu ký', 'Câu chuyện phiêu lưu đầy ý nghĩa về lòng dũng cảm', 'thumb2.jpg', 'Tô Hoài', 'C002', NOW(), NOW()),
-('B003', 'Python cơ bản', 'Hướng dẫn học ngôn ngữ lập trình Python từ đầu', 'thumb3.jpg', 'Lê Minh', 'C003', NOW(), NOW()),
-('B004', 'Tư duy nhanh và chậm', 'Khám phá cách bộ não con người ra quyết định', 'thumb4.jpg', 'Daniel Kahneman', 'C005', NOW(), NOW()),
-('B005', 'Kinh tế học vi mô', 'Giới thiệu khái niệm cơ bản về cung cầu và thị trường', 'thumb5.jpg', 'Paul Samuelson', 'C004', NOW(), NOW());
+-- =========================================================
+-- Bảng Product_Images (Hỗ trợ nhiều ảnh sản phẩm)
+-- =========================================================
+CREATE TABLE product_images (
+    image_id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    image_url VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
+);
 
-select * from books
- SELECT `book_id` AS `bookId`, `book_name` AS `bookName`, `book_description` AS `bookDescription`, `thumbnail`, `author`, `category_id` AS `categoryId`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `books` AS `Book`;
+-- =========================================================
+-- Bảng Cart_Items (Giỏ hàng)
+-- =========================================================
+CREATE TABLE cart_items (
+    cart_item_id INT AUTO_INCREMENT PRIMARY KEY,
+    buyer_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (buyer_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
+);
 
- SELECT `book_id` AS `bookId`, `book_name` AS `bookName`, `book_description` AS `bookDescription`, `thumbnail`, `author`, `category_id` AS `categoryId`, `created_at` AS `createdAt`, `updated_at` AS `updatedAt` FROM `books` AS `Book`;
+-- =========================================================
+-- Bảng Orders (Đơn hàng)
+-- =========================================================
+CREATE TABLE orders (
+    order_id INT AUTO_INCREMENT PRIMARY KEY,
+    buyer_id INT NOT NULL,
+    total_amount DECIMAL(12,2) NOT NULL,
+    status ENUM('pending','processing','shipping','completed','cancelled') DEFAULT 'pending',
+    address VARCHAR(255) NOT NULL,
+    payment_method ENUM('cash','bank_transfer','other') DEFAULT 'cash',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (buyer_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- =========================================================
+-- Bảng Order_Items (Chi tiết đơn hàng)
+-- =========================================================
+CREATE TABLE order_items (
+    order_item_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT DEFAULT 1,
+    price DECIMAL(12,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
+);
+
+-- =========================================================
+-- Bảng Reviews (Đánh giá sản phẩm)
+-- =========================================================
+CREATE TABLE reviews (
+    review_id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    buyer_id INT NOT NULL,
+    rating INT CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
+    FOREIGN KEY (buyer_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- =========================================================
+-- Bảng Chat_Messages (Tin nhắn Buyer ↔ Seller)
+-- =========================================================
+CREATE TABLE chat_messages (
+    chat_id INT AUTO_INCREMENT PRIMARY KEY,
+    buyer_id INT NOT NULL,
+    seller_id INT NOT NULL,
+    message TEXT NOT NULL,
+    sender ENUM('buyer','seller') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (buyer_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (seller_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
