@@ -16,6 +16,22 @@ CREATE TABLE users (
 );
 
 -- =========================================================
+-- Bảng Profiles (Hồ sơ người dùng)
+-- =========================================================
+CREATE TABLE profiles (
+    profile_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL UNIQUE,
+    phone VARCHAR(20),
+    address VARCHAR(255),
+    avatar VARCHAR(255),
+    bio TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+
+-- =========================================================
 -- Bảng Stores (Cửa hàng của seller)
 -- =========================================================
 CREATE TABLE stores (
@@ -34,6 +50,7 @@ CREATE TABLE stores (
 CREATE TABLE categories (
     category_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
+    image VARCHAR(255), -- thêm cột hình ảnh
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
