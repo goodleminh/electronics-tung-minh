@@ -1,5 +1,5 @@
 import { Model, DataTypes } from "sequelize";
-import { sequelize } from "../config/dbConnection.js";
+import sequelize from "../config/dbConnection.js";
 
 export class Product extends Model {}
 
@@ -8,56 +8,56 @@ Product.init(
     product_id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
-      primaryKey: true
+      primaryKey: true,
     },
     store_id: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
     },
     category_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      defaultValue: null
+      defaultValue: null,
     },
     name: {
       type: DataTypes.STRING(150),
-      allowNull: false
+      allowNull: false,
     },
     description: {
       type: DataTypes.TEXT,
-      allowNull: true
+      allowNull: true,
     },
     price: {
       type: DataTypes.DECIMAL(12, 2),
-      allowNull: false
+      allowNull: false,
     },
     stock: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0
+      defaultValue: 0,
     },
     image: {
       type: DataTypes.STRING(255),
-      allowNull: true
+      allowNull: true,
     },
     status: {
       type: DataTypes.ENUM("pending", "approved", "rejected"),
-      defaultValue: "pending"
+      defaultValue: "pending",
     },
     created_at: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
+      defaultValue: DataTypes.NOW,
     },
     updated_at: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
-    }
+      defaultValue: DataTypes.NOW,
+    },
   },
   {
     sequelize,
     modelName: "Product",
     tableName: "products",
     timestamps: false,
-    underscored: true
+    underscored: true,
   }
 );

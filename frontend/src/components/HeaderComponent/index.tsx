@@ -1,0 +1,280 @@
+import {
+  MessageOutlined,
+  SearchOutlined,
+  ShoppingCartOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
+import type { RootState } from "../../redux/store";
+import { useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import type { ICategory } from "../../redux/features/category/categorySlice";
+
+const Header = () => {
+  const { categories } = useSelector((state: RootState) => state.category);
+  const { user } = useSelector((state: RootState) => state.auth);
+  const [offerIdx, setOfferIdx] = useState(0);
+
+  // Header UI states
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [scrollDir, setScrollDir] = useState<"up" | "down">("up");
+  const [isTopCategoriesOpen, setIsTopCategoriesOpen] = useState(false);
+  const topCatRef = useRef<HTMLDivElement | null>(null);
+
+  // Keep hover dropdown open when cursor moves into its panel
+  const [isHoverCatsOpen, setIsHoverCatsOpen] = useState(false);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (topCatRef.current && !topCatRef.current.contains(e.target as Node)) {
+        setIsTopCategoriesOpen(false);
+      }
+    };
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, []);
+
+  // Add subtle shadow/border when scrolling + direction
+  useEffect(() => {
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      setIsScrolled(y > 0);
+      if (y > lastY + 5) setScrollDir("down");
+      else if (y < lastY - 5) setScrollDir("up");
+      lastY = y;
+    };
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Offer ticker like Shopify header
+  const offers: string[] = [
+    "Freeship đơn từ 500.000đ",
+    "Giảm giá lên đến 45% mỗi ngày",
+    "Bảo hành chính hãng 12 tháng",
+    "Hỗ trợ 24/7 mọi ngày",
+    "Khuyến mãi đặc biệt cuối tuần",
+  ];
+
+  // Rotate offers
+  useEffect(() => {
+    const t = setInterval(
+      () => setOfferIdx((i) => (i + 1) % offers.length),
+      6000
+    );
+    return () => clearInterval(t);
+  }, [offers.length]);
+
+  return (
+    <>
+      {/* ====== HEADER (Top bar + Main header + Nav) ====== */}
+      <header
+        className={`sticky top-0 z-50 bg-white ${
+          isScrolled ? "shadow-sm" : ""
+        } transition-transform duration-200 ${
+          scrollDir === "down" && isScrolled
+            ? "-translate-y-full"
+            : "translate-y-0"
+        }`}
+      >
+        {/* Row 1: Centered Logo + Search + Icons */}
+        <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-center gap-6">
+          {/* Logo + brand */}
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <div className="w-12 h-12 bg-[#8b2e0f] text-white text-xl font-bold flex items-center justify-center rounded-sm">
+              E
+            </div>
+            <span className="text-3xl font-bold">Electon</span>
+          </Link>
+
+          {/* Desktop search (shorter and centered with group) */}
+          <form
+            onSubmit={(e) => e.preventDefault()}
+            className="hidden md:flex items-stretch border border-gray-300 md:w-[420px] lg:w-[480px] xl:w-[520px]"
+          >
+            <input
+              type="search"
+              placeholder="Tìm sản phẩm của chúng tôi"
+              className="flex-1 px-4 py-2 focus:outline-none"
+            />
+            <button className="px-5 bg-[#8b2e0f] text-white hover:bg-gray-800 transition">
+              <SearchOutlined />
+            </button>
+          </form>
+
+          {/* Icons group near search (user, cart, chat) */}
+          <div className="flex items-center gap-5">
+            {/* Mobile search toggle */}
+            <button
+              type="button"
+              className="p-2 border border-gray-300 hover:bg-gray-50 md:hidden"
+              aria-label="Tìm kiếm"
+              onClick={() => setIsSearchOpen((s) => !s)}
+            >
+              <SearchOutlined />
+            </button>
+            {!user && (
+              <Link to="/login" className="text-2xl" aria-label="Tài khoản">
+                <UserOutlined />
+              </Link>
+            )}
+            {user && (
+              <h4>
+                Welcome, <span className="text-red-400">{user.username}</span>
+              </h4>
+            )}
+            <Link to="/cart" className="relative" aria-label="Giỏ hàng">
+              <span className="text-2xl">
+                <ShoppingCartOutlined />
+              </span>
+            </Link>
+            <Link to="/chat" className="text-2xl" aria-label="Chat">
+              <MessageOutlined />
+            </Link>
+          </div>
+        </div>
+
+        {/* Mobile search bar */}
+        {isSearchOpen && (
+          <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-center gap-4 md:hidden">
+            <form
+              onSubmit={(e) => e.preventDefault()}
+              className="flex items-stretch border border-gray-300 w-full max-w-md"
+            >
+              <input
+                type="search"
+                placeholder="Tìm sản phẩm của chúng tôi"
+                className="flex-1 px-3 py-2 focus:outline-none"
+              />
+              <button className="px-4 bg-[#8b2e0f] text-white">
+                <SearchOutlined />
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Row 2: Category button + Primary nav + Promo */}
+        <div>
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div ref={topCatRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsTopCategoriesOpen((s) => !s)}
+                    className={`bg-[#2b2b2b] text-white px-4 py-3 flex items-center gap-3 rounded-none transition-colors ${
+                      isTopCategoriesOpen
+                        ? "bg-[#1f1f1f]"
+                        : "hover:bg-[#1f1f1f]"
+                    }`}
+                  >
+                    <span>Danh mục hàng đầu</span>
+                    <span
+                      className={`text-xl transition-transform duration-200 ${
+                        isTopCategoriesOpen ? "rotate-90" : ""
+                      }`}
+                    >
+                      ≡
+                    </span>
+                  </button>
+                  <div
+                    className={`absolute left-0 top-full w-80 bg-white rounded-none shadow-xl ring-1 ring-black/5 z-40 transform transition-all duration-200 origin-top ${
+                      isTopCategoriesOpen
+                        ? "opacity-100 scale-100 pointer-events-auto"
+                        : "opacity-0 scale-95 pointer-events-none"
+                    }`}
+                  >
+                    {categories && categories.length > 0 ? (
+                      <ul className="py-2 overflow-hidden">
+                        {categories.map((c: ICategory) => (
+                          <li key={c.category_id}>
+                            <Link
+                              to={`/products?category=${encodeURIComponent(
+                                c.name
+                              )}`}
+                              className="block px-5 py-3 text-base text-gray-800 transition-all duration-150 hover:bg-[#8b2e0f] hover:text-white hover:pl-6 active:bg-red-600 active:text-white"
+                              onClick={() => setIsTopCategoriesOpen(false)}
+                            >
+                              {c.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="px-5 py-3 text-base text-gray-500">
+                        Không có danh mục
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <nav className="hidden md:flex items-center gap-6 ml-6 text-[15px]">
+                  <Link
+                    to="/"
+                    className="hover:text-red-700 flex items-center gap-1"
+                  >
+                    Trang chủ
+                  </Link>
+
+                  {/* Hover dropdown kept open when moving into panel; panel flush with trigger edge */}
+                  <div
+                    className="relative"
+                    onMouseEnter={() => setIsHoverCatsOpen(true)}
+                    onMouseLeave={() => setIsHoverCatsOpen(false)}
+                  >
+                    <Link
+                      to="/products"
+                      className="hover:text-red-700 flex items-center gap-1"
+                    >
+                      Danh mục <span className="text-xs">▾</span>
+                    </Link>
+                    <div
+                      className={`absolute left-0 top-full w-80 bg-white rounded-none shadow-xl ring-1 ring-black/5 z-40 transform transition-all duration-200 ${
+                        isHoverCatsOpen
+                          ? "opacity-100 translate-y-0 pointer-events-auto"
+                          : "opacity-0 translate-y-1 pointer-events-none"
+                      }`}
+                    >
+                      {categories && categories.length > 0 ? (
+                        <ul className="py-2 overflow-hidden">
+                          {categories.map((c: ICategory) => (
+                            <li key={c.category_id}>
+                              <Link
+                                to={`/products?category=${encodeURIComponent(
+                                  c.name
+                                )}`}
+                                className="block px-5 py-3 text-base text-gray-800 transition-all duration-150 hover:bg-[#8b2e0f] hover:text-white hover:pl-6 active:bg-red-600 active:text-white"
+                              >
+                                {c.name}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="px-5 py-3 text-base text-gray-500">
+                          Không có danh mục
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <Link to="/blog" className="hover:text-red-700">
+                    Blog
+                  </Link>
+                </nav>
+              </div>
+              <div className="hidden md:flex items-center py-3">
+                <div className="text-[#8b2e0f] font-semibold min-h-[24px]">
+                  {offers[offerIdx]}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+    </>
+  );
+};
+export default Header;
