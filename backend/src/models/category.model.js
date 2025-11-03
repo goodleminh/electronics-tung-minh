@@ -1,5 +1,5 @@
 import { Model, DataTypes } from "sequelize";
-import { sequelize } from "../config/dbConnection.js";
+import sequelize from "../config/dbConnection.js";
 
 export class Category extends Model {}
 

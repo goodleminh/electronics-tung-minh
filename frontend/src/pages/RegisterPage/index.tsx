@@ -5,6 +5,8 @@ import { toast, ToastContainer } from "react-toastify";
 import { registerUser } from "../../redux/features/auth/authSlice.ts";
 import { useDispatch } from "react-redux";
 import { type AppDispatch } from "../../redux/store.ts";
+import Header from "../../components/HeaderComponent/index.tsx";
+import Footer from "../../components/FooterComponent/index.tsx";
 interface RegisterForm {
   username: string;
   email: string;
@@ -53,7 +55,8 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-white text-gray-900">
+      <Header />
       <div className="register-page max-w-[600px] mx-auto text-center mt-5">
         <h2 className="text-[30px] inline-block mb-4 border-b-2 border-[brown]">
           Create Account
@@ -119,7 +122,7 @@ const RegisterPage: React.FC = () => {
             CREATE
           </button>
         </form>
-        <div>
+        <div className="mb-8">
           <p>
             Already have an account?{" "}
             <Link to="/login">
@@ -130,8 +133,9 @@ const RegisterPage: React.FC = () => {
           </p>
         </div>
       </div>
+      <Footer />
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
-    </>
+    </div>
   );
 };
 
