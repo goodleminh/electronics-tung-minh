@@ -1,11 +1,11 @@
-import express from 'express';
-import bodyParser from 'body-parser';
-import { v4 as uuidv4 } from 'uuid';
-import productRouter from './routes/product.router.js';
-import categoryRouter from './routes/category.router.js';
-import cors from 'cors';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import express from "express";
+import bodyParser from "body-parser";
+import productRouter from "./routes/product.router.js";
+import categoryRouter from "./routes/category.router.js";
+import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
+import authRouter from "./routes/auth.route.js";
 
 const app = express();
 
@@ -22,8 +22,8 @@ const __dirname = path.dirname(__filename);
 // Cho phép truy cập tĩnh tới thư mục "public"
 app.use("/public", express.static(path.join(__dirname, "public")));
 
-app.use('/products', productRouter);
-app.use('/categories', categoryRouter);
+app.use("/products", productRouter);
+app.use("/categories", categoryRouter);
+app.use("/api/auth", authRouter);
 
 export default app;
-
