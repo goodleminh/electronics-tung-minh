@@ -1,15 +1,15 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:3000/api/auth";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 export const authApis = {
   login: async (payload: { email: string; password: string }) => {
     try {
-      const response = await axios.post(`${BASE_URL}/login`, payload);
+      const response = await axios.post(`${BASE_URL}/api/auth/login`, payload);
       return response.data;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      const message = err.response.data.message;
+    } catch (error: any) {
+      const message = error.response.data.message;
       throw new Error(message);
     }
   },
@@ -19,11 +19,14 @@ export const authApis = {
     email: string;
   }) => {
     try {
-      const response = await axios.post(`${BASE_URL}/register`, payload);
+      const response = await axios.post(
+        `${BASE_URL}/api/auth/register`,
+        payload
+      );
       return response.data;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      const message = err.response.data.message;
+    } catch (error: any) {
+      const message = error.response.data.message;
       throw new Error(message);
     }
   },

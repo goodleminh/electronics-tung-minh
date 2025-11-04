@@ -4,13 +4,16 @@ import {
   ShoppingCartOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import type { RootState } from "../../redux/store";
+import { type AppDispatch, type RootState } from "../../redux/store";
 import { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
 import type { ICategory } from "../../redux/features/category/categorySlice";
+import { logout } from "../../redux/features/auth/authSlice";
 
 const Header = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const { categories } = useSelector((state: RootState) => state.category);
   const { user } = useSelector((state: RootState) => state.auth);
   const [offerIdx, setOfferIdx] = useState(0);
@@ -24,6 +27,9 @@ const Header = () => {
 
   // Keep hover dropdown open when cursor moves into its panel
   const [isHoverCatsOpen, setIsHoverCatsOpen] = useState(false);
+
+  //Hover user is open logout, profile, history bought
+  const [isOpen, setIsOpen] = useState<boolean>();
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -66,6 +72,11 @@ const Header = () => {
     );
     return () => clearInterval(t);
   }, [offers.length]);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login");
+  };
 
   return (
     <>
@@ -120,11 +131,46 @@ const Header = () => {
                 <UserOutlined />
               </Link>
             )}
+
             {user && (
-              <h4>
-                Welcome, <span className="text-red-400">{user.username}</span>
-              </h4>
+              <div
+                className="relative p-1"
+                onMouseEnter={() => setIsOpen(true)}
+                onMouseLeave={() => setIsOpen(false)}
+              >
+                <div className="cursor-pointer ">
+                  {" "}
+                  <UserOutlined className="text-2xl pt-1 " />{" "}
+                  <span className="text-[#8b2e0f] font-medium">
+                    {user.username}
+                  </span>
+                </div>
+                {/* Menu xuất hiện khi hover */}
+                {isOpen && (
+                  <div className="absolute left-0 mt-1 w-48 bg-white  rounded-sm  shadow-lg">
+                    <button
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-100 hover:text-green-400 cursor-pointer"
+                      onClick={() => navigate("/profile")}
+                    >
+                      Tài khoản của bạn
+                    </button>
+                    <button
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-100 hover:text-green-400 cursor-pointer"
+                      onClick={() => navigate("/profile")}
+                    >
+                      Đơn hàng
+                    </button>
+                    <button
+                      className="block w-full text-left px-4 py-2 hover:text-red-600 hover:bg-gray-100 cursor-pointer"
+                      onClick={handleLogout}
+                    >
+                      Đăng xuất
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
+
             <Link to="/cart" className="relative" aria-label="Giỏ hàng">
               <span className="text-2xl">
                 <ShoppingCartOutlined />
