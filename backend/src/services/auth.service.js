@@ -31,7 +31,7 @@ export const register = async (username, email, password, role) => {
     role,
   };
   const user = await User.create(newUser);
-  return { user };
+  return user;
 };
 
 export const login = async (email, password) => {

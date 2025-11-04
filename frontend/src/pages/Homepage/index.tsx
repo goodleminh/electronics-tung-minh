@@ -22,8 +22,7 @@ const Homepage: React.FC = () => {
   );
 
   // Helper: build image URL from backend /public
-  const API_BASE =
-    (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3000";
+  const API_BASE: string | undefined = import.meta.env.VITE_API_URL;
   // If img has no subfolder, assume it's under /public/product
   const buildImageUrl = (img?: string | null) => {
     if (!img) return null;

@@ -21,7 +21,7 @@ const LoginPage: React.FC = () => {
     // Kiểm tra login có thành công không
     if (loginUser.fulfilled.match(resultAction)) {
       toast.success(resultAction.payload.message);
-      setTimeout(() => navigate("/"), 1500);
+      setTimeout(() => navigate("/"), 1000);
     } else {
       toast.error(resultAction.payload);
     }
