@@ -8,20 +8,23 @@ import Categorypage from "./pages/Categorypage";
 import Intropage from "./pages/Intropage";
 import ScrollToTop from "./components/ScrollComponent";
 import Cartpage from "./pages/Cartpage";
+import MainLayout from "./layouts/mainLayout";
 
 function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
       <Routes>
-        <Route path="/" element={<Homepage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/category" element={<Categorypage />} />
-        <Route path="/intro" element={<Intropage />} />
-        <Route path="/cart" element={<Cartpage />} />
-        <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<Homepage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/category" element={<Categorypage />} />
+          <Route path="/intro" element={<Intropage />} />
+          <Route path="/cart" element={<Cartpage />} />
+          <Route path="/products/:id" element={<ProductDetail />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

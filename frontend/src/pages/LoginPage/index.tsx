@@ -4,8 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../redux/store.ts";
 import { loginUser } from "../../redux/features/auth/authSlice.ts";
-import Header from "../../components/HeaderComponent/index.tsx";
-import Footer from "../../components/FooterComponent/index.tsx";
 
 const LoginPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -29,7 +27,6 @@ const LoginPage: React.FC = () => {
 
   return (
     <>
-      <Header />
       <div className="flex flex-col items-center justify-center mt-5 mb-10">
         <div className="w-full max-w-md space-y-6 text-center">
           <h2 className="text-[30px] inline-block mb-5 border-b-2 border-[brown]">
@@ -92,7 +89,6 @@ const LoginPage: React.FC = () => {
           </div>
         </div>
       </div>
-      <Footer />
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
     </>
   );

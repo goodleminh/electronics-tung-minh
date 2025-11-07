@@ -29,7 +29,7 @@ const Header = () => {
   const [isHoverCatsOpen, setIsHoverCatsOpen] = useState(false);
 
   //Hover user for open logout, profile, history bought
-  const [isOpen, setIsOpen] = useState<boolean>();
+  const [isOpen, setIsOpen] = useState<boolean>(false);
 
   // Local search state for header search box
   const [searchText, setSearchText] = useState("");
@@ -79,6 +79,7 @@ const Header = () => {
   //handle logout
   const handleLogout = () => {
     dispatch(logout());
+    setIsOpen(false);
     navigate("/login");
   };
 
@@ -170,7 +171,6 @@ const Header = () => {
                 onMouseLeave={() => setIsOpen(false)}
               >
                 <div className="cursor-pointer ">
-                  {" "}
                   <UserOutlined className="text-2xl pt-1" />{" "}
                   <span className="text-[#8b2e0f] font-medium ">
                     {user?.username}
