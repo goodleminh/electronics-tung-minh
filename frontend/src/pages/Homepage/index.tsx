@@ -22,6 +22,7 @@ const Homepage: React.FC = () => {
   const { products, loading, error } = useSelector(
     (state: RootState) => state.product
   );
+  const navigate = useNavigate();
 
   // Helper: build image URL from backend /public
   const API_BASE: string | undefined = import.meta.env.VITE_API_URL;
@@ -191,24 +192,27 @@ const Homepage: React.FC = () => {
           {/* ====== COLLECTION BANNERS (placeholders) ====== */}
           <section id="collections" className="py-10 bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6">
-              {["3.png", "4.png", "5.png"].map((file, idx) => (
+              { [
+                { file: "3.png", cat: 1, aria: "Xem danh mục Điện thoại" },
+                { file: "4.png", cat: 3, aria: "Xem danh mục Tai nghe" },
+                { file: "5.png", cat: 7, aria: "Xem danh mục Đồng hồ" },
+              ].map((b, idx) => (
                 <div
-                  key={file}
+                  key={b.file}
                   className="relative overflow-hidden group transform-gpu transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
                 >
                   <img
-                    src={buildBannerSrc(file)}
+                    src={buildBannerSrc(b.file)}
                     alt={`collection banner ${idx + 3}`}
                     className="w-full h-auto object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                   />
-                  {/* Strong inner overlay on hover */}
                   <div className="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
                   <div className="pointer-events-none absolute inset-2 border-2 border-white/60 opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300" />
-                  {/* Full overlay button (no link yet) */}
                   <button
                     type="button"
-                    aria-label={`Banner ${idx + 3}`}
+                    aria-label={b.aria}
                     className="absolute inset-0 w-full h-full bg-transparent cursor-pointer"
+                    onClick={() => navigate(`/search?category=${b.cat}`)}
                   />
                 </div>
               ))}
@@ -264,7 +268,7 @@ const Homepage: React.FC = () => {
 
                     {/* Content */}
                     <div className="px-6 pt-6 pb-8 text-center">
-                      <h3 className="text-gray-800 group-hover:text-gray-900 transition font-medium mb-2">
+                      <h3 className="text-gray-800 group-hover:text-gray-900 transition font-medium mb-2 line-clamp-2 min-h-[3em]">
                         {p.name}
                       </h3>
                       <div className="flex items-baseline justify-center gap-3 mb-3">
@@ -327,7 +331,7 @@ const Homepage: React.FC = () => {
 
                     {/* Content */}
                     <div className="px-6 pt-6 pb-8 text-center">
-                      <h3 className="text-gray-800 group-hover:text-gray-900 transition font-medium mb-2">
+                      <h3 className="text-gray-800 group-hover:text-gray-900 transition font-medium mb-2 line-clamp-2 min-h-[3em]">
                         {p.name}
                       </h3>
                       <div className="flex items-baseline justify-center gap-3 mb-3">

@@ -3,19 +3,27 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import Homepage from "./pages/Homepage";
 import ProductDetail from "./pages/ProductDetail";
+import SearchPage from "./pages/SearchPage";
+import Categorypage from "./pages/Categorypage";
+import Intropage from "./pages/Intropage";
+import ScrollToTop from "./components/ScrollComponent";
+import Cartpage from "./pages/Cartpage";
 
 function App() {
   return (
-    <>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Homepage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/products/:id" element={<ProductDetail />} />
-        </Routes>
-      </BrowserRouter>
-    </>
+    <BrowserRouter>
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<Homepage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/category" element={<Categorypage />} />
+        <Route path="/intro" element={<Intropage />} />
+        <Route path="/cart" element={<Cartpage />} />
+        <Route path="/products/:id" element={<ProductDetail />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
