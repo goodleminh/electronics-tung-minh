@@ -14,9 +14,11 @@ import {
 } from "@ant-design/icons";
 import Header from "../../components/HeaderComponent";
 import Footer from "../../components/FooterComponent";
+import { useNavigate } from "react-router-dom";
 
 const Homepage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const { products, loading, error } = useSelector(
     (state: RootState) => state.product
   );
@@ -240,7 +242,8 @@ const Homepage: React.FC = () => {
                 return (
                   <div
                     key={p.product_id}
-                    className="group border border-gray-200 bg-white rounded-none overflow-hidden transition-all duration-300 transform-gpu hover:-translate-y-2 hover:shadow-2xl hover:border-gray-300"
+                    onClick={() => navigate(`/products/${p.product_id}`)}
+                    className="group border border-gray-200 bg-white rounded-none overflow-hidden transition-all duration-300 transform-gpu hover:-translate-y-2 hover:shadow-2xl hover:border-gray-300 cursor-pointer"
                   >
                     {/* Image */}
                     <div className="relative bg-white h-72 flex items-center justify-center overflow-hidden">
@@ -302,7 +305,8 @@ const Homepage: React.FC = () => {
                 return (
                   <div
                     key={p.product_id}
-                    className="group border border-gray-200 bg-white rounded-none overflow-hidden transition-all duration-300 transform-gpu hover:-translate-y-2 hover:shadow-2xl hover:border-gray-300"
+                    onClick={() => navigate(`/products/${p.product_id}`)}
+                    className="group border border-gray-200 bg-white rounded-none overflow-hidden transition-all duration-300 transform-gpu hover:-translate-y-2 hover:shadow-2xl hover:border-gray-300 cursor-pointer"
                   >
                     {/* Image */}
                     <div className="relative bg-white h-72 flex items-center justify-center overflow-hidden">

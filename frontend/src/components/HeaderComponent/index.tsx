@@ -9,13 +9,13 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import type { ICategory } from "../../redux/features/category/categorySlice";
-import { logout } from "../../redux/features/auth/authSlice";
+import { fetchCurrentUser, logout } from "../../redux/features/auth/authSlice";
 
 const Header = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { categories } = useSelector((state: RootState) => state.category);
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { isLoggedIn, user } = useSelector((state: RootState) => state.auth);
   const [offerIdx, setOfferIdx] = useState(0);
 
   // Header UI states
@@ -28,7 +28,7 @@ const Header = () => {
   // Keep hover dropdown open when cursor moves into its panel
   const [isHoverCatsOpen, setIsHoverCatsOpen] = useState(false);
 
-  //Hover user is open logout, profile, history bought
+  //Hover user for open logout, profile, history bought
   const [isOpen, setIsOpen] = useState<boolean>();
 
   useEffect(() => {
@@ -73,10 +73,18 @@ const Header = () => {
     return () => clearInterval(t);
   }, [offers.length]);
 
+  //handle logout
   const handleLogout = () => {
     dispatch(logout());
     navigate("/login");
   };
+
+  //handle still login after reload page
+  useEffect(() => {
+    if (localStorage.getItem("accessToken")) {
+      dispatch(fetchCurrentUser());
+    }
+  }, [dispatch]);
 
   return (
     <>
@@ -126,13 +134,23 @@ const Header = () => {
             >
               <SearchOutlined />
             </button>
-            {!user && (
+
+            <Link to="/cart" className="relative" aria-label="Giỏ hàng">
+              <span className="text-3xl">
+                <ShoppingCartOutlined />
+              </span>
+            </Link>
+            <Link to="/chat" className="text-2xl" aria-label="Chat">
+              <MessageOutlined />
+            </Link>
+            {/* if user not login , show icon login */}
+            {!isLoggedIn && (
               <Link to="/login" className="text-2xl" aria-label="Tài khoản">
                 <UserOutlined />
               </Link>
             )}
-
-            {user && (
+            {/* if user has logged in , show username */}
+            {isLoggedIn && (
               <div
                 className="relative p-1"
                 onMouseEnter={() => setIsOpen(true)}
@@ -140,9 +158,9 @@ const Header = () => {
               >
                 <div className="cursor-pointer ">
                   {" "}
-                  <UserOutlined className="text-2xl pt-1 " />{" "}
-                  <span className="text-[#8b2e0f] font-medium">
-                    {user.username}
+                  <UserOutlined className="text-2xl pt-1" />{" "}
+                  <span className="text-[#8b2e0f] font-medium ">
+                    {user?.username}
                   </span>
                 </div>
                 {/* Menu xuất hiện khi hover */}
@@ -170,15 +188,6 @@ const Header = () => {
                 )}
               </div>
             )}
-
-            <Link to="/cart" className="relative" aria-label="Giỏ hàng">
-              <span className="text-2xl">
-                <ShoppingCartOutlined />
-              </span>
-            </Link>
-            <Link to="/chat" className="text-2xl" aria-label="Chat">
-              <MessageOutlined />
-            </Link>
           </div>
         </div>
 
@@ -218,7 +227,7 @@ const Header = () => {
                   >
                     <span>Danh mục hàng đầu</span>
                     <span
-                      className={`text-xl transition-transform duration-200 ${
+                      className={`text-xl transition-transform duration-200 cursor-pointer ${
                         isTopCategoriesOpen ? "rotate-90" : ""
                       }`}
                     >

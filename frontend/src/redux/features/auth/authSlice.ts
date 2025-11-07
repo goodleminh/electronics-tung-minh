@@ -13,16 +13,22 @@ export interface User {
 interface AuthState {
   user: User | null;
   loading: boolean;
+  isLoggedIn: boolean;
   error: string | null;
-  token: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
 }
 
 // State khởi tạo
 const initialState: AuthState = {
-  user: null,
+  user: localStorage.getItem("user")
+    ? JSON.parse(localStorage.getItem("user") as string)
+    : null,
   loading: false,
   error: null,
-  token: localStorage.getItem("token") || null,
+  isLoggedIn: false,
+  accessToken: localStorage.getItem("accessToken") || null,
+  refreshToken: localStorage.getItem("refreshToken") || null,
 };
 
 interface LoginPayload {
@@ -38,7 +44,7 @@ interface RegisterPayload {
 
 interface LoginResponse {
   user: User;
-  token: string;
+  accessToken: string;
   message: string;
 }
 
@@ -56,13 +62,27 @@ export const loginUser = createAsyncThunk<
 >("auth/login", async (payload, { rejectWithValue }) => {
   try {
     const res = await authApis.login(payload);
-    localStorage.setItem("token", res.token);
-    localStorage.setItem("email", res.user.email);
+    localStorage.setItem("accessToken", res.accessToken);
+    localStorage.setItem("refreshToken", res.refreshToken);
+    localStorage.setItem("user", JSON.stringify(res.user));
     return res;
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
 });
+
+export const refreshAccessToken = createAsyncThunk(
+  "auth/refresh",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await authApis.refreshToken();
+      return res;
+    } catch {
+      localStorage.clear();
+      return rejectWithValue("Refresh token hết hạn, đăng nhập lại");
+    }
+  }
+);
 
 export const registerUser = createAsyncThunk<
   RegisterResponse,
@@ -77,6 +97,20 @@ export const registerUser = createAsyncThunk<
   }
 });
 
+export const fetchCurrentUser = createAsyncThunk(
+  "auth/fetchCurrentUser",
+  async (_, { rejectWithValue }) => {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) return rejectWithValue("No token");
+
+    try {
+      const res = await authApis.getMe(accessToken);
+      return res.user;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || "Token invalid");
+    }
+  }
+);
 //
 const authSlice = createSlice({
   name: "auth",
@@ -84,13 +118,16 @@ const authSlice = createSlice({
   reducers: {
     logout: (state) => {
       state.user = null;
-      state.token = null;
-      localStorage.removeItem("token");
+      state.accessToken = null;
+      state.isLoggedIn = false;
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
     },
   },
   extraReducers: (builder) => {
     builder
-      //  LOGIN
+      // LOGIN
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -98,14 +135,14 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
-        state.token = action.payload.token;
+        state.accessToken = action.payload.accessToken;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Server lỗi";
       })
 
-      // 🟦 REGISTER
+      // REGISTER
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -117,6 +154,16 @@ const authSlice = createSlice({
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Server lỗi";
+      })
+
+      // Fetch User
+      .addCase(fetchCurrentUser.fulfilled, (state, action) => {
+        state.isLoggedIn = true;
+        state.user = action.payload;
+      })
+      .addCase(fetchCurrentUser.rejected, (state) => {
+        state.isLoggedIn = false;
+        state.user = null;
       });
   },
 });
