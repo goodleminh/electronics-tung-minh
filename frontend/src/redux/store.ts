@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { productReducer } from "./features/product/productSlice";
 import { categoryReducer } from "./features/category/categorySlice";
 import authReducer from "../redux/features/auth/authSlice";
+import { cartReducer } from "./features/cart/cartSlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     //them category vao store
     category: categoryReducer,
     auth: authReducer,
+    cart: cartReducer,
   },
 });
 

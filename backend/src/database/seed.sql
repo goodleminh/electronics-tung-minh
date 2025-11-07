@@ -50,4 +50,21 @@ INSERT INTO products (store_id, category_id, name, description, price, stock, im
 (2, 10, 'Máy lọc không khí Daikin MC30VVM-A', 'Thiết kế nhỏ gọn, hiệu suất cao', 3590000, 15, 'daikin_mc30.jpg', 'approved'),
 (2, 8, 'Bình giữ nhiệt Tiger 500ml', 'Giữ nóng/lạnh đến 12 giờ', 890000, 45, 'tiger_500ml.jpg', 'approved');
 
+-- ===== CART_ITEMS =====
+INSERT INTO cart_items (buyer_id, product_id, quantity) VALUES
+-- Buyer 2
+(2, 1, 1),   -- iPhone 15 Pro
+(2, 5, 2),   -- AirPods Pro 2
+(2, 7, 1),   -- Cáp sạc USB-C Anker
+(2, 8, 1),   -- Sạc dự phòng Xiaomi 20000mAh
+(2, 11, 1),  -- Huawei Watch GT 4
+(2, 16, 1),  -- Đèn bàn thông minh Yeelight
+-- Buyer 3
+(3, 3, 1),   -- MacBook Air M3
+(3, 6, 1),   -- Sony WH-1000XM5
+(3, 9, 1),   -- Smart Tivi LG 55 inch 4K
+(3, 12, 1),  -- Apple Watch Series 9
+(3, 14, 1),  -- Máy ép chậm Philips HR1889
+(3, 20, 2);  -- Bình giữ nhiệt Tiger 500ml
+
 

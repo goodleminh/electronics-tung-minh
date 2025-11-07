@@ -31,6 +31,9 @@ const Header = () => {
   //Hover user for open logout, profile, history bought
   const [isOpen, setIsOpen] = useState<boolean>();
 
+  // Local search state for header search box
+  const [searchText, setSearchText] = useState("");
+
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
       if (topCatRef.current && !topCatRef.current.contains(e.target as Node)) {
@@ -108,18 +111,28 @@ const Header = () => {
             <span className="text-3xl font-bold">Electon</span>
           </Link>
 
-          {/* Desktop search (shorter and centered with group) */}
+          {/* SEARCH BOX: navigate to /search?q=... */}
           <form
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const q = searchText.trim();
+              if (q.length === 0) return navigate("/search");
+              navigate(`/search?q=${encodeURIComponent(q)}`);
+            }}
             className="hidden md:flex items-stretch border border-gray-300 md:w-[420px] lg:w-[480px] xl:w-[520px]"
           >
             <input
               type="search"
               placeholder="Tìm sản phẩm của chúng tôi"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
               className="flex-1 px-4 py-2 focus:outline-none"
             />
-            <button className="px-5 bg-[#8b2e0f] text-white hover:bg-gray-800 transition">
-              <SearchOutlined />
+            <button
+              type="submit"
+              className="px-4 bg-[#8b2e0f] text-white hover:bg-[#6e260c]"
+            >
+              Tìm kiếm
             </button>
           </form>
 
@@ -246,9 +259,7 @@ const Header = () => {
                         {categories.map((c: ICategory) => (
                           <li key={c.category_id}>
                             <Link
-                              to={`/products?category=${encodeURIComponent(
-                                c.name
-                              )}`}
+                              to={`/search?category=${c.category_id}`}
                               className="block px-5 py-3 text-base text-gray-800 transition-all duration-150 hover:bg-[#8b2e0f] hover:text-white hover:pl-6 active:bg-red-600 active:text-white"
                               onClick={() => setIsTopCategoriesOpen(false)}
                             >
@@ -280,7 +291,7 @@ const Header = () => {
                     onMouseLeave={() => setIsHoverCatsOpen(false)}
                   >
                     <Link
-                      to="/products"
+                      to="/category"
                       className="hover:text-red-700 flex items-center gap-1"
                     >
                       Danh mục <span className="text-xs">▾</span>
@@ -297,9 +308,7 @@ const Header = () => {
                           {categories.map((c: ICategory) => (
                             <li key={c.category_id}>
                               <Link
-                                to={`/products?category=${encodeURIComponent(
-                                  c.name
-                                )}`}
+                                to={`/search?category=${c.category_id}`}
                                 className="block px-5 py-3 text-base text-gray-800 transition-all duration-150 hover:bg-[#8b2e0f] hover:text-white hover:pl-6 active:bg-red-600 active:text-white"
                               >
                                 {c.name}
@@ -315,8 +324,8 @@ const Header = () => {
                     </div>
                   </div>
 
-                  <Link to="/blog" className="hover:text-red-700">
-                    Blog
+                  <Link to="/intro" className="hover:text-red-700">
+                    Giới Thiệu
                   </Link>
                 </nav>
               </div>
