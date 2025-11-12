@@ -1,5 +1,6 @@
 import sequelize from "../config/dbConnection.js";
 import { DataTypes, Model } from "sequelize";
+import Profile from "./profile.model.js";
 
 export class User extends Model {}
 
@@ -50,4 +51,9 @@ User.init(
     timestamps: true,
   }
 );
+
+// Quan hệ 1-1 với Profile
+User.hasOne(Profile, { foreignKey: "user_id" });
+Profile.belongsTo(User, { foreignKey: "user_id" });
+
 export default User;

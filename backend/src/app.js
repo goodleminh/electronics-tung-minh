@@ -10,6 +10,7 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import authRouter from "./routes/auth.route.js";
+import profileRouter from "./routes/profile.route.js";
 
 const app = express();
 
@@ -26,6 +27,9 @@ const __dirname = path.dirname(__filename);
 // Cho phép truy cập tĩnh tới thư mục "public"
 app.use("/public", express.static(path.join(__dirname, "public")));
 
+// Cho phép truy cập ảnh tĩnh
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
 app.use("/products", productRouter);
 app.use("/categories", categoryRouter);
 app.use("/carts", cartRouter);
@@ -33,5 +37,6 @@ app.use("/stores", storeRouter);
 app.use("/orders", orderRouter); 
 app.use("/order-items", orderItemRouter); 
 app.use("/api/auth", authRouter);
+app.use("/profile", profileRouter);
 
 export default app;

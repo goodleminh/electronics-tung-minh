@@ -10,6 +10,7 @@ import ScrollToTop from "./components/ScrollComponent";
 import Cartpage from "./pages/Cartpage";
 import MainLayout from "./layouts/mainLayout";
 import OrderPage from "./pages/Orderpage";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/cart" element={<Cartpage />} />
           <Route path="/orders" element={<OrderPage />} />
           <Route path="/products/:id" element={<ProductDetail />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Routes>
     </BrowserRouter>

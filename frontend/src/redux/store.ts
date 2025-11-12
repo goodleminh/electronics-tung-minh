@@ -6,6 +6,7 @@ import { cartReducer } from "./features/cart/cartSlice";
 import { storeReducer } from "./features/store/storeSlice";
 import { orderReducer } from "./features/order/orderSlice";
 import { orderItemReducer } from "./features/order_item/order_itemSlice";
+import profileReducer from "../redux/features/profile/profileSlice";
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     store: storeReducer,
     order: orderReducer,
     orderItems: orderItemReducer,
+    profile: profileReducer,
   },
 });
 
