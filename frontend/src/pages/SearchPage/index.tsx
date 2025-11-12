@@ -1,23 +1,27 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import type { RootState, AppDispatch } from "../../redux/store";
-import {
-  actFetchProducts,
-  type IProduct,
-} from "../../redux/features/product/productSlice";
-import {
-  actFetchCategories,
-  type ICategory,
-} from "../../redux/features/category/categorySlice";
+import { actFetchCategories } from "../../redux/features/category/categorySlice";
+import type { ICategory } from "../../redux/features/category/categorySlice"; // add ICategory type
+import { searchProducts } from "../../redux/features/product/productSlice";
+import type { IProduct } from "../../redux/features/product/productSlice";
+import { getFormattedPricing } from "../../utils/price/priceUtil";
 import "./style.css";
 
 const SearchPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const { products, loading, error } = useSelector((s: RootState) => s.product);
+  const {
+    searchItems,
+    searchLoading,
+    searchLoadingMore,
+    searchError,
+    searchHasMore,
+    searchTotal,
+    searchPage,
+  } = useSelector((s: RootState) => s.product);
   const { categories } = useSelector((s: RootState) => s.category);
 
   // Query params
@@ -65,7 +69,6 @@ const SearchPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!products.length) dispatch(actFetchProducts());
     if (!categories.length) dispatch(actFetchCategories());
     // sync url -> state when back/forward
     setQ(qParam);
@@ -73,8 +76,35 @@ const SearchPage: React.FC = () => {
     setMinPrice(minParam);
     setMaxPrice(maxParam);
     setSortBy(sortParam);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qParam, catParam, minParam, maxParam, sortParam]);
+  }, [qParam, catParam, minParam, maxParam, sortParam, categories.length, dispatch]);
+
+  // Fetch paginated search whenever params change
+  useEffect(() => {
+    // Normalize min/max if both present and min>max
+    let min = minParam;
+    let max = maxParam;
+    if (minParam && maxParam && !isNaN(Number(minParam)) && !isNaN(Number(maxParam))) {
+      const a = Number(minParam);
+      const b = Number(maxParam);
+      if (a > b) {
+        min = String(b);
+        max = String(a);
+      }
+    }
+    const category = catParam !== "all" ? catParam : undefined;
+    dispatch(
+      searchProducts({
+        q: qParam || undefined,
+        category,
+        min: min || undefined,
+        max: max || undefined,
+        sort: sortParam !== "relevance" ? sortParam : undefined,
+        page: 1,
+        limit: 12,
+        reset: true,
+      })
+    );
+  }, [dispatch, qParam, catParam, minParam, maxParam, sortParam]);
 
   // Helpers matching Homepage
   const API_BASE: string | undefined = import.meta.env.VITE_API_URL;
@@ -84,17 +114,6 @@ const SearchPage: React.FC = () => {
     const normalized = img.includes("/") ? img : `product/${img}`;
     return `${API_BASE}/public/${normalized}`;
   };
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(Number(price));
-  const getDiscountPercent = (p: IProduct) => {
-    const map = [2, 5, 7, 8];
-    return map[p.product_id % map.length];
-  };
-  const getOldPrice = (price: number, percent: number) =>
-    Math.round(Number(price) * (1 + percent / 100));
 
   const updateUrl = (kv: Record<string, string | undefined>) => {
     const p = new URLSearchParams(location.search);
@@ -120,50 +139,7 @@ const SearchPage: React.FC = () => {
     updateUrl({ q: "", category: "", min: "", max: "", sort: "" });
   };
 
-  const filtered = useMemo(() => {
-    let list: IProduct[] = [...products];
-    if (qParam) {
-      const kw = qParam.toLowerCase();
-      list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(kw) ||
-          (p.description || "").toLowerCase().includes(kw)
-      );
-    }
-    if (catParam !== "all") {
-      const cid = Number(catParam);
-      list = list.filter((p) => Number(p.category_id) === cid);
-    }
-    const min = Number(minParam || 0);
-    const max = Number(maxParam || 0);
-    if (min) list = list.filter((p) => Number(p.price) >= min);
-    if (max) list = list.filter((p) => Number(p.price) <= max);
-
-    switch (sortParam) {
-      case "price-asc":
-        list.sort((a, b) => Number(a.price) - Number(b.price));
-        break;
-      case "price-desc":
-        list.sort((a, b) => Number(b.price) - Number(a.price));
-        break;
-      case "newest":
-        list.sort(
-          (a, b) =>
-            new Date(b.created_at || 0).getTime() -
-            new Date(a.created_at || 0).getTime()
-        );
-        break;
-      case "bestseller": {
-        const getSold = (x: IProduct) =>
-          Number((x as any).sold ?? (x as any).sold_count ?? 0);
-        list.sort((a, b) => getSold(b) - getSold(a));
-        break;
-      }
-      default:
-        break;
-    }
-    return list;
-  }, [products, qParam, catParam, minParam, maxParam, sortParam]);
+  const canLoadMore = searchHasMore && !searchLoading && !searchLoadingMore;
 
   return (
     <main className="py-8">
@@ -174,7 +150,7 @@ const SearchPage: React.FC = () => {
             Tìm kiếm sản phẩm
           </h1>
           <span className="text-sm text-gray-500">
-            {filtered.length} kết quả
+            {searchTotal} kết quả
           </span>
         </div>
 
@@ -275,15 +251,15 @@ const SearchPage: React.FC = () => {
 
           {/* Results with same card style as Homepage */}
           <section className="md:col-span-9">
-            {loading && (
+            {searchLoading && (
               <div className="text-center py-8">Đang tải dữ liệu...</div>
             )}
-            {error && (
+            {searchError && (
               <div className="text-red-600 border border-red-300 p-3 mb-4">
-                {error}
+                {searchError}
               </div>
             )}
-            {!loading && filtered.length === 0 && !error && (
+            {!searchLoading && searchItems.length === 0 && !searchError && (
               <div className="text-center text-gray-500">
                 Không có sản phẩm phù hợp.
               </div>
@@ -291,21 +267,23 @@ const SearchPage: React.FC = () => {
 
             {/* Use auto-fill with minmax so items wrap to new rows when width is insufficient */}
             <div className="grid [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))] gap-8">
-              {filtered.map((p: IProduct) => {
-                const percent = getDiscountPercent(p);
-                const oldPrice = getOldPrice(Number(p.price), percent);
+              {searchItems.map((p: IProduct) => {
+                const pricing = getFormattedPricing(p);
                 const imgUrl = buildImageUrl(p.image);
                 return (
                   <div
                     key={p.product_id}
-                    className="group border border-gray-200 bg-white rounded-none overflow-hidden transition-all duration-300 transform-gpu hover:-translate-y-2 hover:shadow-2xl hover:border-gray-300"
+                    onClick={() => navigate(`/products/${p.product_id}`)}
+                    className="group border border-gray-200 bg-white rounded-none overflow-hidden transition-all duration-300 transform-gpu hover:-translate-y-2 hover:shadow-2xl hover:border-gray-300 cursor-pointer"
                   >
                     {/* Image */}
                     <div className="relative bg-white h-72 flex items-center justify-center overflow-hidden">
                       {/* Discount badge */}
-                      <div className="absolute top-4 left-4 z-10 bg-[#8b2e0f] text-white text-xs font-semibold px-2 py-1">
-                        {percent}%
-                      </div>
+                      {pricing.isDiscount && pricing.percent !== undefined && (
+                        <div className="absolute top-4 left-4 z-10 bg-[#8b2e0f] text-white text-xs font-semibold px-2 py-1">
+                          {pricing.percent}%
+                        </div>
+                      )}
                       {imgUrl ? (
                         <img
                           src={imgUrl}
@@ -324,11 +302,13 @@ const SearchPage: React.FC = () => {
                       </h3>
                       <div className="flex items-baseline justify-center gap-3 mb-3">
                         <span className="text-2xl font-extrabold text-gray-900">
-                          {formatPrice(Number(p.price))}
+                          {pricing.final}
                         </span>
-                        <span className="text-gray-400 line-through">
-                          {formatPrice(oldPrice)}
-                        </span>
+                        {pricing.original && (
+                          <span className="text-gray-400 line-through">
+                            {pricing.original}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
                         <div className="text-amber-400 text-lg leading-none">
@@ -341,6 +321,33 @@ const SearchPage: React.FC = () => {
                 );
               })}
             </div>
+
+            {/* Load more */}
+            {searchItems.length > 0 && (
+              <div className="flex justify-center mt-8">
+                <button
+                  type="button"
+                  disabled={!canLoadMore}
+                  onClick={() => {
+                    const category = catParam !== "all" ? catParam : undefined;
+                    dispatch(
+                      searchProducts({
+                        q: qParam || undefined,
+                        category,
+                        min: minParam || undefined,
+                        max: maxParam || undefined,
+                        sort: sortParam !== "relevance" ? sortParam : undefined,
+                        page: searchPage + 1,
+                        limit: 12,
+                      })
+                    );
+                  }}
+                  className={`px-6 py-2 bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {searchLoadingMore ? "Đang tải..." : searchHasMore ? "Tải thêm" : "Hết dữ liệu"}
+                </button>
+              </div>
+            )}
           </section>
         </div>
       </div>

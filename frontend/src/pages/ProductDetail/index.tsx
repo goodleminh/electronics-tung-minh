@@ -8,6 +8,8 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { type AppDispatch, type RootState } from "../../redux/store";
 import { Modal } from "antd";
+import { getFormattedPricing, getActivePricing } from "../../utils/price/priceUtil";
+import { actAddToCart } from "../../redux/features/cart/cartSlice";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -16,73 +18,146 @@ const ProductDetail = () => {
   const { productDetail, loading, error, productRelated } = useSelector(
     (state: RootState) => state.product
   );
+  // NEW: auth state
+  const { isLoggedIn, user } = useSelector((state: RootState) => state.auth);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
 
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  // info modal: delivery/ask
+  const [infoModal, setInfoModal] = useState<null | "delivery" | "ask">(null);
+  // NEW: add-to-cart quantity modal state
+  const [addOpen, setAddOpen] = useState(false);
+  const [addQty, setAddQty] = useState<number>(1);
+  // NEW: login required modal state
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   useEffect(() => {
     if (id) dispatch(fetchProductById(Number(id)));
   }, [id, dispatch]);
 
+  // Fetch related products when category/id changes (avoid using `loading`)
   useEffect(() => {
-    if (productDetail?.category_id && productDetail?.product_id) {
-      dispatch(
-        fetchRelatedProducts({
-          category_id: productDetail.category_id,
-          product_id: productDetail.product_id,
-        })
-      );
-    }
-  }, [productDetail, loading, dispatch]);
+    if (!productDetail?.category_id || !productDetail?.product_id) return;
+    dispatch(
+      fetchRelatedProducts({
+        category_id: productDetail.category_id,
+        product_id: productDetail.product_id,
+      })
+    );
+  }, [dispatch, productDetail?.category_id, productDetail?.product_id]);
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(Number(price));
-
-  // Helpers for product card UI
-  const getDiscountPercent = (p: IProduct) => {
-    const map = [2, 5, 7, 8];
-    return map[p.product_id % map.length];
-  };
-  const getOldPrice = (price: number, percent: number) => {
-    return Math.round(Number(price) * (1 + percent / 100));
-  };
-
-  if (!productDetail) return <div>Không tìm thấy sản phẩm</div>;
-
-  const discount = getDiscountPercent(productDetail);
-  const oldPrice = getOldPrice(productDetail?.price, discount);
+  const pricing = productDetail ? getFormattedPricing(productDetail) : null;
 
   // Helper: build image URL from backend /public
   const API_BASE: string | undefined = import.meta.env.VITE_API_URL;
 
   // If img has no subfolder, assume it's under /public/product
   const buildImageUrl = (img?: string | null) => {
-    if (!img) return null;
+    if (!img) return undefined;
     if (img.startsWith("http")) return img;
     const normalized = img.includes("/") ? img : `product/${img}`;
     return `${API_BASE}/public/${normalized}`;
   };
-  //  tăng giảm
+  //  tăng giảm (clamp by stock if provided)
   const handleIncrease = () => {
-    setQuantity((prev) => prev + 1);
+    const max = productDetail?.stock ?? Number.POSITIVE_INFINITY;
+    setQuantity((prev) => (Number.isFinite(max) ? Math.min(prev + 1, max as number) : prev + 1));
   };
   const handleDecrease = () => {
     // Không cho giảm dưới 1
     setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
   };
 
-  //control modal
-  const showModal = () => {
-    setIsModalOpen(true);
+  // NEW: handlers for add-to-cart modal
+  const openAddModal = () => {
+    if (!isLoggedIn) {
+      setAuthModalOpen(true);
+      return;
+    }
+    const max = productDetail?.stock ?? Number.POSITIVE_INFINITY;
+    const init = Math.max(1, Math.min(quantity, max));
+    setAddQty(init);
+    setAddOpen(true);
+  };
+  const decAdd = () => setAddQty((q) => (q > 1 ? q - 1 : 1));
+  const incAdd = () => {
+    const max = productDetail?.stock ?? Number.POSITIVE_INFINITY;
+    setAddQty((q) => (Number.isFinite(max) ? Math.min(q + 1, max as number) : q + 1));
+  };
+  // NEW: helper to get buyer id robustly
+  const getBuyerId = () => {
+    // Support both user_id and id from backend/auth
+    const idFromState = (user as any)?.user_id ?? (user as any)?.id;
+    if (typeof idFromState === "number") return idFromState;
+    try {
+      const raw = localStorage.getItem("user");
+      if (!raw) return undefined;
+      const parsed = JSON.parse(raw);
+      const id = parsed?.user_id ?? parsed?.id;
+      return typeof id === "number" ? id : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  const confirmAdd = async () => {
+    if (!productDetail) return;
+    const buyerId = getBuyerId();
+    if (!buyerId) {
+      setAuthModalOpen(true);
+      return;
+    }
+    try {
+      await dispatch(
+        actAddToCart({
+          buyer_id: buyerId,
+          product_id: productDetail.product_id,
+          quantity: addQty,
+        })
+      ).unwrap();
+      setQuantity(addQty);
+      setAddOpen(false);
+    } catch (e: any) {
+      Modal.error({
+        title: "Thêm vào giỏ hàng thất bại",
+        content: e?.message || "Thử lại sau",
+      });
+    }
+  };
+  const handleBuyNow = () => {
+    if (!productDetail) return;
+    if (!isLoggedIn) {
+      setAuthModalOpen(true);
+      return;
+    }
+    // Chốt số lượng hợp lệ theo tồn kho
+    const max = productDetail.stock ?? Number.POSITIVE_INFINITY;
+    const finalQty = Number.isFinite(max) ? Math.min(quantity, max as number) : quantity;
+    const active = getActivePricing(productDetail as any);
+    const unitPrice = Number(active.finalPrice);
+    const total = unitPrice * finalQty;
+    navigate('/orders', {
+      state: {
+        checkout: {
+          items: [
+            {
+              product_id: productDetail.product_id,
+              quantity: finalQty,
+              price: unitPrice,
+            },
+          ],
+          total,
+        },
+      },
+    });
   };
 
   if (loading) return <div>Đang tải...</div>;
   if (error) return <div className="text-red-500">Lỗi: {error}</div>;
   if (!productDetail) return <div>Không tìm thấy sản phẩm</div>;
+
+  // Helper: clamp stock for display
+  const displayStock = Math.min(productDetail.stock, 99);
+
   return (
     <>
       <div className="grid grid-cols-12 gap-10 max-w-7xl mx-auto px-12 mt-12 mb-12">
@@ -90,11 +165,18 @@ const ProductDetail = () => {
         <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6">
           <div className="group border py-4 border-gray-300 bg-white rounded-none overflow-hidden ">
             <div className="bg-white h-100 flex items-center justify-center overflow-hidden">
-              <img
-                src={`${buildImageUrl(productDetail.image)}`}
-                alt={productDetail.name}
-                className="max-h-[100%] max-w-[100%] object-contain"
-              />
+              {(() => {
+                const src = buildImageUrl(productDetail.image);
+                return src ? (
+                  <img
+                    src={src}
+                    alt={productDetail.name}
+                    className="max-h-[100%] max-w-[100%] object-contain"
+                  />
+                ) : (
+                  <div className="text-5xl text-gray-400">📦</div>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -107,15 +189,18 @@ const ProductDetail = () => {
           {/* product price */}
           <div className="mb-3">
             <span className="text-2xl font-extrabold text-gray-900 mr-3">
-              {formatPrice(productDetail.price)}
+              {pricing?.final}
             </span>
-            <span className="text-gray-400 line-through mr-3">
-              {formatPrice(oldPrice)}
-            </span>
-            {/* Discount badge */}
-            <span className=" bg-[#8b2e0f] text-white text-xs font-semibold px-4 py-1">
-              {discount}%
-            </span>
+            {pricing?.original && (
+              <span className="text-gray-400 line-through mr-3">
+                {pricing.original}
+              </span>
+            )}
+            {pricing?.isDiscount && pricing.percent !== undefined && (
+              <span className=" bg-[#8b2e0f] text-white text-xs font-semibold px-4 py-1">
+                {pricing.percent}%
+              </span>
+            )}
           </div>
           {/* product description */}
           <p className="mb-3">{productDetail.description}</p>
@@ -164,7 +249,7 @@ const ProductDetail = () => {
                   fill="rgb(238,148,65)"
                 ></circle>
               </svg>
-              <span className="ml-1">Low stock: 10 left</span>
+              <span className="ml-1">Low stock: {displayStock} left</span>
             </div>
           )}
 
@@ -182,6 +267,8 @@ const ProductDetail = () => {
               <button
                 className="px-2 py-1 cursor-pointer"
                 onClick={handleIncrease}
+                disabled={Number.isFinite(productDetail?.stock) && quantity >= (productDetail?.stock ?? Infinity)}
+                title={productDetail?.stock === 0 ? "Hết hàng" : undefined}
               >
                 +
               </button>
@@ -190,119 +277,83 @@ const ProductDetail = () => {
 
           {/* Buttons */}
           <div className="flex gap-4 mb-5">
-            <button className="flex-1 bg-[#8b2e0f] text-white py-3 hover:bg-[#2b2b2b] cursor-pointer">
+            <button
+              className="flex-1 bg-[#8b2e0f] text-white py-3 hover:bg-[#2b2b2b] cursor-pointer"
+              onClick={openAddModal}
+              disabled={productDetail.stock === 0}
+              title={productDetail.stock === 0 ? "Hết hàng" : "Thêm vào giỏ hàng"}
+            >
               ADD TO CART
             </button>
-            <button className="flex-1  bg-[#8b2e0f] py-3 hover:bg-[#2b2b2b] text-white cursor-pointer">
+            <button
+              className="flex-1 bg-[#8b2e0f] py-3 hover:bg-[#2b2b2b] text-white cursor-pointer"
+              onClick={handleBuyNow}
+              disabled={productDetail.stock === 0}
+              title={productDetail.stock === 0 ? 'Hết hàng' : 'Mua ngay'}
+            >
               BUY IT NOW
             </button>
           </div>
 
-          {/* Delivery & Returns */}
+          {/* Delivery & Returns / Ask a question */}
           <div className="flex gap-8">
             <h2
               className="text-xl font-medium hover:text-[#8b2e0f] cursor-pointer"
-              onClick={showModal}
+              onClick={() => setInfoModal("delivery")}
             >
               Delivery & return
             </h2>
-            <Modal
-              closable={{ "aria-label": "Custom Close Button" }}
-              open={isModalOpen}
-              onCancel={() => setIsModalOpen(false)}
-              footer={null}
-              centered
-            >
-              {/* Modal content */}
-              <div className="py-5">
-                {/* Delivery */}
-                <h2 className="text-2xl font-medium mb-3">Delivery</h2>
-                <p>All orders shipped with UPS Express.</p>
-                <p>Always free shipping for orders over US $250.</p>
-                <p className="mb-6">
-                  All orders are shipped with a UPS tracking number.
-                </p>
-                {/* Return */}
-                <h2 className="text-2xl font-medium mb-3">Returns</h2>
-                <p>
-                  Items returned within 14 days of their original shipment date
-                  in same as new condition will be eligible for a full refund or
-                  store credit.
-                </p>
-                <p>
-                  Refunds will be charged back to the original form of payment
-                  used for purchase.
-                </p>
-                <p>
-                  Customer is responsible for shipping charges when making
-                  returns and shipping/handling fees of original purchase is
-                  non-refundable.
-                </p>
-                <p className="mb-6">All sale items are final purchases.</p>
-                <h2 className="text-2xl font-medium mb-3">Help</h2>
-                <p>
-                  Give us a shout if you have any other questions and/or
-                  concerns.
-                </p>
-                <p>
-                  Email:<span className="font-medium"> demo@gmail.com</span>
-                </p>
-                <p>
-                  Phone:<span className="font-medium"> +1 (23) 456 789</span>
-                </p>
-              </div>
-            </Modal>
-            {/* Ask a question */}
             <h2
               className="text-xl font-medium hover:text-[#8b2e0f] cursor-pointer"
-              onClick={showModal}
+              onClick={() => setInfoModal("ask")}
             >
               Ask a question
             </h2>
             <Modal
-              closable={{ "aria-label": "Custom Close Button" }}
-              open={isModalOpen}
-              onCancel={() => setIsModalOpen(false)}
+              open={!!infoModal}
+              onCancel={() => setInfoModal(null)}
               footer={null}
               centered
             >
-              {/* Modal content */}
               <div className="py-5">
-                {/* Delivery */}
-                <h2 className="text-2xl font-medium mb-3">Delivery</h2>
-                <p>All orders shipped with UPS Express.</p>
-                <p>Always free shipping for orders over US $250.</p>
-                <p className="mb-6">
-                  All orders are shipped with a UPS tracking number.
-                </p>
-                {/* Return */}
-                <h2 className="text-2xl font-medium mb-3">Returns</h2>
-                <p>
-                  Items returned within 14 days of their original shipment date
-                  in same as new condition will be eligible for a full refund or
-                  store credit.
-                </p>
-                <p>
-                  Refunds will be charged back to the original form of payment
-                  used for purchase.
-                </p>
-                <p>
-                  Customer is responsible for shipping charges when making
-                  returns and shipping/handling fees of original purchase is
-                  non-refundable.
-                </p>
-                <p className="mb-6">All sale items are final purchases.</p>
-                <h2 className="text-2xl font-medium mb-3">Help</h2>
-                <p>
-                  Give us a shout if you have any other questions and/or
-                  concerns.
-                </p>
-                <p>
-                  Email:<span className="font-medium"> demo@gmail.com</span>
-                </p>
-                <p>
-                  Phone:<span className="font-medium"> +1 (23) 456 789</span>
-                </p>
+                {infoModal === "delivery" ? (
+                  <>
+                    <h2 className="text-2xl font-medium mb-3">Delivery</h2>
+                    <p>All orders shipped with UPS Express.</p>
+                    <p>Always free shipping for orders over US $250.</p>
+                    <p className="mb-6">All orders are shipped with a UPS tracking number.</p>
+                    <h2 className="text-2xl font-medium mb-3">Returns</h2>
+                    <p>
+                      Items returned within 14 days of their original shipment date in same as new
+                      condition will be eligible for a full refund or store credit.
+                    </p>
+                    <p>Refunds will be charged back to the original form of payment used for purchase.</p>
+                    <p>
+                      Customer is responsible for shipping charges when making returns and
+                      shipping/handling fees of original purchase is non-refundable.
+                    </p>
+                    <p className="mb-6">All sale items are final purchases.</p>
+                    <h2 className="text-2xl font-medium mb-3">Help</h2>
+                    <p>Give us a shout if you have any other questions and/or concerns.</p>
+                    <p>
+                      Email:<span className="font-medium"> demo@gmail.com</span>
+                    </p>
+                    <p>
+                      Phone:<span className="font-medium"> +1 (23) 456 789</span>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-2xl font-medium mb-3">Ask a question</h2>
+                    <p>Need more info about this product? Contact us:</p>
+                    <p>
+                      Email:<span className="font-medium"> support@example.com</span>
+                    </p>
+                    <p>
+                      Phone:<span className="font-medium"> +1 (23) 456 789</span>
+                    </p>
+                  </>
+                )}
               </div>
             </Modal>
           </div>
@@ -419,8 +470,7 @@ const ProductDetail = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
               {productRelated.map((p: IProduct) => {
-                const percent = getDiscountPercent(p);
-                const oldPrice = getOldPrice(p.price, percent);
+                const pricing = getFormattedPricing(p);
                 const imgUrl = buildImageUrl(p.image);
                 return (
                   <div
@@ -431,9 +481,11 @@ const ProductDetail = () => {
                     {/* Image */}
                     <div className="relative bg-white h-72 flex items-center justify-center overflow-hidden">
                       {/* Discount badge */}
-                      <div className="absolute top-4 left-4 z-10 bg-[#8b2e0f] text-white text-xs font-semibold px-2 py-1">
-                        {discount}%
-                      </div>
+                      {pricing.isDiscount && pricing.percent !== undefined && (
+                        <div className="absolute top-4 left-4 z-10 bg-[#8b2e0f] text-white text-xs font-semibold px-2 py-1">
+                          {pricing.percent}%
+                        </div>
+                      )}
                       {imgUrl ? (
                         <img
                           src={imgUrl}
@@ -452,11 +504,13 @@ const ProductDetail = () => {
                       </h3>
                       <div className="flex items-baseline justify-center gap-3 mb-3">
                         <span className="text-2xl font-extrabold text-gray-900">
-                          {formatPrice(p.price)}
+                          {pricing.final}
                         </span>
-                        <span className="text-gray-400 line-through">
-                          {formatPrice(oldPrice)}
-                        </span>
+                        {pricing.original && (
+                          <span className="text-gray-400 line-through">
+                            {pricing.original}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
                         <div className="text-amber-400 text-lg leading-none">
@@ -476,6 +530,98 @@ const ProductDetail = () => {
           Không có sản phẩm liên quan
         </div>
       )}
+
+      {/* NEW: Add-to-Cart Quantity Modal */}
+      <Modal
+        title={null}
+        open={addOpen}
+        onCancel={() => setAddOpen(false)}
+        onOk={confirmAdd}
+        okText="Xác nhận"
+        cancelText="Hủy"
+        centered
+        styles={{ content: { borderRadius: 0, padding: 16 } }}
+        className="rounded-none"
+        okButtonProps={{ style: { backgroundColor: '#8b2e0f', borderColor: '#8b2e0f', borderRadius: 0 } }}
+        cancelButtonProps={{ style: { borderRadius: 0 } }}
+      >
+        {productDetail && (
+          <div className="flex items-start gap-4">
+            <div className="w-28 h-28 flex items-center justify-center bg-white border border-gray-200">
+              {buildImageUrl(productDetail.image) ? (
+                <img
+                  src={buildImageUrl(productDetail.image) as string}
+                  alt={productDetail.name}
+                  className="max-w-[85%] max-h-[85%] object-contain"
+                />
+              ) : (
+                <div className="text-3xl text-gray-400">📦</div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-lg font-medium text-gray-900 mb-1 line-clamp-2">
+                {productDetail.name}
+              </div>
+              {(() => {
+                const pr = getFormattedPricing(productDetail as any);
+                return (
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="text-[#8b2e0f] font-semibold">{pr.final}</span>
+                    {pr.original && (
+                      <span className="text-gray-400 line-through text-sm">{pr.original}</span>
+                    )}
+                    {pr.isDiscount && pr.percent !== undefined && (
+                      <span className="bg-[#8b2e0f] text-white text-[10px] font-semibold px-2 py-0.5">-{pr.percent}%</span>
+                    )}
+                  </div>
+                );
+              })()}
+              <div className="flex items-center gap-3">
+                <span className="text-sm">Số lượng</span>
+                <div className="flex items-center border border-gray-300">
+                  <button
+                    className="px-3 py-1 hover:bg-gray-50"
+                    onClick={decAdd}
+                    aria-label="Giảm"
+                  >
+                    -
+                  </button>
+                  <span className="px-4 min-w-[2rem] text-center">{addQty}</span>
+                  <button
+                    className="px-3 py-1 hover:bg-gray-50"
+                    onClick={incAdd}
+                    aria-label="Tăng"
+                    disabled={Number.isFinite(productDetail?.stock) && addQty >= (productDetail?.stock ?? Infinity)}
+                    title={productDetail?.stock === 0 ? 'Hết hàng' : undefined}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* NEW: Login required modal (shown when not logged in) */}
+      <Modal
+        open={authModalOpen}
+        onCancel={() => setAuthModalOpen(false)}
+        onOk={() => {
+          setAuthModalOpen(false);
+          navigate("/login");
+        }}
+        okText="Đăng nhập"
+        cancelText="Để sau"
+        centered
+        title={null}
+        styles={{ content: { borderRadius: 0 } }}
+        className="rounded-none"
+        okButtonProps={{ style: { backgroundColor: '#8b2e0f', borderRadius: 0 } }}
+        cancelButtonProps={{ style: { borderRadius: 0 } }}
+      >
+        Bạn cần đăng nhập
+      </Modal>
     </>
   );
 };

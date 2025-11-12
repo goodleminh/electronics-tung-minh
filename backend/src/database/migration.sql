@@ -65,6 +65,8 @@ CREATE TABLE products (
     name VARCHAR(150) NOT NULL,
     description TEXT,
     price DECIMAL(12,2) NOT NULL,
+    discount_price DECIMAL(12,2) DEFAULT NULL,   -- Giá sau giảm (tùy chọn)
+    discount_expiry DATETIME DEFAULT NULL,       -- Hạn áp dụng giảm giá (nếu có)
     stock INT DEFAULT 0,
     image VARCHAR(255),
     status ENUM('pending','approved','rejected') DEFAULT 'pending',
@@ -108,7 +110,7 @@ CREATE TABLE orders (
     total_amount DECIMAL(12,2) NOT NULL,
     status ENUM('pending','processing','shipping','completed','cancelled') DEFAULT 'pending',
     address VARCHAR(255) NOT NULL,
-    payment_method ENUM('cash','bank_transfer','other') DEFAULT 'cash',
+    payment_method ENUM('cash','zalopay') DEFAULT 'cash',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (buyer_id) REFERENCES users(user_id) ON DELETE CASCADE

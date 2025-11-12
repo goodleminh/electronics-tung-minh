@@ -11,6 +11,8 @@ export interface IProduct {
   name: string;
   description?: string;
   price: number;
+  discount_price?: number | null; // giá sau giảm (nullable)
+  discount_expiry?: string | null; // hạn áp dụng giảm giá (nullable ISO string)
   stock: number;
   image?: string;
   status?: "pending" | "approved" | "rejected";
@@ -25,6 +27,23 @@ interface ProductState {
   productRelated: IProduct[];
   loading: boolean;
   error: string | null;
+  // New: search pagination state
+  searchItems: IProduct[];
+  searchLoading: boolean;
+  searchLoadingMore: boolean;
+  searchError: string | null;
+  searchPage: number;
+  searchPageSize: number;
+  searchTotal: number;
+  searchHasMore: boolean;
+  searchParams: {
+    q?: string;
+    category?: string;
+    min?: string;
+    max?: string;
+    sort?: string;
+    limit?: number;
+  };
 }
 
 const initialState: ProductState = {
@@ -33,6 +52,15 @@ const initialState: ProductState = {
   productRelated: [],
   loading: false,
   error: null,
+  searchItems: [],
+  searchLoading: false,
+  searchLoadingMore: false,
+  searchError: null,
+  searchPage: 1,
+  searchPageSize: 12,
+  searchTotal: 0,
+  searchHasMore: false,
+  searchParams: {},
 };
 
 // 🔹 Async thunk: lấy danh sách tất cả sản phẩm
@@ -62,7 +90,45 @@ export const fetchProductById = createAsyncThunk(
     }
   }
 );
-
+// Thêm sản phẩm mới
+export const createProduct = createAsyncThunk(
+  "products/create",
+  async (data: FormData, { rejectWithValue }) => {
+    try {
+      const product = await ProductApi.createProduct(data);
+      return product;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+// Cập nhật sản phẩm
+export const updateProduct = createAsyncThunk(
+  "products/update",
+  async (
+    { id, data }: { id: string | number; data: FormData },
+    { rejectWithValue }
+  ) => {
+    try {
+      const product = await ProductApi.updateProduct(id, data);
+      return product;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+// Xóa sản phẩm
+export const deleteProduct = createAsyncThunk(
+  "products/delete",
+  async (id: string | number, { rejectWithValue }) => {
+    try {
+      const product = await ProductApi.deleteProduct(id);
+      return product;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 // Lấy sản phẩm liên quan
 export const fetchRelatedProducts = createAsyncThunk(
   "products/fetchRelated",
@@ -83,12 +149,47 @@ export const fetchRelatedProducts = createAsyncThunk(
   }
 );
 
+// Tìm kiếm sản phẩm với phân trang
+export const searchProducts = createAsyncThunk(
+  "products/search",
+  async (
+    params: {
+      q?: string;
+      category?: string;
+      min?: string;
+      max?: string;
+      sort?: string;
+      page?: number;
+      limit?: number;
+      reset?: boolean; // if true, start over
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const { reset, ...query } = params;
+      const res = await ProductApi.searchProducts(query);
+      return { ...res, reset };
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Search failed");
+    }
+  }
+);
+
 // 🔹 Tạo Slice
 const productSlice = createSlice({
   name: "products",
   initialState,
   reducers: {
-    // Có thể thêm reducers đồng bộ sau (ví dụ: thêm sản phẩm local)
+    // Reset search state manually if needed
+    resetSearchState(state) {
+      state.searchItems = [];
+      state.searchLoading = false;
+      state.searchLoadingMore = false;
+      state.searchError = null;
+      state.searchPage = 1;
+      state.searchTotal = 0;
+      state.searchHasMore = false;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -119,15 +220,41 @@ const productSlice = createSlice({
         }
       )
       .addCase(fetchProductById.rejected, (state, action) => {
-        state.loading = true;
+        // Fix: should be false
+        state.loading = false;
         state.error = action.payload as string;
       })
       // Sản phẩm liên quan
       .addCase(fetchRelatedProducts.fulfilled, (state, action) => {
-        console.log(action.payload);
-        state.productRelated = action.payload;
+        state.productRelated = action.payload as IProduct[];
+      })
+      // Search products
+      .addCase(searchProducts.pending, (state, action) => {
+        const page = (action.meta.arg && action.meta.arg.page) || 1;
+        if (page > 1) state.searchLoadingMore = true; else state.searchLoading = true;
+        if (page === 1) state.searchError = null;
+      })
+      .addCase(searchProducts.fulfilled, (state, action) => {
+        const { items, total, page, pageSize, hasMore, reset } = action.payload as any;
+        if (reset || page === 1) {
+          state.searchItems = items;
+        } else {
+          state.searchItems = [...state.searchItems, ...items];
+        }
+        state.searchTotal = total;
+        state.searchPage = page;
+        state.searchPageSize = pageSize;
+        state.searchHasMore = hasMore;
+        state.searchLoading = false;
+        state.searchLoadingMore = false;
+      })
+      .addCase(searchProducts.rejected, (state, action) => {
+        state.searchError = action.payload as string;
+        state.searchLoading = false;
+        state.searchLoadingMore = false;
       });
   },
 });
 
+export const { resetSearchState } = productSlice.actions;
 export const productReducer = productSlice.reducer;

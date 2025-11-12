@@ -4,6 +4,7 @@ import {
   ShoppingCartOutlined,
   UserOutlined,
 } from "@ant-design/icons";
+import { Modal } from "antd";
 import { type AppDispatch, type RootState } from "../../redux/store";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -33,6 +34,9 @@ const Header = () => {
 
   // Local search state for header search box
   const [searchText, setSearchText] = useState("");
+
+  // NEW: auth modal state
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -149,12 +153,32 @@ const Header = () => {
               <SearchOutlined />
             </button>
 
-            <Link to="/cart" className="relative" aria-label="Giỏ hàng">
+            <Link
+              to="/cart"
+              className="relative"
+              aria-label="Giỏ hàng"
+              onClick={(e) => {
+                if (!isLoggedIn) {
+                  e.preventDefault();
+                  setAuthModalOpen(true);
+                }
+              }}
+            >
               <span className="text-3xl">
                 <ShoppingCartOutlined />
               </span>
             </Link>
-            <Link to="/chat" className="text-2xl" aria-label="Chat">
+            <Link
+              to="/chat"
+              className="text-2xl"
+              aria-label="Chat"
+              onClick={(e) => {
+                if (!isLoggedIn) {
+                  e.preventDefault();
+                  setAuthModalOpen(true);
+                }
+              }}
+            >
               <MessageOutlined />
             </Link>
             {/* if user not login , show icon login */}
@@ -338,6 +362,26 @@ const Header = () => {
           </div>
         </div>
       </header>
+
+      {/* Login required modal */}
+      <Modal
+        open={authModalOpen}
+        onCancel={() => setAuthModalOpen(false)}
+        onOk={() => {
+          setAuthModalOpen(false);
+          navigate("/login");
+        }}
+        okText="Đăng nhập"
+        cancelText="Để sau"
+        centered
+        title={null}
+        styles={{ content: { borderRadius: 0 } }}
+        className="rounded-none"
+        okButtonProps={{ style: { backgroundColor: '#8b2e0f', borderRadius: 0 } }}
+        cancelButtonProps={{ style: { borderRadius: 0 } }}
+      >
+        Bạn cần đăng nhập
+      </Modal>
     </>
   );
 };

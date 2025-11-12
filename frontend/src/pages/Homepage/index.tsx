@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { actFetchProducts } from "../../redux/features/product/productSlice";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { actFetchCategories } from "../../redux/features/category/categorySlice";
-import type { AppDispatch, RootState } from "../../redux/store";
+import type { AppDispatch } from "../../redux/store";
 import type { IProduct } from "../../redux/features/product/productSlice";
 import {
   SyncOutlined,
@@ -12,14 +12,13 @@ import {
   DoubleLeftOutlined,
   DoubleRightOutlined,
 } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
+import { ProductApi } from "../../apis/productApis";
+import { getFormattedPricing } from "../../utils/price/priceUtil";
 
 const Homepage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { products, loading, error } = useSelector(
-    (state: RootState) => state.product
-  );
+
   // Helper: build image URL from backend /public
   const API_BASE: string | undefined = import.meta.env.VITE_API_URL;
   // If img has no subfolder, assume it's under /public/product
@@ -31,7 +30,7 @@ const Homepage: React.FC = () => {
   };
 
   useEffect(() => {
-    dispatch(actFetchProducts());
+    // Fetch categories for header/menus if not loaded elsewhere
     dispatch(actFetchCategories());
   }, [dispatch]);
 
@@ -70,23 +69,39 @@ const Homepage: React.FC = () => {
     else window.location.hash = `#${id}`;
   };
 
-  const featuredProducts = products.slice(0, 8);
-  const newArrivals = products.slice(8, 16);
+  // Local data for sections: only 8 items each
+  const [bestSellers, setBestSellers] = useState<IProduct[]>([]);
+  const [newItems, setNewItems] = useState<IProduct[]>([]);
+  const [bestLoading, setBestLoading] = useState(false);
+  const [bestError, setBestError] = useState<string | null>(null);
+  const [newLoading, setNewLoading] = useState(false);
+  const [newError, setNewError] = useState<string | null>(null);
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(Number(price));
-
-  // Helpers for product card UI
-  const getDiscountPercent = (p: IProduct) => {
-    const map = [2, 5, 7, 8];
-    return map[p.product_id % map.length];
-  };
-  const getOldPrice = (price: number, percent: number) => {
-    return Math.round(Number(price) * (1 + percent / 100));
-  };
+  useEffect(() => {
+    const fetchSections = async () => {
+      try {
+        setBestLoading(true);
+        setBestError(null);
+        const best = await ProductApi.searchProducts({ sort: "bestseller", page: 1, limit: 8 });
+        setBestSellers(best.items || []);
+      } catch (e: any) {
+        setBestError(e?.message || "Không thể tải Best Sellers");
+      } finally {
+        setBestLoading(false);
+      }
+      try {
+        setNewLoading(true);
+        setNewError(null);
+        const newest = await ProductApi.searchProducts({ sort: "newest", page: 1, limit: 8 });
+        setNewItems(newest.items || []);
+      } catch (e: any) {
+        setNewError(e?.message || "Không thể tải New Arrivals");
+      } finally {
+        setNewLoading(false);
+      }
+    };
+    fetchSections();
+  }, []);
 
   return (
     <main>
@@ -213,24 +228,33 @@ const Homepage: React.FC = () => {
       <section id="best-sellers" className="py-12">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-8">
-            <h2 className="text-[30px] inline-block border-b-2 border-[brown]">
+            <h2
+              className="text-[30px] inline-block border-b-2 border-[brown] cursor-pointer"
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(`/search?sort=bestseller`)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  navigate(`/search?sort=bestseller`);
+                }
+              }}
+            >
               Best Sellers
             </h2>
           </div>
 
-          {loading && (
+          {bestLoading && (
             <div className="text-center py-8">Đang tải dữ liệu...</div>
           )}
-          {error && (
+          {bestError && (
             <div className="text-red-600 border border-red-300 p-3 mb-4">
-              {error}
+              {bestError}
             </div>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {featuredProducts.map((p: IProduct) => {
-              const percent = getDiscountPercent(p);
-              const oldPrice = getOldPrice(p.price, percent);
+            {bestSellers.map((p: IProduct) => {
+              const pricing = getFormattedPricing(p);
               const imgUrl = buildImageUrl(p.image);
               return (
                 <div
@@ -241,9 +265,11 @@ const Homepage: React.FC = () => {
                   {/* Image */}
                   <div className="relative bg-white h-72 flex items-center justify-center overflow-hidden">
                     {/* Discount badge */}
-                    <div className="absolute top-4 left-4 z-10 bg-[#8b2e0f] text-white text-xs font-semibold px-2 py-1">
-                      {percent}%
-                    </div>
+                    {pricing.isDiscount && pricing.percent !== undefined && (
+                      <div className="absolute top-4 left-4 z-10 bg-[#8b2e0f] text-white text-xs font-semibold px-2 py-1">
+                        {pricing.percent}%
+                      </div>
+                    )}
                     {imgUrl ? (
                       <img
                         src={imgUrl}
@@ -262,11 +288,13 @@ const Homepage: React.FC = () => {
                     </h3>
                     <div className="flex items-baseline justify-center gap-3 mb-3">
                       <span className="text-2xl font-extrabold text-gray-900">
-                        {formatPrice(p.price)}
+                        {pricing.final}
                       </span>
-                      <span className="text-gray-400 line-through">
-                        {formatPrice(oldPrice)}
-                      </span>
+                      {pricing.original && (
+                        <span className="text-gray-400 line-through">
+                          {pricing.original}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
                       <div className="text-amber-400 text-lg leading-none">
@@ -286,14 +314,31 @@ const Homepage: React.FC = () => {
       <section id="new-arrivals" className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-8">
-            <h2 className="text-[30px] inline-block border-b-2 border-[brown]">
+            <h2
+              className="text-[30px] inline-block border-b-2 border-[brown] cursor-pointer"
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(`/search?sort=newest`)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  navigate(`/search?sort=newest`);
+                }
+              }}
+            >
               New Arrivals
             </h2>
           </div>
+          {newLoading && (
+            <div className="text-center py-8">Đang tải dữ liệu...</div>
+          )}
+          {newError && (
+            <div className="text-red-600 border border-red-300 p-3 mb-4">
+              {newError}
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {newArrivals.map((p: IProduct) => {
-              const percent = getDiscountPercent(p);
-              const oldPrice = getOldPrice(p.price, percent);
+            {newItems.map((p: IProduct) => {
+              const pricing = getFormattedPricing(p);
               const imgUrl = buildImageUrl(p.image);
               return (
                 <div
@@ -304,9 +349,11 @@ const Homepage: React.FC = () => {
                   {/* Image */}
                   <div className="relative bg-white h-72 flex items-center justify-center overflow-hidden">
                     {/* Discount badge */}
-                    <div className="absolute top-4 left-4 z-10 bg-[#8b2e0f] text-white text-xs font-semibold px-2 py-1">
-                      {percent}%
-                    </div>
+                    {pricing.isDiscount && pricing.percent !== undefined && (
+                      <div className="absolute top-4 left-4 z-10 bg-[#8b2e0f] text-white text-xs font-semibold px-2 py-1">
+                        {pricing.percent}%
+                      </div>
+                    )}
                     {imgUrl ? (
                       <img
                         src={imgUrl}
@@ -325,11 +372,13 @@ const Homepage: React.FC = () => {
                     </h3>
                     <div className="flex items-baseline justify-center gap-3 mb-3">
                       <span className="text-2xl font-extrabold text-gray-900">
-                        {formatPrice(p.price)}
+                        {pricing.final}
                       </span>
-                      <span className="text-gray-400 line-through">
-                        {formatPrice(oldPrice)}
-                      </span>
+                      {pricing.original && (
+                        <span className="text-gray-400 line-through">
+                          {pricing.original}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
                       <div className="text-amber-400 text-lg leading-none">
