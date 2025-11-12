@@ -1,0 +1,155 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// redux/features/profileSlice.ts
+import {
+  createSlice,
+  createAsyncThunk,
+  type PayloadAction,
+} from "@reduxjs/toolkit";
+import * as profileApi from "../../../apis/profileApis.ts";
+
+export interface IProfile {
+  username: string;
+  email: string;
+  Profile: {
+    phone?: string;
+    address?: string;
+    avatar?: string;
+    bio?: string;
+    birthday?: string;
+  };
+}
+
+interface ProfileState {
+  profile: IProfile | null;
+  loading: boolean;
+  error: string | null;
+}
+
+interface UpdateProfilePayload {
+  username: string;
+  email: string;
+  phone: string;
+  bio: string;
+  birthday: string; // yyyy-mm-dd
+}
+
+const initialState: ProfileState = {
+  profile: localStorage.getItem("profile")
+    ? JSON.parse(localStorage.getItem("profile") as string)
+    : null,
+  loading: false,
+  error: null,
+};
+
+// Async Thunks
+export const fetchProfile = createAsyncThunk(
+  "profile/fetchProfile",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await profileApi.getProfile();
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || "Error fetching profile"
+      );
+    }
+  }
+);
+
+export const updateProfileThunk = createAsyncThunk<
+  IProfile,
+  UpdateProfilePayload
+>("profile/update", async (payload, { rejectWithValue }) => {
+  try {
+    const res = await profileApi.updateProfile(payload);
+    return res.data;
+  } catch (err: any) {
+    return rejectWithValue(err);
+  }
+});
+
+export const changePasswordThunk = createAsyncThunk(
+  "profile/changePassword",
+  async (data: { oldPassword: string; newPassword: string }) => {
+    const res = await profileApi.changePassword(data);
+    return res.data;
+  }
+);
+
+export const uploadAvatarThunk = createAsyncThunk(
+  "profile/uploadAvatar",
+  async (formData: FormData) => {
+    const res = await profileApi.uploadAvatar(formData);
+    return res.data;
+  }
+);
+
+// Slice
+const profileSlice = createSlice({
+  name: "profile",
+  initialState,
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      // fetchProfile
+      .addCase(fetchProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchProfile.fulfilled, (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.profile = action.payload;
+        console.log(action.payload);
+      })
+      .addCase(fetchProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Error";
+      })
+
+      // updateProfile
+      .addCase(updateProfileThunk.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(
+        updateProfileThunk.fulfilled,
+        (state, action: PayloadAction<IProfile>) => {
+          state.loading = false;
+          state.profile = action.payload;
+        }
+      )
+      .addCase(updateProfileThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Error";
+      })
+
+      // changePassword
+      .addCase(changePasswordThunk.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(changePasswordThunk.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(changePasswordThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Error";
+      })
+
+      // uploadAvatar
+      .addCase(uploadAvatarThunk.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(
+        uploadAvatarThunk.fulfilled,
+        (state, action: PayloadAction<any>) => {
+          state.loading = false;
+          state.profile = action.payload;
+        }
+      )
+      .addCase(uploadAvatarThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Error";
+      });
+  },
+});
+
+export default profileSlice.reducer;
