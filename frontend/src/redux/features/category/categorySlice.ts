@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { CategoryApi } from "../../../apis/categoryApis";
 
-// Interface danh mục (khớp backend)
+// Interface danh mục
 export interface ICategory {
   category_id: number;
   name: string;
@@ -32,6 +32,60 @@ export const actFetchCategories = createAsyncThunk<ICategory[], void, { rejectVa
       return categories as ICategory[];
     } catch (err: any) {
       return rejectWithValue(err?.message || "Không thể tải danh mục");
+    }
+  }
+);
+// Lấy danh mục theo id
+export const fetchCategoryById = createAsyncThunk(
+  "categories/fetchById",
+  async (id: string | number, { rejectWithValue }) => {
+    try {
+      const category = await CategoryApi.getCategoryById(id);
+      return category;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+// Thêm danh mục mới (FormData)
+export const createCategory = createAsyncThunk(
+  "categories/create",
+  async (
+    data: FormData,
+    { rejectWithValue }
+  ) => {
+    try {
+      const category = await CategoryApi.createCategory(data);
+      return category;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+// Cập nhật danh mục (FormData)
+export const updateCategory = createAsyncThunk(
+  "categories/update",
+  async (
+    { id, data }: { id: string | number; data: FormData },
+    { rejectWithValue }
+  ) => {
+    try {
+      const category = await CategoryApi.updateCategory(id, data);
+      return category;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+// Xóa danh mục
+export const deleteCategory = createAsyncThunk(
+  "categories/delete",
+  async (id: string | number, { rejectWithValue }) => {
+    try {
+      const category = await CategoryApi.deleteCategory(id);
+      return category;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
     }
   }
 );

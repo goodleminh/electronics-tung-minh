@@ -9,6 +9,7 @@ import Intropage from "./pages/Intropage";
 import ScrollToTop from "./components/ScrollComponent";
 import Cartpage from "./pages/Cartpage";
 import MainLayout from "./layouts/mainLayout";
+import OrderPage from "./pages/Orderpage";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/category" element={<Categorypage />} />
           <Route path="/intro" element={<Intropage />} />
           <Route path="/cart" element={<Cartpage />} />
+          <Route path="/orders" element={<OrderPage />} />
           <Route path="/products/:id" element={<ProductDetail />} />
         </Route>
       </Routes>

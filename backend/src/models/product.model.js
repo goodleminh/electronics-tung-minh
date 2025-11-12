@@ -31,6 +31,16 @@ Product.init(
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false,
     },
+    discount_price: {
+      type: DataTypes.DECIMAL(12, 2),
+      allowNull: true,
+      defaultValue: null,
+    },
+    discount_expiry: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
     stock: {
       type: DataTypes.INTEGER,
       allowNull: false,

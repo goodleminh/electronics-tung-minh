@@ -3,6 +3,9 @@ import { productReducer } from "./features/product/productSlice";
 import { categoryReducer } from "./features/category/categorySlice";
 import authReducer from "../redux/features/auth/authSlice";
 import { cartReducer } from "./features/cart/cartSlice";
+import { storeReducer } from "./features/store/storeSlice";
+import { orderReducer } from "./features/order/orderSlice";
+import { orderItemReducer } from "./features/order_item/order_itemSlice";
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +15,9 @@ export const store = configureStore({
     category: categoryReducer,
     auth: authReducer,
     cart: cartReducer,
+    store: storeReducer,
+    order: orderReducer,
+    orderItems: orderItemReducer,
   },
 });
 
