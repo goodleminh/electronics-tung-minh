@@ -70,9 +70,19 @@ export const updateProfileThunk = createAsyncThunk<
 
 export const changePasswordThunk = createAsyncThunk(
   "profile/changePassword",
-  async (data: { oldPassword: string; newPassword: string }) => {
-    const res = await profileApi.changePassword(data);
-    return res.data;
+  async (
+    payload: { oldPassword: string; newPassword: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await profileApi.changePassword(payload);
+      return res.data;
+    } catch (err: any) {
+      // Lấy message từ response nếu có
+      const message = err.response?.data?.message || "Đã xảy ra lỗi";
+      console.log(message);
+      return rejectWithValue(message);
+    }
   }
 );
 
@@ -99,7 +109,6 @@ const profileSlice = createSlice({
       .addCase(fetchProfile.fulfilled, (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.profile = action.payload;
-        console.log(action.payload);
       })
       .addCase(fetchProfile.rejected, (state, action) => {
         state.loading = false;
