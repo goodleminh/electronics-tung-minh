@@ -37,14 +37,15 @@ export const changePasswordService = async (
   newPassword
 ) => {
   const user = await User.findByPk(userId);
-  if (!user) throw new Error("User not found");
+
+  if (!user) throw new Error("Người dùng không tồn tại");
 
   const match = await bcrypt.compare(oldPassword, user.password);
-  if (!match) throw new Error("Old password incorrect");
+  if (!match) throw new Error("Mật khẩu cũ không chính xác");
 
   user.password = await bcrypt.hash(newPassword, 10);
   await user.save();
-  return "Password updated successfully";
+  return { message: "Mật khẩu cập nhật thành công" };
 };
 
 export const updateAvatar = async (userId, filePath) => {

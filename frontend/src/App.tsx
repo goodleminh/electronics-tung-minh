@@ -11,6 +11,9 @@ import Cartpage from "./pages/Cartpage";
 import MainLayout from "./layouts/mainLayout";
 import OrderPage from "./pages/Orderpage";
 import ProfilePage from "./pages/ProfilePage";
+import ProfileLayout from "./layouts/profileLayout";
+import ChangePasswordForm from "./components/ChangePasswordForm";
+import ForgotPasswordForm from "./components/ForgotPasswordForm";
 
 function App() {
   return (
@@ -27,7 +30,14 @@ function App() {
           <Route path="/cart" element={<Cartpage />} />
           <Route path="/orders" element={<OrderPage />} />
           <Route path="/products/:id" element={<ProductDetail />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/forgot" element={<ForgotPasswordForm />} />
+        </Route>
+        <Route path="/profile" element={<ProfileLayout />}>
+          <Route index element={<ProfilePage />} />
+          <Route
+            path="/profile/change-password"
+            element={<ChangePasswordForm />}
+          />
         </Route>
       </Routes>
     </BrowserRouter>

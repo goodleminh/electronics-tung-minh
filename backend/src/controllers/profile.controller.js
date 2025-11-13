@@ -24,14 +24,18 @@ export const updateProfile = async (req, res) => {
 export const changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
+
     const message = await profileService.changePasswordService(
       req.user.id,
       oldPassword,
       newPassword
     );
-    res.json({ message });
+
+    res.status(200).json(message);
   } catch (e) {
-    res.status(400).json({ message: e.message });
+    res.status(400).json({
+      message: e.message,
+    });
   }
 };
 
@@ -42,7 +46,7 @@ export const uploadAvatar = async (req, res) => {
     }
 
     const userId = req.user?.id;
-    const filePath = `/uploads/avatars/${req.file.filename}`;
+    const filePath = `public/avatar/${req.file.filename}`;
 
     const profile = await profileService.updateAvatar(userId, filePath);
 

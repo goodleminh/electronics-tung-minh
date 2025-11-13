@@ -1,34 +1,43 @@
-import { useEffect, useState } from "react";
 import { UserOutlined, ShoppingOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
+import { NavLink } from "react-router-dom";
 import type { RootState } from "../../redux/store";
-import { useNavigate } from "react-router-dom";
 
 const menuItems = [
   {
     icon: <UserOutlined />,
     label: "Tài Khoản Của Tôi",
-    children: ["Hồ Sơ", "Địa Chỉ", "Đổi Mật Khẩu", "Thông Tin Cá Nhân"],
+    children: [
+      { name: "Hồ Sơ", path: "/profile" },
+      { name: "Địa Chỉ", path: "/profile/address" },
+      { name: "Đổi Mật Khẩu", path: "/profile/change-password" },
+    ],
   },
-  { icon: <ShoppingOutlined />, label: "Đơn Mua" },
+  { icon: <ShoppingOutlined />, label: "Đơn Hàng", path: "/profile/orders" },
 ];
 
 const ProfileSidebar = () => {
   const { user } = useSelector((state: RootState) => state.auth);
-  const [activeItem, setActiveItem] = useState("Hồ Sơ");
-  const navigate = useNavigate();
-  useEffect(() => {
-    if (activeItem === "Đổi Mật Khẩu") {
-      navigate("/change-password");
-    }
-  }, [activeItem, navigate]);
+  const { profile } = useSelector((state: RootState) => state.profile);
+  const avatarUrl = profile?.Profile?.avatar
+    ? `${import.meta.env.VITE_API_URL}/${profile.Profile?.avatar}`
+    : null;
   return (
-    <div className="w-64 pt-8 pr-8 pb-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center space-x-3">
-        <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-          <UserOutlined className="text-2xl" />
+    <div className="pr-6">
+      {/* Header desktop */}
+      <div className="flex items-center space-x-3 mb-6 justify-center">
+        <div className="w-12 h-12 rounded-full overflow-hidden border bg-gray-200 flex items-center justify-center text-gray-500">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="Avatar"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <UserOutlined className="text-2xl" />
+          )}
         </div>
+
         <div>
           <p className="font-medium text-gray-800">{user?.username}</p>
           <button className="flex items-center gap-1 text-sm text-gray-500 hover:text-[#8b2e0f]">
@@ -52,26 +61,49 @@ const ProfileSidebar = () => {
       <div className="space-y-2 border-t pt-6">
         {menuItems.map((item) => (
           <div key={item.label}>
-            <div className="flex items-center space-x-2 px-2 py-2 text-gray-700 font-medium hover:bg-gray-100 rounded cursor-pointer">
+            {/* Menu cha */}
+            <div className="flex items-center space-x-2 px-2 py-2 text-gray-700 font-medium">
               {item.icon}
               <span>{item.label}</span>
             </div>
+
+            {/* Menu con */}
             {item.children && (
               <div className="ml-6 mt-1 space-y-1">
                 {item.children.map((child) => (
-                  <div
-                    key={child}
-                    onClick={() => setActiveItem(child)}
-                    className={`text-sm px-2 py-1 rounded cursor-pointer ${
-                      activeItem === child
-                        ? "text-[#8b2e0f] font-semibold"
-                        : "text-gray-600 hover:text-[#8b2e0f]"
-                    }`}
+                  <NavLink
+                    key={child.name}
+                    to={child.path}
+                    end
+                    className={({ isActive }) =>
+                      `block text-sm px-2 py-1 rounded transition ${
+                        isActive
+                          ? "text-[#8b2e0f] font-semibold border-l-4 border-[#8b2e0f] bg-gray-100 pl-1"
+                          : "text-gray-600"
+                      }`
+                    }
                   >
-                    {child}
-                  </div>
+                    {child.name}
+                  </NavLink>
                 ))}
               </div>
+            )}
+
+            {/* Menu không con */}
+            {!item.children && item.path && (
+              <NavLink
+                to={item.path}
+                end
+                className={({ isActive }) =>
+                  `ml-8 block text-sm px-2 py-1 rounded transition ${
+                    isActive
+                      ? "text-[#8b2e0f] font-semibold border-l-4 border-[#8b2e0f] bg-gray-100 pl-1"
+                      : "text-gray-600"
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
             )}
           </div>
         ))}
