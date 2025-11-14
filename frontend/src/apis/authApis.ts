@@ -5,6 +5,7 @@ import axiosInstance from "../utils/instance/authInstance";
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 export const authApis = {
+  //
   login: async (payload: { email: string; password: string }) => {
     try {
       const response = await axios.post(`${BASE_URL}/api/auth/login`, payload);
@@ -14,6 +15,7 @@ export const authApis = {
       throw new Error(message);
     }
   },
+  //
   register: async (payload: {
     username: string;
     password: string;
@@ -31,8 +33,8 @@ export const authApis = {
       throw new Error(message);
     }
   },
-  // Refresh token
 
+  // Refresh token
   refreshToken: async () => {
     const refreshToken = localStorage.getItem("refreshToken");
     const res = await axiosInstance.post(`${BASE_URL}/api/auth/refresh`, {
@@ -47,5 +49,35 @@ export const authApis = {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return res.data;
+  },
+  forgotPassword: async ({ email }: { email: string }) => {
+    try {
+      const res = await axios.post(`${BASE_URL}/api/auth/forgot-password`, {
+        email,
+      });
+      return res.data;
+    } catch (err: any) {
+      return { error: err.response?.data?.error || err.message };
+    }
+  },
+
+  resetPassword: async ({
+    token,
+    password,
+  }: {
+    token: string;
+    password: string;
+  }) => {
+    try {
+      const res = await axios.post(
+        `${BASE_URL}/api/auth/reset-password/${token}`,
+        {
+          newPassword: password,
+        }
+      );
+      return res.data;
+    } catch (err: any) {
+      return { error: err.response?.data?.error || err.message };
+    }
   },
 };

@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import User from "../models/auth.model.js";
 import dotenv from "dotenv";
 import { Op } from "sequelize";
+import crypto from "crypto";
+import { sendMail } from "../config/mailer.js";
 
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -64,4 +66,55 @@ export const login = async (email, password) => {
   );
 
   return { accessToken, refreshToken, user };
+};
+
+export const forgotPassword = async (email) => {
+  const user = await User.findOne({ where: { email: email } });
+  if (!user) throw new Error("Email không hợp lệ!");
+
+  // Tạo token xác nhận
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const expires = new Date(Date.now() + 15 * 60 * 1000); //15 phút
+
+  user.resetToken = resetToken;
+  user.resetTokenExpires = expires;
+
+  await user.save();
+
+  const resetLink = `${process.env.BASE_URL}/api/auth/reset-password/${resetToken}`;
+  await sendMail(
+    //to email
+    user.email,
+    // subject
+    `Xác nhận yêu cầu đặt lại mật khẩu`,
+    // html
+    `<h3>Xin chào ${user.username}</h3>
+    <p>Bạn (hoặc ai đó) vừa yêu cầu đặt lại mật khẩu.</p>
+    <p>Nếu đúng là bạn, hãy nhấn vào liên kết bên dưới để xác nhận và đặt lại mật khẩu:</p>
+    <a href="${resetLink}">${resetLink}</a>
+    <p>Liên kết này có hiệu lực trong 15 phút.</p>
+    <p>Nếu không phải bạn, vui lòng bỏ qua email này.</p>`
+  );
+  return true;
+};
+
+export const resetPassword = async (token, newPassword) => {
+  if (!newPassword) throw new Error("Password mới không được để trống");
+  const user = await User.findOne({
+    where: {
+      resetToken: token,
+      resetTokenExpires: { [Op.gt]: new Date() },
+    },
+  });
+  // const salt = parseInt(process.env.BCRYPT_SALT);
+  if (!user) throw new Error("Token không hợp lệ hoặc đã hết hạn!");
+  const hashed = await bcrypt.hash(newPassword, 10);
+
+  user.password = hashed;
+  user.resetToken = null;
+  user.resetTokenExpires = null;
+
+  await user.save();
+
+  return true;
 };

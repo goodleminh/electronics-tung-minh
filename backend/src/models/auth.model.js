@@ -33,6 +33,15 @@ User.init(
       allowNull: false,
       defaultValue: "buyer",
     },
+    resetToken: {
+      type: DataTypes.STRING,
+      field: "reset_token",
+    },
+    resetTokenExpires: {
+      type: DataTypes.DATE,
+
+      field: "reset_token_expires",
+    },
     createdAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

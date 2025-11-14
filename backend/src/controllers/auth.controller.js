@@ -70,3 +70,26 @@ export const refresh = async (req, res) => {
     res.status(403).json({ message: "Invalid or expired refresh token" });
   }
 };
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    await authService.forgotPassword(email);
+    res.status(200).json({ message: "Đã gửi email reset password" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    const { token } = req.params;
+    if (!token || !newPassword)
+      throw new Error("Token hoặc mật khẩu không hợp lệ");
+    await authService.resetPassword(token, newPassword);
+    res.status(200).json({ message: "Đổi mật khẩu thành công!" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
