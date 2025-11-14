@@ -13,7 +13,8 @@ import OrderPage from "./pages/Orderpage";
 import ProfilePage from "./pages/ProfilePage";
 import ProfileLayout from "./layouts/profileLayout";
 import ChangePasswordForm from "./components/ChangePasswordForm";
-import ForgotPasswordForm from "./components/ForgotPasswordForm";
+import ForgotPasswordForm from "./pages/ForgotPasswordForm";
+import ResetPasswordPage from "./components/ResetPassword";
 
 function App() {
   return (
@@ -31,6 +32,10 @@ function App() {
           <Route path="/orders" element={<OrderPage />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/forgot" element={<ForgotPasswordForm />} />
+          <Route
+            path="/api/auth/reset-password/:token"
+            element={<ResetPasswordPage />}
+          />
         </Route>
         <Route path="/profile" element={<ProfileLayout />}>
           <Route index element={<ProfilePage />} />

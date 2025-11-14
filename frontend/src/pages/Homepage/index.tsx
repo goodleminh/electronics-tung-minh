@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -82,7 +83,11 @@ const Homepage: React.FC = () => {
       try {
         setBestLoading(true);
         setBestError(null);
-        const best = await ProductApi.searchProducts({ sort: "bestseller", page: 1, limit: 8 });
+        const best = await ProductApi.searchProducts({
+          sort: "bestseller",
+          page: 1,
+          limit: 8,
+        });
         setBestSellers(best.items || []);
       } catch (e: any) {
         setBestError(e?.message || "Không thể tải Best Sellers");
@@ -92,7 +97,11 @@ const Homepage: React.FC = () => {
       try {
         setNewLoading(true);
         setNewError(null);
-        const newest = await ProductApi.searchProducts({ sort: "newest", page: 1, limit: 8 });
+        const newest = await ProductApi.searchProducts({
+          sort: "newest",
+          page: 1,
+          limit: 8,
+        });
         setNewItems(newest.items || []);
       } catch (e: any) {
         setNewError(e?.message || "Không thể tải New Arrivals");
