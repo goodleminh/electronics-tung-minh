@@ -182,7 +182,8 @@ const authSlice = createSlice({
       // Fetch User
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.isLoggedIn = true;
-        state.user = action.payload;
+        // Giữ lại user_id cũ, chỉ cập nhật các trường mới từ API
+        state.user = { ...(state.user || {}), ...action.payload };
       })
       .addCase(fetchCurrentUser.rejected, (state) => {
         state.isLoggedIn = false;

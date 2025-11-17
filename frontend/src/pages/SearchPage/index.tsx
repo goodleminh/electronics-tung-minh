@@ -126,7 +126,13 @@ const SearchPage: React.FC = () => {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateUrl({ q, category: cat, min: minPrice, max: maxPrice, sort: sortBy });
+    updateUrl({
+      q,
+      category: cat,
+      min: minPrice !== "" ? minPrice : undefined,
+      max: maxPrice !== "" ? maxPrice : undefined,
+      sort: sortBy,
+    });
   };
 
   // Add reset handler to clear all filters and URL params

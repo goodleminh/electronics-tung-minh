@@ -1,44 +1,24 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import type { AppDispatch, RootState } from '../../redux/store';
-import { fetchOrderById, fetchMyOrders, updateOrder, createOrder } from '../../redux/features/order/orderSlice';
-import { fetchOrderItemsByOrderId, createOrderItem } from '../../redux/features/order_item/order_itemSlice';
-import { Button, Tag, Spin, Alert, message } from 'antd';
+import { createOrder } from '../../redux/features/order/orderSlice';
+import { createOrderItem } from '../../redux/features/order_item/order_itemSlice';
+import { Button, Alert, message, Modal } from 'antd';
 import { actFetchProducts } from '../../redux/features/product/productSlice';
-
-const statusColor: Record<string, string> = {
-  pending: 'gold',
-  processing: 'blue',
-  shipping: 'geekblue',
-  completed: 'green',
-  cancelled: 'red',
-};
+import { actSendConfirmationEmail } from '../../redux/features/order/orderSlice';
 
 const formatCurrency = (n?: number) => {
   if (typeof n !== 'number') return '0₫';
   return n.toLocaleString('vi-VN') + '₫';
 };
 
-const formatDateTime = (iso?: string) => {
-  if (!iso) return '';
-  try {
-    const d = new Date(iso);
-    return d.toLocaleString('vi-VN');
-  } catch {
-    return iso;
-  }
-};
-
 const OrderPage: React.FC = () => {
-  const { id: paramId } = useParams();
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const location = useLocation();
 
   const auth = useSelector((s: RootState) => s.auth);
-  const orderState = useSelector((s: RootState) => s.order);
-  const orderItemsState = useSelector((s: RootState) => s.orderItems);
   const productState = useSelector((s: RootState) => s.product);
 
   // Build image URL like other pages
@@ -93,96 +73,20 @@ const OrderPage: React.FC = () => {
     }
   }, [dispatch, productState.products?.length]);
 
-  const [initialLoaded, setInitialLoaded] = useState(false);
   const [payment, setPayment] = useState<'cash' | 'zalopay'>('cash');
   const [creating, setCreating] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
-
-  // Decide current order id
-  const orderId = useMemo(() => {
-    if (paramId) return paramId;
-    // fallback: use first order in list
-    if (orderState.list.length) return String(orderState.list[0].order_id);
-    return undefined;
-  }, [paramId, orderState.list]);
-
-  useEffect(() => {
-    if (!auth.accessToken || !auth.user) return;
-
-    // If coming from Cart with checkout payload, skip fetching existing orders
-    if (checkout) {
-      setInitialLoaded(true);
-      return;
-    }
-
-    const load = async () => {
-      try {
-        if (paramId) {
-          await dispatch(fetchOrderById(paramId));
-          await dispatch(fetchOrderItemsByOrderId(paramId));
-        } else {
-          const res = await dispatch(fetchMyOrders());
-          const list = (res as any).payload as any[] | undefined;
-          if (list && list.length) {
-            const firstId = list[0].order_id;
-            await dispatch(fetchOrderById(firstId));
-            await dispatch(fetchOrderItemsByOrderId(firstId));
-          }
-        }
-      } finally {
-        setInitialLoaded(true);
-      }
-    };
-    load();
-  }, [dispatch, auth.accessToken, auth.user, paramId, checkout]);
-
-  const currentOrder = orderState.current;
-  const items = orderId ? orderItemsState.byOrder[String(orderId)] || [] : [];
-  const computedTotal = useMemo(() => {
-    if (!items || items.length === 0) return 0;
-    return items.reduce((sum, it) => sum + it.price * it.quantity, 0);
-  }, [items]);
-
-  const productsMap = useMemo(() => {
-    const map: Record<number, any> = {};
-    productState.products?.forEach((p: any) => {
-      if (p?.product_id != null) map[p.product_id] = p;
-    });
-    return map;
-  }, [productState.products]);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Dynamic total for checkout flow
-  const checkoutTotal = useMemo(() => {
-    if (!checkoutItems?.length) return 0;
-    return checkoutItems.reduce((s, it) => s + Number(it.price) * Number(it.quantity), 0);
-  }, [checkoutItems]);
-  // Normalize status for reliable checks
-  const normalizedStatus = (currentOrder?.status || '').toString().toLowerCase();
-  const canCancel = !!currentOrder && ['pending', 'processing'].includes(normalizedStatus);
-  const canConfirm = !!currentOrder && normalizedStatus === 'shipping';
-
-  const handleCancel = async () => {
-    if (!currentOrder) return;
-    try {
-      await dispatch(updateOrder({ id: currentOrder.order_id, data: { status: 'cancelled' } }));
-      message.success('Đã huỷ đơn hàng');
-    } catch (e) {
-      message.error('Không thể huỷ đơn');
-    }
-  };
-
-  const handleConfirm = async () => {
-    if (!currentOrder) return;
-    try {
-      await dispatch(updateOrder({ id: currentOrder.order_id, data: { status: 'completed' } }));
-      message.success('Đã xác nhận hoàn tất');
-    } catch (e) {
-      message.error('Không thể xác nhận');
-    }
-  };
+  const checkoutTotal = checkoutItems.reduce((s, it) => s + Number(it.price) * Number(it.quantity), 0);
 
   const placeOrder = async () => {
-    if (!checkout || creating) return;
+    console.log("[DEBUG] placeOrder called", { checkout, creating, address, phone });
+    if (!checkout || creating) {
+      message.error('Không có dữ liệu đơn hàng (checkout) hoặc đang tạo đơn hàng.');
+      return;
+    }
     if (!address.trim()) {
       message.warning('Vui lòng nhập địa chỉ giao hàng');
       return;
@@ -196,6 +100,7 @@ const OrderPage: React.FC = () => {
       const created = await dispatch(
         createOrder({ total_amount: checkoutTotal, address, payment_method: payment })
       ).unwrap();
+      console.log("[DEBUG] Order created", created);
       const newId = (created as any).order_id as number;
       await Promise.all(
         checkoutItems.map((it) =>
@@ -204,16 +109,65 @@ const OrderPage: React.FC = () => {
           ).unwrap()
         )
       );
-      await dispatch(fetchOrderById(newId));
-      await dispatch(fetchOrderItemsByOrderId(newId));
       setCreatedOrderId(newId);
       message.success('Đặt hàng thành công');
+      // Gửi email xác nhận qua Redux Thunk
+      try {
+        const userEmail = (auth.user as any)?.email;
+        const orderCode = (created as any).order_code;
+        const totalAmount = checkoutTotal;
+        const addressValue = address;
+        const itemsWithDetails = checkoutItems.map(item => {
+          const product = productState.products.find(p => p.product_id === item.product_id);
+          return { name: product?.name || 'Sản phẩm', ...item };
+        });
+        if (userEmail) {
+          dispatch(
+            actSendConfirmationEmail({
+              toEmail: userEmail,
+              orderCode,
+              totalAmount,
+              address: addressValue,
+              items: itemsWithDetails,
+            })
+          );
+        }
+      } catch (emailError) {
+        console.error('[DEBUG] Lỗi gửi email:', emailError);
+      }
     } catch (e: any) {
+      console.error("[DEBUG] Error in placeOrder", e);
       message.error(e?.message || 'Đặt hàng thất bại');
     } finally {
       setCreating(false);
     }
   };
+
+  const handlePlaceOrder = () => {
+    setShowConfirm(true);
+  };
+
+  const handleConfirmOrder = async () => {
+    console.log("[DEBUG] handleConfirmOrder called");
+    setShowConfirm(false);
+    await placeOrder();
+  };
+
+  const handleCancelOrder = () => {
+    setShowConfirm(false);
+  };
+
+  // Hiển thị cảnh báo nếu không có dữ liệu checkout
+  if (!checkout) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <Alert type="error" message="Không có dữ liệu đơn hàng. Vui lòng quay lại giỏ hàng để đặt hàng." />
+        <Button className="mt-4" onClick={() => navigate('/cart')} type="primary">
+          Quay lại giỏ hàng
+        </Button>
+      </div>
+    );
+  }
 
   if (!auth.accessToken || !auth.user) {
     return (
@@ -225,8 +179,6 @@ const OrderPage: React.FC = () => {
       </div>
     );
   }
-
-  const loading = orderState.loading || orderItemsState.loading || !initialLoaded;
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
@@ -266,7 +218,7 @@ const OrderPage: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {checkoutItems.map((it) => {
-                  const p = productsMap[it.product_id];
+                  const p = productState.products?.find((prod) => prod.product_id === it.product_id);
                   const imgUrl = buildImageUrl(p?.image);
                   return (
                     <tr key={it.product_id}>
@@ -358,122 +310,42 @@ const OrderPage: React.FC = () => {
             <Button
               type="primary"
               loading={creating}
-              onClick={placeOrder}
+              onClick={handlePlaceOrder}
               className="rounded-none w-1/3 py-5 text-xl font-extrabold mx-auto"
               style={{ backgroundColor: '#8b2e0f', borderColor: '#8b2e0f', borderRadius: 0, height: '45px', fontSize: '20px', fontWeight: '400' }}
+              disabled={!address.trim() || !phone.trim()}
             >
               Đặt Hàng
             </Button>
-          </div>
-        </div>
-      )}
-
-      Existing detail view
-      {loading && (
-        <div className="flex items-center justify-center py-10">
-          <Spin size="large" />
-        </div>
-      )}
-      {!loading && !currentOrder && !checkout && (
-        <Alert type="info" message="Không tìm thấy đơn hàng" showIcon />
-      )}
-      {!loading && currentOrder && (
-        <div className="space-y-8">
-          {/* Summary */}
-          <div className="border border-gray-200 bg-white rounded-none p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <div className="text-lg font-medium">Mã đơn: <span className="text-[#8b2e0f]">#{currentOrder.order_id}</span></div>
-                <div className="text-sm text-gray-600">Ngày tạo: {formatDateTime(currentOrder.created_at)}</div>
-                <div className="mt-2">
-                  <Tag color={statusColor[currentOrder.status] || 'default'}>{currentOrder.status}</Tag>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                {canCancel && (
-                  <Button danger onClick={handleCancel} className="rounded-none">
-                    Huỷ đơn
-                  </Button>
-                )}
-                {canConfirm && (
-                  <Button type="primary" onClick={handleConfirm} className="rounded-none" style={{ backgroundColor: '#8b2e0f', borderColor: '#8b2e0f' }}>
-                    Xác nhận nhận hàng
-                  </Button>
-                )}
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-              <div>
-                <div className="font-semibold mb-1">Người mua</div>
-                <div className="text-[#8b2e0f] font-extrabold text-lg">{auth.user?.username || `User #${currentOrder.buyer_id}`}</div>
-              </div>
-              <div>
-                <div className="font-semibold mb-1">Địa chỉ giao hàng</div>
-                <div>{currentOrder.address}</div>
-              </div>
-              <div>
-                <div className="font-semibold mb-1">Thanh toán</div>
-                <div>{currentOrder.payment_method === 'zalopay' ? 'ZaloPay' : 'Tiền mặt'}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Items */}
-          <div className="border border-gray-200 bg-white rounded-none p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold inline-block border-b-2 border-[#8b2e0f]">Sản phẩm ({items.length})</h2>
-            </div>
-            {items.length === 0 && <Alert type="info" message="Đơn hàng chưa có sản phẩm" showIcon />}
-            {items.length > 0 && (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-base">
-                  <thead>
-                    <tr className="bg-gray-50 text-left text-gray-700">
-                      <th className="p-4 font-medium">Sản phẩm</th>
-                      <th className="p-4 font-medium">Đơn giá</th>
-                      <th className="p-4 font-medium">Số lượng</th>
-                      <th className="p-4 font-medium">Thành tiền</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {items.map((it) => {
-                      const p = productsMap[it.product_id];
-                      return (
-                        <tr key={it.order_item_id}>
-                          <td className="p-4">
-                            <div className="flex items-center gap-4">
-                              <div className="w-16 h-16 bg-white flex items-center justify-center overflow-hidden border border-gray-200">
-                                {/* Optional product image if needed: buildImageUrl(p?.image) */}
-                                <div className="text-2xl text-gray-400">📦</div>
-                              </div>
-                              <div className="min-w-0">
-                                <div className="font-medium text-gray-900 line-clamp-2">{p?.name || `Product #${it.product_id}`}</div>
-                                {p?.store_id && (
-                                  <div className="text-xs text-gray-500 mt-0.5">Cửa hàng: {p?.store?.name || p?.store_id}</div>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="p-4 whitespace-nowrap text-gray-900">{formatCurrency(it.price)}</td>
-                          <td className="p-4">{it.quantity}</td>
-                          <td className="p-4 font-semibold text-gray-900">{formatCurrency(it.price * it.quantity)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            <div className="mt-6 flex flex-col items-end">
-              <div className="text-sm text-gray-600">Tổng tạm tính: {formatCurrency(computedTotal)}</div>
-              <div className="text-2xl font-extrabold mt-1">Tổng thanh toán: <span className="text-[#8b2e0f]">{formatCurrency(currentOrder.total_amount || computedTotal)}</span></div>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <div className="flex justify-between">
-            <Button onClick={() => navigate('/cart')} className="rounded-none">Quay lại giỏ hàng</Button>
-            <Button type="primary" onClick={() => navigate('/orders')} className="rounded-none" style={{ backgroundColor: '#8b2e0f', borderColor: '#8b2e0f' }}>Xem tất cả đơn hàng</Button>
+            <Modal
+              open={showConfirm}
+              onOk={handleConfirmOrder}
+              onCancel={handleCancelOrder}
+              okText="Xác nhận"
+              cancelText="Huỷ"
+              centered
+              footer={[
+                <Button
+                  key="cancel"
+                  onClick={handleCancelOrder}
+                  style={{ borderRadius: 0 }}
+                >
+                  Huỷ
+                </Button>,
+                <Button
+                  key="ok"
+                  type="primary"
+                  onClick={handleConfirmOrder}
+                  style={{ backgroundColor: '#8b2e0f', borderColor: '#8b2e0f', borderRadius: 0 }}
+                >
+                  Xác nhận
+                </Button>,
+              ]}
+              styles={{ content: { borderRadius: 0 } }}
+            >
+              <div className="text-lg font-semibold mb-2">Bạn có chắc chắn đặt hàng?</div>
+              <div className="text-base">Tổng thanh toán: <span className="text-[#8b2e0f] font-bold">{formatCurrency(checkoutTotal)}</span></div>
+            </Modal>
           </div>
         </div>
       )}

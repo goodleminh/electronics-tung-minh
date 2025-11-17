@@ -57,7 +57,7 @@ const RegisterPage: React.FC = () => {
     <>
       <div className="register-page max-w-[600px] mx-auto text-center mt-5">
         <h2 className="text-[30px] inline-block mb-4 border-b-2 border-[brown]">
-          Create Account
+          Đăng ký tài khoản
         </h2>
 
         <form
@@ -65,12 +65,12 @@ const RegisterPage: React.FC = () => {
           className="flex flex-col gap-4 max-w-lg mx-auto p-6  rounded-2xl text-left "
         >
           <div>
-            <label className="block mb-1">Username</label>
+            <label className="block mb-1">Tên người dùng</label>
             <input
               className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:border-[#8b2e0f]"
               type="text"
               name="username"
-              placeholder="Username"
+              placeholder="Tên người dùng"
               onChange={handleChange}
             />
           </div>
@@ -86,23 +86,23 @@ const RegisterPage: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block mb-1">Password</label>
+            <label className="block mb-1">Mật khẩu</label>
             <input
               className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:border-[#8b2e0f]"
               type="password"
               name="password"
-              placeholder="Password"
+              placeholder="Mật khẩu"
               autoComplete="new-password"
               onChange={handleChange}
             />
           </div>
           <div>
-            <label className="block mb-1">Confirm Password</label>
+            <label className="block mb-1">Nhập lại mật khẩu</label>
             <input
               className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:border-[#8b2e0f]"
               type="password"
               name="confirmPassword"
-              placeholder="Confirm Password"
+              placeholder="Nhập lại mật khẩu"
               autoComplete="new-password"
               onChange={handleChange}
             />
@@ -114,18 +114,18 @@ const RegisterPage: React.FC = () => {
               name="agree"
               onChange={handleChange}
             />
-            <label>I have read and agree with the Terms and condition</label>
+            Tôi đồng ý với các điều khoản
           </div>
           <button className="mx-auto p-5 bg-gray-800 text-white py-2 rounded hover:bg-red-800 cursor-pointer">
-            CREATE
+            TẠO TÀI KHOẢN
           </button>
         </form>
         <div className="mb-8">
           <p>
-            Already have an account?{" "}
+            Đã có tài khoản?
             <Link to="/login">
               <span className="text-[#8b2e0f] hover:underline font-medium">
-                Sign in
+                Đăng nhập
               </span>
             </Link>
           </p>

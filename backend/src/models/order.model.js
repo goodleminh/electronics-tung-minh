@@ -10,6 +10,11 @@ Order.init(
       autoIncrement: true,
       primaryKey: true,
     },
+    order_code: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      unique: true,
+    },
     buyer_id: {
       type: DataTypes.INTEGER,
       allowNull: false,

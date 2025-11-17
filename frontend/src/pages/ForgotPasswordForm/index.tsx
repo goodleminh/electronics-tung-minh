@@ -33,7 +33,7 @@ const ForgotPasswordForm = () => {
 
         <input
           type="email"
-          placeholder="Nhập email của bạn để xác minh"
+          placeholder="Nhập email của bạn để xác minh"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="w-full border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#8b2e0f] focus:border-transparent"
@@ -53,7 +53,7 @@ const ForgotPasswordForm = () => {
             type="submit"
             className="w-full bg-[#8b2e0f] hover:bg-[#2b2b2b] flex justify-center items-center text-white font-semibold py-2 rounded-md cursor-pointer"
           >
-            <LoadingOutlined className="mr-2" /> Đang gửi email
+            <LoadingOutlined className="mr-2" /> Đang gửi email
           </button>
         )}
       </form>

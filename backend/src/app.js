@@ -1,11 +1,11 @@
 import express from "express";
 import bodyParser from "body-parser";
-import productRouter from "./routes/product.router.js";
-import categoryRouter from "./routes/category.router.js";
-import cartRouter from "./routes/cart.router.js";
-import storeRouter from "./routes/store.router.js";
-import orderRouter from "./routes/order.router.js"; 
-import orderItemRouter from "./routes/order_item.router.js"; 
+import productRouter from "./routes/product.route.js";
+import categoryRouter from "./routes/category.route.js";
+import cartRouter from "./routes/cart.route.js";
+import storeRouter from "./routes/store.route.js";
+import orderRouter from "./routes/order.route.js"; 
+import orderItemRouter from "./routes/order_item.route.js"; 
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -27,8 +27,8 @@ const __dirname = path.dirname(__filename);
 // Cho phép truy cập tĩnh tới thư mục "public"
 app.use("/public", express.static(path.join(__dirname, "public")));
 
-// Cho phép truy cập ảnh tĩnh
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+// // Cho phép truy cập ảnh tĩnh
+// app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use("/products", productRouter);
 app.use("/categories", categoryRouter);
