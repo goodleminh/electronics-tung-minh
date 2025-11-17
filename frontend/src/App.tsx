@@ -15,6 +15,7 @@ import ProfileLayout from "./layouts/profileLayout";
 import ChangePasswordForm from "./components/ChangePasswordForm";
 import ForgotPasswordForm from "./pages/ForgotPasswordForm";
 import ResetPasswordPage from "./components/ResetPassword";
+import TrackOrderPage from "./pages/Trackorderpage";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           <Route path="/orders" element={<OrderPage />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/forgot" element={<ForgotPasswordForm />} />
+          <Route path="/track-order" element={<TrackOrderPage />} />
           <Route
             path="/api/auth/reset-password/:token"
             element={<ResetPasswordPage />}

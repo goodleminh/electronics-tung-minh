@@ -31,17 +31,13 @@ OrderItem.init(
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
-    updated_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
   },
   {
     sequelize,
     modelName: 'OrderItem',
     tableName: 'order_items',
     timestamps: false,
-    underscored: true,
+    // underscored: true,
   }
 );
 

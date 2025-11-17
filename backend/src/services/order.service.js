@@ -17,7 +17,25 @@ export const getOrderById = async (id) => {
 };
 // tạo đơn hàng mới
 export const createOrder = async (orderData) => {
-  const newOrder = await Order.create(orderData);
+  // Sinh mã order_code tự động
+  const now = new Date();
+  const pad = (n) => n.toString().padStart(2, '0');
+  const dateStr =
+    now.getFullYear().toString() +
+    pad(now.getMonth() + 1) +
+    pad(now.getDate()) +
+    pad(now.getHours()) +
+    pad(now.getMinutes()) +
+    pad(now.getSeconds());
+  const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+  let order_code = `ORD-${dateStr}-${randomStr}`;
+
+  // Đảm bảo order_code là duy nhất
+  while (await Order.findOne({ where: { order_code } })) {
+    order_code = `ORD-${dateStr}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+  }
+
+  const newOrder = await Order.create({ ...orderData, order_code });
   return newOrder;
 };
 // sửa thông tin đơn hàng

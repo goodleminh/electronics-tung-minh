@@ -1,5 +1,5 @@
 import * as profileService from "../services/profile.service.js";
-
+// Lấy thông tin profile
 export const getProfile = async (req, res) => {
   try {
     const profile = await profileService.getProfileService(req.user.id);
@@ -8,7 +8,7 @@ export const getProfile = async (req, res) => {
     res.status(400).json({ message: e.message });
   }
 };
-
+// Cập nhật thông tin profile
 export const updateProfile = async (req, res) => {
   try {
     const profile = await profileService.updateProfileService(
@@ -20,7 +20,7 @@ export const updateProfile = async (req, res) => {
     res.status(400).json({ message: e.message });
   }
 };
-
+// Đổi mật khẩu
 export const changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
@@ -38,7 +38,7 @@ export const changePassword = async (req, res) => {
     });
   }
 };
-
+// Upload avatar
 export const uploadAvatar = async (req, res) => {
   try {
     if (!req.file) {

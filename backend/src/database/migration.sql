@@ -109,6 +109,7 @@ CREATE TABLE cart_items (
 -- =========================================================
 CREATE TABLE orders (
     order_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_code VARCHAR(50) NOT NULL UNIQUE,
     buyer_id INT NOT NULL,
     total_amount DECIMAL(12,2) NOT NULL,
     status ENUM('pending','processing','shipping','completed','cancelled') DEFAULT 'pending',

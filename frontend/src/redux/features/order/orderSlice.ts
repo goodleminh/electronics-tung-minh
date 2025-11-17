@@ -2,9 +2,11 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { OrderApi } from '../../../apis/orderApis';
 import type { RootState } from '../../store';
+import axios from 'axios';
 
 export interface IOrder {
   order_id: number;
+  order_code: string;
   buyer_id: number;
   total_amount: number;
   status: 'pending' | 'processing' | 'shipping' | 'completed' | 'cancelled';
@@ -30,7 +32,9 @@ const initialState: OrderState = {
 
 // Helpers to get token and buyer id
 const getToken = (state: RootState) => state.auth.accessToken as string | null;
-const getBuyerId = (state: RootState) => state.auth.user?.user_id as number | undefined;
+// Sửa hàm này để kiểm tra cả 'user_id' và 'id'
+const getBuyerId = (state: RootState) =>
+  ((state.auth.user as any)?.user_id ?? (state.auth.user as any)?.id) as number | undefined;
 
 export const fetchMyOrders = createAsyncThunk<IOrder[], void, { state: RootState; rejectValue: string }>(
   'orders/fetchMine',
@@ -105,6 +109,27 @@ export const deleteOrder = createAsyncThunk<{ id: number | string }, number | st
     }
   }
 );
+
+// Gửi email xác nhận đơn hàng
+export const actSendConfirmationEmail = createAsyncThunk<
+  void,
+  { toEmail: string; orderCode: string; totalAmount: number; address: string; items: any[] },
+  { state: RootState; rejectValue: string }
+>('orders/sendConfirmationEmail', async (payload, { getState, rejectWithValue }) => {
+  try {
+    const token = getToken(getState());
+    if (!token) throw new Error('Chưa đăng nhập');
+    await axios.post(
+      `${import.meta.env.VITE_API_URL}/orders/send-confirmation`,
+      payload,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  } catch (err: any) {
+    // Không reject lỗi để không làm gián đoạn flow đặt hàng
+    console.error('[DEBUG] Lỗi gửi email:', err);
+    return rejectWithValue(err?.message || 'Không thể gửi email xác nhận');
+  }
+});
 
 const orderSlice = createSlice({
   name: 'orders',

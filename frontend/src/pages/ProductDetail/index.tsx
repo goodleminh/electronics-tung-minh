@@ -156,7 +156,7 @@ const ProductDetail = () => {
   if (!productDetail) return <div>Không tìm thấy sản phẩm</div>;
 
   // Helper: clamp stock for display
-  const displayStock = Math.min(productDetail.stock, 99);
+  // const displayStock = Math.min(productDetail.stock, 99);
 
   return (
     <>
@@ -210,7 +210,7 @@ const ProductDetail = () => {
             <span>Không có đánh giá</span>
           </div>
           {/* product stock */}
-          {productDetail.stock > 10 && (
+          {/* {productDetail.stock > 10 && (
             <div className="flex justify-start items-center mb-3">
               <svg width="15" height="15" aria-hidden="true">
                 <circle
@@ -249,13 +249,13 @@ const ProductDetail = () => {
                   fill="rgb(238,148,65)"
                 ></circle>
               </svg>
-              <span className="ml-1">Low stock: {displayStock} left</span>
+              <span className="ml-1">Sắp hết: còn {displayStock} sản phẩm</span>
             </div>
-          )}
+          )} */}
 
           {/* Quantity */}
           <div className="flex items-center gap-4 mb-6">
-            <p className="font-semibold">Quantity:</p>
+            <p className="font-semibold">Số lượng:</p>
             <div className="flex items-center border border-gray-300">
               <button
                 className="px-2 py-1 cursor-pointer "
@@ -283,7 +283,7 @@ const ProductDetail = () => {
               disabled={productDetail.stock === 0}
               title={productDetail.stock === 0 ? "Hết hàng" : "Thêm vào giỏ hàng"}
             >
-              ADD TO CART
+              THÊM VÀO GIỎ HÀNG
             </button>
             <button
               className="flex-1 bg-[#8b2e0f] py-3 hover:bg-[#2b2b2b] text-white cursor-pointer"
@@ -291,7 +291,7 @@ const ProductDetail = () => {
               disabled={productDetail.stock === 0}
               title={productDetail.stock === 0 ? 'Hết hàng' : 'Mua ngay'}
             >
-              BUY IT NOW
+              MUA NGAY
             </button>
           </div>
 
@@ -301,13 +301,13 @@ const ProductDetail = () => {
               className="text-xl font-medium hover:text-[#8b2e0f] cursor-pointer"
               onClick={() => setInfoModal("delivery")}
             >
-              Delivery & return
+              Giao hàng & đổi trả
             </h2>
             <h2
               className="text-xl font-medium hover:text-[#8b2e0f] cursor-pointer"
               onClick={() => setInfoModal("ask")}
             >
-              Ask a question
+              Hỏi về sản phẩm
             </h2>
             <Modal
               open={!!infoModal}
@@ -318,39 +318,37 @@ const ProductDetail = () => {
               <div className="py-5">
                 {infoModal === "delivery" ? (
                   <>
-                    <h2 className="text-2xl font-medium mb-3">Delivery</h2>
-                    <p>All orders shipped with UPS Express.</p>
-                    <p>Always free shipping for orders over US $250.</p>
-                    <p className="mb-6">All orders are shipped with a UPS tracking number.</p>
-                    <h2 className="text-2xl font-medium mb-3">Returns</h2>
+                    <h2 className="text-2xl font-medium mb-3">Giao hàng</h2>
+                    <p>Tất cả đơn hàng được giao qua đơn vị vận chuyển tiêu chuẩn.</p>
+                    <p>Miễn phí giao hàng cho đơn trên 500.000đ.</p>
+                    <p className="mb-6">Tất cả đơn hàng đều có mã theo dõi vận chuyển.</p>
+                    <h2 className="text-2xl font-medium mb-3">Đổi trả</h2>
                     <p>
-                      Items returned within 14 days of their original shipment date in same as new
-                      condition will be eligible for a full refund or store credit.
+                      Sản phẩm đổi trả trong vòng 14 ngày kể từ ngày nhận hàng, giữ nguyên tình trạng ban đầu sẽ được hoàn tiền hoặc đổi sản phẩm khác.
                     </p>
-                    <p>Refunds will be charged back to the original form of payment used for purchase.</p>
+                    <p>Hoàn tiền sẽ được chuyển về phương thức thanh toán ban đầu.</p>
                     <p>
-                      Customer is responsible for shipping charges when making returns and
-                      shipping/handling fees of original purchase is non-refundable.
+                      Khách hàng chịu phí vận chuyển khi đổi trả, phí vận chuyển ban đầu không hoàn lại.
                     </p>
-                    <p className="mb-6">All sale items are final purchases.</p>
-                    <h2 className="text-2xl font-medium mb-3">Help</h2>
-                    <p>Give us a shout if you have any other questions and/or concerns.</p>
+                    <p className="mb-6">Các sản phẩm giảm giá không áp dụng đổi trả.</p>
+                    <h2 className="text-2xl font-medium mb-3">Hỗ trợ</h2>
+                    <p>Nếu bạn có thắc mắc, vui lòng liên hệ:</p>
                     <p>
                       Email:<span className="font-medium"> demo@gmail.com</span>
                     </p>
                     <p>
-                      Phone:<span className="font-medium"> +1 (23) 456 789</span>
+                      SĐT:<span className="font-medium"> 0123 456 789</span>
                     </p>
                   </>
                 ) : (
                   <>
-                    <h2 className="text-2xl font-medium mb-3">Ask a question</h2>
-                    <p>Need more info about this product? Contact us:</p>
+                    <h2 className="text-2xl font-medium mb-3">Hỏi về sản phẩm</h2>
+                    <p>Cần thêm thông tin về sản phẩm? Liên hệ:</p>
                     <p>
                       Email:<span className="font-medium"> support@example.com</span>
                     </p>
                     <p>
-                      Phone:<span className="font-medium"> +1 (23) 456 789</span>
+                      SĐT:<span className="font-medium"> 0123 456 789</span>
                     </p>
                   </>
                 )}
@@ -364,9 +362,9 @@ const ProductDetail = () => {
         {/* Tabs */}
         <div className="flex justify-center gap-3 mb-8">
           {[
-            { id: "description", label: "DESCRIPTION" },
-            { id: "additional", label: "ADDITIONAL INFORMATION" },
-            { id: "reviews", label: "REVIEWS" },
+            { id: "description", label: "Mô tả" },
+            { id: "additional", label: "Thông tin bổ sung" },
+            { id: "reviews", label: "Đánh giá" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -386,43 +384,41 @@ const ProductDetail = () => {
         <div className="text-gray-800 leading-relaxed mb-10">
           {activeTab === "description" && (
             <div>
-              <h2 className="text-lg font-bold mb-4">More detail</h2>
+              <h2 className="text-lg font-bold mb-4">Chi tiết sản phẩm</h2>
               <ul className="list-disc ml-6 space-y-2">
                 <li>
-                  Lorem ipsum is simply dummy text of the printing industry
+                  Sản phẩm chính hãng, chất lượng đảm bảo.
                 </li>
                 <li>
-                  Lorem ipsum has been the industry's standard dummy text since
-                  the 1500s
+                  Đổi trả trong 14 ngày nếu có lỗi từ nhà sản xuất.
                 </li>
                 <li>
-                  It has survived not only five centuries, but also the leap
-                  into electronic typesetting
+                  Hỗ trợ bảo hành 12 tháng.
                 </li>
                 <li>
-                  It was popularised in the 1960s with the release of Letraset
-                  sheets containing Lorem Ipsum passages
+                  Giao hàng toàn quốc, thanh toán khi nhận hàng.
                 </li>
                 <li>
-                  Contrary to popular belief, Lorem Ipsum is not simply random
-                  text.
+                  Liên hệ CSKH để được tư vấn chi tiết.
                 </li>
               </ul>
 
-              <h3 className="text-lg font-bold mt-8 mb-4">Key specification</h3>
+              <h3 className="text-lg font-bold mt-8 mb-4">Điểm nổi bật của sản phẩm</h3>
               <ul className="list-disc ml-6 space-y-2">
                 <li>
-                  A reader will be distracted by the readable content of a page
-                  when looking at its layout.
+                  Thiết kế hiện đại, sang trọng với vỏ kim loại nguyên khối.
                 </li>
                 <li>
-                  The point of using Lorem Ipsum is that it has a normal
-                  distribution of letters.
+                  Hiệu năng mạnh mẽ, xử lý mượt mà các tác vụ văn phòng và đồ họa.
                 </li>
-                <li>Various versions have evolved over the years.</li>
                 <li>
-                  The majority have suffered alteration in some form, by
-                  injected humour.
+                  Màn hình có độ phân giải cao, mang lại trải nghiệm hình ảnh sống động, sắc nét.
+                </li>
+                <li>
+                  Thời lượng pin ấn tượng, đủ dùng cho cả ngày dài làm việc.
+                </li>
+                <li>
+                  Hỗ trợ công nghệ sạc nhanh, đầy 50% pin chỉ trong 30 phút.
                 </li>
               </ul>
             </div>
@@ -430,20 +426,20 @@ const ProductDetail = () => {
 
           {activeTab === "additional" && (
             <div>
-              <h2 className="text-lg font-bold mb-4">Additional Information</h2>
+              <h2 className="text-lg font-bold mb-4">Thông tin bổ sung</h2>
               <p>
-                Weight: 1.2kg <br />
-                Dimensions: 25 × 15 × 8 cm <br />
-                Material: Aluminum <br />
-                Warranty: 12 months
+                Trọng lượng: 1.2kg <br />
+                Kích thước: 25 × 15 × 8 cm <br />
+                Chất liệu: Nhôm <br />
+                Bảo hành: 12 tháng
               </p>
             </div>
           )}
 
           {activeTab === "reviews" && (
             <div>
-              <h2 className="text-lg font-bold mb-4">Reviews (0)</h2>
-              <p>No reviews yet. Be the first to review this product!</p>
+              <h2 className="text-lg font-bold mb-4">Đánh giá (0)</h2>
+              <p>Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá sản phẩm này!</p>
             </div>
           )}
         </div>
@@ -455,7 +451,7 @@ const ProductDetail = () => {
           <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-8">
               <h2 className="text-[30px] inline-block border-b-2 border-[brown]">
-                Related Products
+                Sản phẩm liên quan
               </h2>
             </div>
 

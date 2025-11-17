@@ -68,11 +68,11 @@ export const searchProducts = async ({
   }
 
   // Price range
-  if (min || max) {
-    const priceCond = {};
-    if (!isNaN(Number(min))) priceCond[Op.gte] = Number(min);
-    if (!isNaN(Number(max))) priceCond[Op.lte] = Number(max);
-    if (Object.keys(priceCond).length) where.price = priceCond;
+  if (min !== undefined && min !== null && min !== "" && !isNaN(Number(min))) {
+    where.price = { ...(where.price || {}), [Op.gte]: Number(min) };
+  }
+  if (max !== undefined && max !== null && max !== "" && !isNaN(Number(max))) {
+    where.price = { ...(where.price || {}), [Op.lte]: Number(max) };
   }
 
   // Sorting

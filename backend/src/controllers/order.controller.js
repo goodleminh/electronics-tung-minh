@@ -1,4 +1,5 @@
 import * as orderService from '../services/order.service.js';
+import { sendMail } from '../config/mailer.js';
 
 // Lấy tất cả đơn hàng
 export const getAllOrders = async (req, res) => {
@@ -84,6 +85,32 @@ export const deleteOrder = async (req, res) => {
       return res.status(404).json({ message: error.message });
     }
     return res.status(500).json({ message: error.message || 'Server error' });
+  }
+};
+
+// Gửi email xác nhận đơn hàng
+export const sendConfirmationEmail = async (req, res) => {
+  try {
+    const { toEmail, orderCode, totalAmount, address, items } = req.body;
+    if (!toEmail || !orderCode || !totalAmount || !address || !items || !items.length) {
+      return res.status(400).json({ message: 'Thiếu thông tin gửi email' });
+    }
+    let html = `<h3>Đặt hàng thành công!</h3>
+      <p>Mã đơn: <b>${orderCode}</b></p>
+      <p>Địa chỉ nhận hàng: ${address}</p>
+      <ul>`;
+    items.forEach((it) => {
+      html += `<li>${it.name} x${it.quantity} - ${it.price}đ</li>`;
+    });
+    html += `</ul><p>Tổng tiền: <b>${totalAmount}đ</b></p>`;
+    const result = await sendMail(toEmail, `Xác nhận đơn hàng #${orderCode}`, html);
+    if (result) {
+      return res.status(200).json({ message: 'Đã gửi email xác nhận' });
+    } else {
+      return res.status(500).json({ message: 'Gửi email thất bại' });
+    }
+  } catch (err) {
+    return res.status(500).json({ message: err.message || 'Server error' });
   }
 };
 

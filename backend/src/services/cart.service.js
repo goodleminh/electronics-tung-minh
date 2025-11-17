@@ -12,8 +12,21 @@ export const getCartById = async (id) => {
 };
 // thêm sản phẩm vào giỏ hàng
 export const addToCart = async (buyer_id, product_id, quantity = 1) => {
-  const newCartItem = await CartItem.create({ buyer_id, product_id, quantity });
-  return newCartItem;
+  // Kiểm tra sản phẩm đã tồn tại trong giỏ
+  const existingItem = await CartItem.findOne({
+    where: { buyer_id, product_id },
+  });
+
+  if (existingItem) {
+    // Nếu có → tăng số lượng
+    existingItem.quantity += quantity;
+    await existingItem.save();
+    return existingItem;
+  } else {
+    // Nếu chưa → tạo mới
+    const newCartItem = await CartItem.create({ buyer_id, product_id, quantity });
+    return newCartItem;
+  }
 };
 // cập nhật giỏ hàng
 export const updateCart = async (id, quantity) => {

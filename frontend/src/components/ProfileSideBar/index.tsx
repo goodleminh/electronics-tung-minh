@@ -13,7 +13,7 @@ const menuItems = [
       { name: "Đổi Mật Khẩu", path: "/profile/change-password" },
     ],
   },
-  { icon: <ShoppingOutlined />, label: "Đơn Hàng", path: "/profile/orders" },
+  { icon: <ShoppingOutlined />, label: "Đơn Hàng", path: "/track-order" },
 ];
 
 const ProfileSidebar = () => {

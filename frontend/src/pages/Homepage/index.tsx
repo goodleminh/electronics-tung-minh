@@ -248,7 +248,7 @@ const Homepage: React.FC = () => {
                 }
               }}
             >
-              Best Sellers
+              Bán Chạy Nhất
             </h2>
           </div>
 
@@ -334,7 +334,7 @@ const Homepage: React.FC = () => {
                 }
               }}
             >
-              New Arrivals
+              Sản Phẩm Mới
             </h2>
           </div>
           {newLoading && (

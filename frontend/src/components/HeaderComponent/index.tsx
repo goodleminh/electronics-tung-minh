@@ -211,7 +211,7 @@ const Header = () => {
                     </button>
                     <button
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100 hover:text-green-400 cursor-pointer"
-                      onClick={() => navigate("/profile")}
+                      onClick={() => navigate("/track-order")}
                     >
                       Đơn hàng
                     </button>
