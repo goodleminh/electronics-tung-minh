@@ -92,35 +92,40 @@ function ProfileForm() {
       return;
     }
 
-    const birthday = `${form.year}-${form.month.padStart(
-      2,
-      "0"
-    )}-${form.day.padStart(2, "0")}`;
+    let birthday = null;
+
+    // Chỉ tạo birthday khi đủ 3 trường
+    if (form.year && form.month && form.day) {
+      birthday = `${form.year}-${form.month.padStart(
+        2,
+        "0"
+      )}-${form.day.padStart(2, "0")}`;
+    }
 
     try {
-      // 1. Update thông tin profile
       const resultAction = await dispatch(
         updateProfileThunk({ ...form, birthday, address: "" })
       );
+
       if (updateProfileThunk.fulfilled.match(resultAction)) {
         toast.success("Cập nhật profile thành công!");
       } else {
         toast.error("Cập nhật profile thất bại!");
         return;
       }
-      // 2. Upload avatar nếu có chọn
+
       if (avatar) {
         const formData = new FormData();
         formData.append("avatar", avatar);
         const uploadResult = await dispatch(uploadAvatarThunk(formData));
         if (uploadAvatarThunk.fulfilled.match(uploadResult)) {
           toast.success("Cập nhật avatar thành công!");
-          setAvatar(null); // reset file
+          setAvatar(null);
         } else {
           toast.error("Upload avatar thất bại!");
         }
       }
-      // 3. Refetch profile để cập nhật state mới
+
       dispatch(fetchProfile());
     } catch (err) {
       console.error(err);
@@ -215,45 +220,37 @@ function ProfileForm() {
         {/* Birthday */}
         <div className="grid grid-cols-3 items-center gap-4">
           <label className="text-gray-700 font-medium">Ngày sinh</label>{" "}
-          {profile?.Profile?.birthday ? (
-            <div className="col-span-2 flex gap-2">
-              <p>
-                {form.day}/{form.month}/{form.year}{" "}
-              </p>
-            </div>
-          ) : (
-            <div className="col-span-2 flex gap-2">
-              <input
-                type="number"
-                name="day"
-                value={form.day}
-                onChange={handleChange}
-                placeholder="Ngày"
-                min="1"
-                max="31"
-                className="border rounded px-2 py-2 w-full"
-              />
-              <input
-                type="number"
-                name="month"
-                value={form.month}
-                onChange={handleChange}
-                placeholder="Tháng"
-                min="1"
-                max="12"
-                className="border rounded px-2 py-2 w-full"
-              />
-              <input
-                type="number"
-                name="year"
-                value={form.year}
-                onChange={handleChange}
-                max="2025"
-                placeholder="Năm"
-                className="border rounded px-2 py-2 w-full"
-              />
-            </div>
-          )}
+          <div className="col-span-2 flex gap-2">
+            <input
+              type="number"
+              name="day"
+              value={form.day}
+              onChange={handleChange}
+              placeholder="Ngày"
+              min="1"
+              max="31"
+              className="border rounded px-2 py-2 w-full"
+            />
+            <input
+              type="number"
+              name="month"
+              value={form.month}
+              onChange={handleChange}
+              placeholder="Tháng"
+              min="1"
+              max="12"
+              className="border rounded px-2 py-2 w-full"
+            />
+            <input
+              type="number"
+              name="year"
+              value={form.year}
+              onChange={handleChange}
+              max="2025"
+              placeholder="Năm"
+              className="border rounded px-2 py-2 w-full"
+            />
+          </div>
         </div>
         {/* Submit */}
         <div className="flex justify-start">

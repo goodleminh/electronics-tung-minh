@@ -11,6 +11,7 @@ export interface IProfile {
   username: string;
   email: string;
   Profile: {
+    user_id: string;
     phone?: string;
     address?: string;
     avatar?: string;
@@ -30,7 +31,7 @@ interface UpdateProfilePayload {
   email: string;
   phone: string;
   bio: string;
-  birthday: string; // yyyy-mm-dd
+  birthday: string | null; // yyyy-mm-dd
   address: string; // thêm dòng này để fix lỗi truyền address
 }
 
@@ -99,7 +100,12 @@ export const uploadAvatarThunk = createAsyncThunk(
 const profileSlice = createSlice({
   name: "profile",
   initialState,
-  reducers: {},
+  reducers: {
+    clearProfile: (state) => {
+      state.profile = null;
+      state.loading = false;
+    },
+  },
   extraReducers: (builder) => {
     builder
       // fetchProfile
@@ -161,5 +167,5 @@ const profileSlice = createSlice({
       });
   },
 });
-
+export const { clearProfile } = profileSlice.actions;
 export default profileSlice.reducer;

@@ -4,8 +4,9 @@ import type { RootState } from "../../redux/store";
 import { Navigate } from "react-router-dom";
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const { accessToken } = useSelector((state: RootState) => state.auth);
-  if (!accessToken) return <Navigate to="/login" replace />;
+  const { user } = useSelector((state: RootState) => state.auth);
+  if (!user) return <Navigate to="/login" />;
+  if (user.role !== "admin") return <Navigate to="/no-access" />;
   return children;
 };
 

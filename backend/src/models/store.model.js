@@ -1,5 +1,6 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../config/dbConnection.js";
+import User from "./auth.model.js";
 
 export class Store extends Model {}
 

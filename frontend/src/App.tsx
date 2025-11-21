@@ -18,12 +18,20 @@ import ResetPasswordPage from "./components/ResetPassword";
 import TrackOrderPage from "./pages/Trackorderpage";
 import SellerRegisterPage from "./pages/Seller_Register";
 import SellerProfilePage from "./pages/Seller_Profile";
+import DashboardLayout from "./layouts/dashboardLayout";
+import ContentUsers from "./components/UserDashboard";
+import ProtectedRoute from "./components/ProtectRoute";
+import NoAccess from "./pages/NoAccess";
+import ContentProducts from "./components/ProductsDashboard";
 
 function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
       <Routes>
+        <Route path="/no-access" element={<NoAccess />} />
+
+        {/* Main layout */}
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Homepage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -49,6 +57,17 @@ function App() {
             path="/profile/change-password"
             element={<ChangePasswordForm />}
           />
+        </Route>
+        <Route
+          path="/dash-board"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<ContentUsers />} />
+          <Route path="/dash-board/products" element={<ContentProducts />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -15,9 +15,9 @@ const transporter = nodemailer.createTransport({
 // Kiểm tra kết nối SMTP khi server khởi chạy
 transporter.verify((error, success) => {
   if (error) {
-    console.error("❌ SMTP connection error:", error);
+    console.error("SMTP connection error:", error);
   } else {
-    console.log("✅ SMTP server is ready to take emails");
+    console.log("SMTP server is ready to take emails");
   }
 });
 
@@ -31,10 +31,10 @@ export const sendMail = async (to, subject, html) => {
       html,
     });
 
-    console.log("📨 Email sent:", info.messageId);
+    console.log(" Email sent:", info.messageId);
     return true;
   } catch (err) {
-    console.error("❌ Error sending email:", err);
+    console.error(" Error sending email:", err);
     return false;
   }
 };
