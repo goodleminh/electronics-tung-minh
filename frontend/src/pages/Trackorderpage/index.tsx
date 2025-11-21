@@ -5,6 +5,7 @@ import type { AppDispatch, RootState } from '../../redux/store';
 import { fetchMyOrders, type IOrder } from '../../redux/features/order/orderSlice';
 import { fetchOrderItemsByOrderId, type IOrderItem } from '../../redux/features/order_item/order_itemSlice';
 import { actFetchProducts, type IProduct } from '../../redux/features/product/productSlice';
+import { updateOrder } from '../../redux/features/order/orderSlice';
 
 interface IOrderItemDetailed extends IOrderItem {
   product?: IProduct;
@@ -19,8 +20,8 @@ const statusColor: Record<string, string> = {
 };
 
 const statusLabel: Record<string, string> = {
-  pending: 'Đang xác nhận',
-  processing: 'Đang xử lý',
+  pending: 'Chờ thanh toán', // Chỉ dùng cho đơn ZaloPay chưa thanh toán
+  processing: 'Chờ xử lý',   // Đơn đã thanh toán ZaloPay hoặc đơn COD vừa tạo
   shipping: 'Đang vận chuyển',
   completed: 'Đã hoàn thành',
   cancelled: 'Đã hủy',
@@ -57,6 +58,7 @@ const TrackOrderPage: React.FC = () => {
   const { products } = useSelector((state: RootState) => state.product);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<IOrder | null>(null);
 
   useEffect(() => {
@@ -80,9 +82,13 @@ const TrackOrderPage: React.FC = () => {
   };
 
   const filterOrders = useMemo(() => {
-    if (tab === 'all') return orders;
-    if (tab === 'confirming') return orders.filter(o => o.status === 'pending' || o.status === 'processing');
-    return orders.filter(o => o.status === tab);
+    let sortedOrders = [...orders].sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime());
+    if (tab === 'all') return sortedOrders;
+    // Nếu tab là 'pending', chỉ show đơn ZaloPay chưa thanh toán
+    if (tab === 'pending') return sortedOrders.filter(o => o.status === 'pending' && o.payment_method === 'zalopay');
+    // Nếu tab là 'processing', show đơn đã thanh toán ZaloPay và đơn COD vừa tạo (status processing)
+    if (tab === 'processing') return sortedOrders.filter(o => o.status === 'processing');
+    return sortedOrders.filter(o => o.status === tab);
   }, [orders, tab]);
 
   const handleViewDetails = (order: IOrder) => {
@@ -145,7 +151,7 @@ const TrackOrderPage: React.FC = () => {
       title: 'Thanh toán',
       dataIndex: 'payment_method',
       key: 'payment_method',
-      render: (v: string) => (v === 'zalopay' ? 'ZaloPay' : 'Tiền mặt'),
+      render: (v: string) => (v === 'zalopay' ? 'ZaloPay' : 'Thanh toán khi nhận hàng'),
     },
     {
       title: 'Địa chỉ',
@@ -156,45 +162,71 @@ const TrackOrderPage: React.FC = () => {
       title: '',
       key: 'action',
       render: (_: any, record: IOrder) => (
-        <Button
-          type="primary"
-          style={{ backgroundColor: '#8b2e0f', borderColor: '#8b2e0f', borderRadius: 0 }}
-          size="small"
-          onClick={() => handleViewDetails(record)}
-        >
-          Xem chi tiết
-        </Button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Button
+            type="primary"
+            style={{ backgroundColor: '#8b2e0f', borderColor: '#8b2e0f', borderRadius: 0 }}
+            size="small"
+            onClick={() => handleViewDetails(record)}
+          >
+            Xem chi tiết
+          </Button>
+          {/* Thêm nút Xóa cho đơn COD ở trạng thái processing */}
+          {record.payment_method === 'cash' && record.status === 'processing' && (
+            <Button
+              danger
+              size="small"
+              style={{ borderRadius: 0 }}
+              onClick={() => handleDeleteOrder(record)}
+            >
+              Hủy đơn
+            </Button>
+          )}
+        </div>
       ),
     },
   ];
+  // Mở modal hủy đơn
+  const handleDeleteOrder = (order: IOrder) => {
+    setSelectedOrder(order);
+    setIsCancelModalOpen(true);
+  };
+  // Khi xác nhận hủy đơn, gọi API updateOrder để sửa status thành 'cancelled'
+  const handleConfirmCancelOrder = async () => {
+    if (selectedOrder) {
+      try {
+        await dispatch(updateOrder({
+          id: selectedOrder.order_id,
+          data: { status: 'cancelled' },
+        }));
+        setIsCancelModalOpen(false);
+        setSelectedOrder(null);
+        dispatch(fetchMyOrders());
+      } catch (err) {}
+    }
+  };
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-[30px] inline-block border-b-2 border-[#8b2e0f] mb-8">Đơn hàng của tôi</h1>
-      <div className="bg-white border border-gray-200 p-6">
-        <Tabs
-          activeKey={tab}
-          onChange={setTab}
-          className="mb-6"
-          items={[
-            { key: 'all', label: 'Tất cả', children: null },
-            { key: 'confirming', label: 'Đang xác nhận', children: null },
-            { key: 'shipping', label: 'Đang vận chuyển', children: null },
-            { key: 'completed', label: 'Đã hoàn thành', children: null },
-            { key: 'cancelled', label: 'Đã hủy', children: null },
-          ]}
-        />
-        <Table
-          columns={columns}
-          dataSource={filterOrders}
-          rowKey="order_id"
-          pagination={false}
-          bordered
-          className="rounded-none"
-          loading={loading}
-          locale={{ emptyText: 'Không có đơn hàng nào' }}
-        />
-      </div>
+      <Tabs activeKey={tab} onChange={setTab} className="mb-4">
+        <Tabs.TabPane tab="Tất cả" key="all" />
+        <Tabs.TabPane tab="Chờ thanh toán" key="pending" />
+        <Tabs.TabPane tab="Đang xử lý" key="processing" />
+        <Tabs.TabPane tab="Đang vận chuyển" key="shipping" />
+        <Tabs.TabPane tab="Đã hoàn thành" key="completed" />
+        <Tabs.TabPane tab="Đã hủy" key="cancelled" />
+      </Tabs>
+      <Table
+        dataSource={filterOrders}
+        columns={columns}
+        rowKey="order_id"
+        loading={loading}
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          pageSizeOptions: ['10', '20', '50'],
+        }}
+      />
       <Modal
         title={
           <span className="font-semibold text-lg">
@@ -260,6 +292,30 @@ const TrackOrderPage: React.FC = () => {
             </div>
           </div>
         )}
+      </Modal>
+      <Modal
+        title={<span className="font-semibold text-lg">Xác nhận hủy đơn hàng</span>}
+        open={isCancelModalOpen}
+        onCancel={() => setIsCancelModalOpen(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setIsCancelModalOpen(false)} style={{ borderRadius: 0 }}>
+            Hủy
+          </Button>,
+          <Button
+            key="ok"
+            danger
+            style={{ borderRadius: 0 }}
+            onClick={handleConfirmCancelOrder}
+          >
+            Xác nhận
+          </Button>,
+        ]}
+        width={400}
+        centered
+        className="rounded-none"
+        styles={{ content: { borderRadius: 0 } }}
+      >
+        <p>Bạn có chắc chắn muốn hủy đơn hàng này không?</p>
       </Modal>
     </main>
   );

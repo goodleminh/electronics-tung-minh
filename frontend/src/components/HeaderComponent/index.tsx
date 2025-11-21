@@ -11,12 +11,16 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import type { ICategory } from "../../redux/features/category/categorySlice";
 import { fetchCurrentUser, logout } from "../../redux/features/auth/authSlice";
+import { actFetchCartItems } from "../../redux/features/cart/cartSlice";
 
 const Header = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { categories } = useSelector((state: RootState) => state.category);
   const { isLoggedIn, user } = useSelector((state: RootState) => state.auth);
+  const { items } = useSelector((state: RootState) => state.cart);
+  // Đếm số loại sản phẩm khác nhau trong giỏ hàng
+  const cartCount = isLoggedIn ? items.length : 0;
   const [offerIdx, setOfferIdx] = useState(0);
 
   // Header UI states
@@ -37,6 +41,9 @@ const Header = () => {
 
   // NEW: auth modal state
   const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  // NEW: modal cho seller không được vào cart/order
+  const [sellerModalOpen, setSellerModalOpen] = useState(false);
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -93,6 +100,13 @@ const Header = () => {
       dispatch(fetchCurrentUser());
     }
   }, [dispatch]);
+
+  // Khi đăng nhập hoặc đăng xuất, tự động fetch lại giỏ hàng
+  useEffect(() => {
+    if (isLoggedIn) {
+      dispatch(actFetchCartItems());
+    }
+  }, [isLoggedIn, dispatch]);
 
   return (
     <>
@@ -154,18 +168,43 @@ const Header = () => {
             </button>
 
             <Link
-              to="/cart"
+              to={user?.role === "seller" ? "#" : "/cart"}
               className="relative"
               aria-label="Giỏ hàng"
               onClick={(e) => {
                 if (!isLoggedIn) {
                   e.preventDefault();
                   setAuthModalOpen(true);
+                } else if (user?.role === "seller") {
+                  e.preventDefault();
+                  setSellerModalOpen(true);
                 }
               }}
             >
               <span className="text-3xl">
                 <ShoppingCartOutlined />
+                {cartCount > 0 && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '-6px',
+                      right: '-10px',
+                      background: '#e53935',
+                      color: 'white',
+                      borderRadius: '50%','fontSize': '12px',
+                      minWidth: '18px',
+                      height: '18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '0 5px',
+                      fontWeight: 600,
+                      zIndex: 2,
+                    }}
+                  >
+                    {cartCount}
+                  </span>
+                )}
               </span>
             </Link>
             <Link
@@ -205,13 +244,25 @@ const Header = () => {
                   <div className="absolute left-0 mt-1 w-48 bg-white  rounded-sm  shadow-lg">
                     <button
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100 hover:text-green-400 cursor-pointer"
-                      onClick={() => navigate("/profile")}
+                      onClick={() => {
+                        if (user?.role === "seller") {
+                          navigate("/seller/profile");
+                        } else {
+                          navigate("/profile");
+                        }
+                      }}
                     >
                       Tài khoản của bạn
                     </button>
                     <button
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100 hover:text-green-400 cursor-pointer"
-                      onClick={() => navigate("/track-order")}
+                      onClick={() => {
+                        if (user?.role === "seller") {
+                          setSellerModalOpen(true);
+                        } else {
+                          navigate("/track-order");
+                        }
+                      }}
                     >
                       Đơn hàng
                     </button>
@@ -381,6 +432,22 @@ const Header = () => {
         cancelButtonProps={{ style: { borderRadius: 0 } }}
       >
         Bạn cần đăng nhập
+      </Modal>
+
+      {/* Modal seller không phải là người mua hàng */}
+      <Modal
+        open={sellerModalOpen}
+        onCancel={() => setSellerModalOpen(false)}
+        onOk={() => setSellerModalOpen(false)}
+        okText="Đã hiểu"
+        cancelButtonProps={{ style: { display: 'none' } }}
+        centered
+        title={null}
+        styles={{ content: { borderRadius: 0 } }}
+        className="rounded-none"
+        okButtonProps={{ style: { backgroundColor: '#8b2e0f', borderRadius: 0 } }}
+      >
+        Bạn không phải là người mua hàng
       </Modal>
     </>
   );

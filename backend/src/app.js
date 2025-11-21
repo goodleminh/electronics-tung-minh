@@ -11,6 +11,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import authRouter from "./routes/auth.route.js";
 import profileRouter from "./routes/profile.route.js";
+import paymentRouter from "./routes/payment.route.js";
 
 const app = express();
 
@@ -38,5 +39,6 @@ app.use("/orders", orderRouter);
 app.use("/order-items", orderItemRouter); 
 app.use("/api/auth", authRouter);
 app.use("/profile", profileRouter);
+app.use("/payment", paymentRouter);
 
 export default app;

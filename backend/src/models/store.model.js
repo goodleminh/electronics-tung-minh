@@ -22,6 +22,15 @@ Store.init(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    image: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      defaultValue: null,
+    },
+    status: {
+      type: DataTypes.ENUM('pending', 'processing', 'approved', 'rejected'),
+      defaultValue: 'pending',
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

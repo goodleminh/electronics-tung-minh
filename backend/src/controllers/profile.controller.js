@@ -46,7 +46,7 @@ export const uploadAvatar = async (req, res) => {
     }
 
     const userId = req.user?.id;
-    const filePath = `public/avatar/${req.file.filename}`;
+    const filePath = `${req.file.filename}`;
 
     const profile = await profileService.updateAvatar(userId, filePath);
 

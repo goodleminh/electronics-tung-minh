@@ -30,6 +30,8 @@ const ProductDetail = () => {
   const [addQty, setAddQty] = useState<number>(1);
   // NEW: login required modal state
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  // NEW: modal cho seller không phải là người mua hàng
+  const [sellerModalOpen, setSellerModalOpen] = useState(false);
 
   useEffect(() => {
     if (id) dispatch(fetchProductById(Number(id)));
@@ -70,6 +72,10 @@ const ProductDetail = () => {
 
   // NEW: handlers for add-to-cart modal
   const openAddModal = () => {
+    if (user?.role === "seller") {
+      setSellerModalOpen(true);
+      return;
+    }
     if (!isLoggedIn) {
       setAuthModalOpen(true);
       return;
@@ -124,6 +130,10 @@ const ProductDetail = () => {
     }
   };
   const handleBuyNow = () => {
+    if (user?.role === "seller") {
+      setSellerModalOpen(true);
+      return;
+    }
     if (!productDetail) return;
     if (!isLoggedIn) {
       setAuthModalOpen(true);
@@ -617,6 +627,22 @@ const ProductDetail = () => {
         cancelButtonProps={{ style: { borderRadius: 0 } }}
       >
         Bạn cần đăng nhập
+      </Modal>
+
+      {/* NEW: Modal seller không phải là người mua hàng */}
+      <Modal
+        open={sellerModalOpen}
+        onCancel={() => setSellerModalOpen(false)}
+        onOk={() => setSellerModalOpen(false)}
+        okText="Đã hiểu"
+        cancelButtonProps={{ style: { display: 'none' } }}
+        centered
+        title={null}
+        styles={{ content: { borderRadius: 0 } }}
+        className="rounded-none"
+        okButtonProps={{ style: { backgroundColor: '#8b2e0f', borderRadius: 0 } }}
+      >
+        Bạn không phải là người mua hàng
       </Modal>
     </>
   );

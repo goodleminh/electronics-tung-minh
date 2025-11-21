@@ -35,7 +35,21 @@ export const createOrder = async (orderData) => {
     order_code = `ORD-${dateStr}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
   }
 
-  const newOrder = await Order.create({ ...orderData, order_code });
+  // Xác định trạng thái đơn hàng phù hợp
+  let status = orderData.status;
+  if (!status) {
+    if (orderData.payment_method === 'zalopay') {
+      if (orderData.total_amount === 0) {
+        status = 'processing'; // Đơn miễn phí, không cần chờ thanh toán
+      } else {
+        status = 'pending'; // Chờ thanh toán
+      }
+    } else {
+      status = 'processing'; // COD: Chờ xử lý
+    }
+  }
+
+  const newOrder = await Order.create({ ...orderData, order_code, status });
   return newOrder;
 };
 // sửa thông tin đơn hàng

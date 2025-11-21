@@ -43,11 +43,17 @@ export const getOrderById = async (req, res) => {
 // Tạo đơn hàng mới
 export const createOrder = async (req, res) => {
   try {
-    const { buyer_id, total_amount, address, payment_method, status } = req.body;
-    if (!buyer_id || !total_amount || !address) {
-      return res.status(400).json({ message: 'buyer_id, total_amount, address là bắt buộc' });
+    const { buyer_id, total_amount, address, payment_method } = req.body;
+    // Kiểm tra kỹ các trường bắt buộc, không ép kiểu số 0 là false
+    if (
+      buyer_id === undefined || buyer_id === null ||
+      total_amount === undefined || total_amount === null ||
+      !address || !payment_method
+    ) {
+      return res.status(400).json({ message: 'buyer_id, total_amount, address, payment_method là bắt buộc' });
     }
-    const newOrder = await orderService.createOrder({ buyer_id, total_amount, address, payment_method, status });
+    // Không cho phép client tự truyền status, backend sẽ tự quyết định
+    const newOrder = await orderService.createOrder({ buyer_id, total_amount, address, payment_method });
     return res.status(201).json(newOrder);
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Server error' });
@@ -92,7 +98,7 @@ export const deleteOrder = async (req, res) => {
 export const sendConfirmationEmail = async (req, res) => {
   try {
     const { toEmail, orderCode, totalAmount, address, items } = req.body;
-    if (!toEmail || !orderCode || !totalAmount || !address || !items || !items.length) {
+    if (!toEmail || !orderCode || totalAmount === undefined || totalAmount === null || !address || !items || !items.length) {
       return res.status(400).json({ message: 'Thiếu thông tin gửi email' });
     }
     let html = `<h3>Đặt hàng thành công!</h3>
