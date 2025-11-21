@@ -31,6 +31,7 @@ interface UpdateProfilePayload {
   phone: string;
   bio: string;
   birthday: string; // yyyy-mm-dd
+  address: string; // thêm dòng này để fix lỗi truyền address
 }
 
 const initialState: ProfileState = {

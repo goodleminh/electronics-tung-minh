@@ -7,6 +7,7 @@ import { createOrderItem } from '../../redux/features/order_item/order_itemSlice
 import { Button, Alert, message, Modal } from 'antd';
 import { actFetchProducts } from '../../redux/features/product/productSlice';
 import { actSendConfirmationEmail } from '../../redux/features/order/orderSlice';
+import axios from 'axios';
 
 const formatCurrency = (n?: number) => {
   if (typeof n !== 'number') return '0₫';
@@ -53,30 +54,50 @@ const OrderPage: React.FC = () => {
   // Prefill address from user profile if available
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
-  useEffect(() => {
-    if (checkout) {
-      if (!address) {
-        const defaultAddr = (auth.user as any)?.address || '';
-        if (defaultAddr) setAddress(defaultAddr);
-      }
-      if (!phone) {
-        const defaultPhone = (auth.user as any)?.phone || '';
-        if (defaultPhone) setPhone(defaultPhone);
-      }
-    }
-  }, [checkout, auth.user, address, phone]);
-
-  // Ensure products are loaded for names/images
-  useEffect(() => {
-    if (!productState.products?.length) {
-      dispatch(actFetchProducts());
-    }
-  }, [dispatch, productState.products?.length]);
-
-  const [payment, setPayment] = useState<'cash' | 'zalopay'>('cash');
+  const [provinces, setProvinces] = useState<any[]>([]);
+  const [districts, setDistricts] = useState<any[]>([]);
+  const [wards, setWards] = useState<any[]>([]);
+  const [selectedProvince, setSelectedProvince] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedWard, setSelectedWard] = useState('');
+  const [detailAddress, setDetailAddress] = useState('');
   const [creating, setCreating] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [payment, setPayment] = useState<'cash' | 'zalopay'>('cash');
+
+  // Fetch provinces on mount
+  useEffect(() => {
+    axios.get('https://provinces.open-api.vn/api/p/').then(res => setProvinces(res.data));
+  }, []);
+
+  // Fetch districts when province changes
+  useEffect(() => {
+    if (selectedProvince) {
+      axios.get(`https://provinces.open-api.vn/api/p/${selectedProvince}?depth=2`).then(res => setDistricts(res.data.districts || []));
+      setSelectedDistrict(''); setWards([]); setSelectedWard('');
+    }
+  }, [selectedProvince]);
+
+  // Fetch wards when district changes
+  useEffect(() => {
+    if (selectedDistrict) {
+      axios.get(`https://provinces.open-api.vn/api/d/${selectedDistrict}?depth=2`).then(res => setWards(res.data.wards || []));
+      setSelectedWard('');
+    }
+  }, [selectedDistrict]);
+
+  // Update address when all selected
+  useEffect(() => {
+    if (selectedProvince && selectedDistrict && selectedWard) {
+      const province = provinces.find(p => p.code == selectedProvince)?.name || '';
+      const district = districts.find(d => d.code == selectedDistrict)?.name || '';
+      const ward = wards.find(w => w.code == selectedWard)?.name || '';
+      setAddress(`${detailAddress}, ${ward}, ${district}, ${province}`);
+    } else {
+      setAddress('');
+    }
+  }, [selectedProvince, selectedDistrict, selectedWard, detailAddress]);
 
   // Dynamic total for checkout flow
   const checkoutTotal = checkoutItems.reduce((s, it) => s + Number(it.price) * Number(it.quantity), 0);
@@ -97,10 +118,15 @@ const OrderPage: React.FC = () => {
     }
     try {
       setCreating(true);
+      // BƯỚC 1: TẠO ĐƠN HÀNG PENDING VÀO DB TRƯỚC
       const created = await dispatch(
-        createOrder({ total_amount: checkoutTotal, address, payment_method: payment })
+        createOrder({
+          total_amount: checkoutTotal,
+          address,
+          payment_method: payment
+        })
       ).unwrap();
-      console.log("[DEBUG] Order created", created);
+      console.log("[DEBUG] Order created in DB:", created);
       const newId = (created as any).order_id as number;
       await Promise.all(
         checkoutItems.map((it) =>
@@ -109,9 +135,33 @@ const OrderPage: React.FC = () => {
           ).unwrap()
         )
       );
+      // BƯỚC 2: NẾU CHỌN ZALOPAY -> GỌI LINK THANH TOÁN
+      if (payment === "zalopay") {
+        try {
+          const res = await axios.post(`${API_BASE}/payment/zalopay`, {
+            amount: checkoutTotal,
+            orderId: newId,
+          });
+          if (res.status === 200 && res.data.order_url) {
+            window.open(res.data.order_url, "_blank");
+            return;
+          } else {
+            message.error("Không nhận được link thanh toán.");
+          }
+        } catch (err) {
+          let msg = "Lỗi kết nối ZaloPay";
+          if (err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response) {
+            // @ts-ignore
+            msg = err.response.data?.message || msg;
+          }
+          message.error(msg);
+        }
+        setCreating(false);
+        return;
+      }
+      // BƯỚC 3: NẾU LÀ COD -> HOÀN TẤT LUÔN
       setCreatedOrderId(newId);
       message.success('Đặt hàng thành công');
-      // Gửi email xác nhận qua Redux Thunk
       try {
         const userEmail = (auth.user as any)?.email;
         const orderCode = (created as any).order_code;
@@ -139,7 +189,9 @@ const OrderPage: React.FC = () => {
       console.error("[DEBUG] Error in placeOrder", e);
       message.error(e?.message || 'Đặt hàng thất bại');
     } finally {
-      setCreating(false);
+      if (payment !== 'zalopay') {
+        setCreating(false);
+      }
     }
   };
 
@@ -156,6 +208,13 @@ const OrderPage: React.FC = () => {
   const handleCancelOrder = () => {
     setShowConfirm(false);
   };
+
+  // Đảm bảo luôn có dữ liệu sản phẩm để hiển thị
+  useEffect(() => {
+    if (!productState.products || productState.products.length === 0) {
+      dispatch(actFetchProducts());
+    }
+  }, [dispatch, productState.products]);
 
   // Hiển thị cảnh báo nếu không có dữ liệu checkout
   if (!checkout) {
@@ -179,6 +238,12 @@ const OrderPage: React.FC = () => {
       </div>
     );
   }
+
+  // Validate phone and address
+  const isValidPhone = /^0\d{9,10}$/.test(phone.trim());
+  const isValidAddress = !!(selectedProvince && selectedDistrict && selectedWard && detailAddress.trim());
+  const [addressTouched, setAddressTouched] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
@@ -256,28 +321,68 @@ const OrderPage: React.FC = () => {
           <div className="flex flex-col md:flex-row gap-8 mb-6">
             <div className="flex-1">
               <label className="block text-sm font-medium mb-2">Địa chỉ giao hàng <span className="text-red-500">*</span></label>
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Nhập địa chỉ nhận hàng"
-                className="w-full border border-gray-300 p-4 rounded-none text-base focus:outline-none focus:border-[#8b2e0f]"
-                required
-              />
-              {!address.trim() && (
-                <p className="mt-1 text-sm text-red-600">Vui lòng nhập địa chỉ giao hàng</p>
+              <div className="flex flex-col gap-3 mb-2">
+                <select
+                  className="w-full border border-gray-300 p-3 rounded-none text-base focus:outline-none focus:border-[#8b2e0f]"
+                  value={selectedProvince}
+                  onChange={e => { setSelectedProvince(e.target.value); setAddressTouched(true); }}
+                  onBlur={() => setAddressTouched(true)}
+                >
+                  <option value="">Chọn tỉnh/thành</option>
+                  {provinces.map((p: any) => (
+                    <option key={p.code} value={p.code}>{p.name}</option>
+                  ))}
+                </select>
+                <select
+                  className="w-full border border-gray-300 p-3 rounded-none text-base focus:outline-none focus:border-[#8b2e0f]"
+                  value={selectedDistrict}
+                  onChange={e => { setSelectedDistrict(e.target.value); setAddressTouched(true); }}
+                  onBlur={() => setAddressTouched(true)}
+                  disabled={!selectedProvince}
+                >
+                  <option value="">Chọn quận/huyện</option>
+                  {districts.map((d: any) => (
+                    <option key={d.code} value={d.code}>{d.name}</option>
+                  ))}
+                </select>
+                <select
+                  className="w-full border border-gray-300 p-3 rounded-none text-base focus:outline-none focus:border-[#8b2e0f]"
+                  value={selectedWard}
+                  onChange={e => { setSelectedWard(e.target.value); setAddressTouched(true); }}
+                  onBlur={() => setAddressTouched(true)}
+                  disabled={!selectedDistrict}
+                >
+                  <option value="">Chọn phường/xã</option>
+                  {wards.map((w: any) => (
+                    <option key={w.code} value={w.code}>{w.name}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  value={detailAddress}
+                  onChange={e => { setDetailAddress(e.target.value); setAddressTouched(true); }}
+                  onBlur={() => setAddressTouched(true)}
+                  placeholder="Số nhà, tên đường..."
+                  className="w-full border border-gray-300 p-4 rounded-none text-base focus:outline-none focus:border-[#8b2e0f]"
+                  required
+                />
+              </div>
+              {addressTouched && !isValidAddress && (
+                <p className="mt-1 text-sm text-red-600">Vui lòng nhập đầy đủ địa chỉ giao hàng (Số nhà, phường/xã, quận/huyện, tỉnh/thành)</p>
               )}
               <label className="block text-sm font-medium mb-2 mt-4">Số điện thoại liên hệ <span className="text-red-500">*</span></label>
               <input
                 type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => { setPhone(e.target.value); setPhoneTouched(true); }}
+                onBlur={() => setPhoneTouched(true)}
                 placeholder="VD: 0901234567"
                 className="w-full border border-gray-300 p-4 rounded-none text-base focus:outline-none focus:border-[#8b2e0f]"
                 required
+                maxLength={11}
               />
-              {!phone.trim() && (
-                <p className="mt-1 text-sm text-red-600">Vui lòng nhập số điện thoại liên hệ</p>
+              {phoneTouched && !isValidPhone && (
+                <p className="mt-1 text-sm text-red-600">Số điện thoại phải bắt đầu bằng 0, gồm 10-11 chữ số</p>
               )}
             </div>
             <div className="flex-1">
@@ -313,7 +418,7 @@ const OrderPage: React.FC = () => {
               onClick={handlePlaceOrder}
               className="rounded-none w-1/3 py-5 text-xl font-extrabold mx-auto"
               style={{ backgroundColor: '#8b2e0f', borderColor: '#8b2e0f', borderRadius: 0, height: '45px', fontSize: '20px', fontWeight: '400' }}
-              disabled={!address.trim() || !phone.trim()}
+              disabled={!isValidAddress || !isValidPhone}
             >
               Đặt Hàng
             </Button>

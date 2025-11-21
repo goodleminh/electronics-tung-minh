@@ -57,7 +57,7 @@ function ProfileForm() {
     // Xử lý avatar
     if (profile?.Profile?.avatar) {
       const baseUrl = import.meta.env.VITE_API_URL;
-      const fullUrl = `${baseUrl}/${profile.Profile.avatar}`;
+      const fullUrl = `${baseUrl}/public/avatar/${profile.Profile.avatar}`;
       setPreview(fullUrl);
     }
   }, [profile]);
@@ -100,7 +100,7 @@ function ProfileForm() {
     try {
       // 1. Update thông tin profile
       const resultAction = await dispatch(
-        updateProfileThunk({ ...form, birthday })
+        updateProfileThunk({ ...form, birthday, address: "" })
       );
       if (updateProfileThunk.fulfilled.match(resultAction)) {
         toast.success("Cập nhật profile thành công!");

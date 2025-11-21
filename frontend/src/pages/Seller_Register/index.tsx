@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import "./style.css";
 import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
-import { registerUser } from "../../redux/features/auth/authSlice.ts";
 import { useDispatch } from "react-redux";
-import { type AppDispatch } from "../../redux/store.ts";
+import { type AppDispatch } from "../../redux/store";
+import { registerUser } from "../../redux/features/auth/authSlice";
 
-interface RegisterForm {
+interface SellerRegisterForm {
   username: string;
   email: string;
   password: string;
@@ -14,9 +14,9 @@ interface RegisterForm {
   agree: boolean;
 }
 
-const RegisterPage: React.FC = () => {
+const SellerRegisterPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const [formData, setFormData] = useState<RegisterForm>({
+  const [formData, setFormData] = useState<SellerRegisterForm>({
     username: "",
     email: "",
     password: "",
@@ -42,11 +42,18 @@ const RegisterPage: React.FC = () => {
       toast.error("Bạn phải đồng ý với các điều khoản!");
       return;
     }
-    const resultAction = await dispatch(registerUser(formData));
+    const resultAction = await dispatch(
+      registerUser({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        role: "seller",
+      })
+    );
     if (registerUser.fulfilled.match(resultAction)) {
       toast.success(resultAction.payload.message);
       setTimeout(() => {
-        navigate("/login"); // chuyển sang trang login
+        navigate("/login");
       }, 2000);
     } else {
       toast.error(resultAction.payload);
@@ -57,9 +64,8 @@ const RegisterPage: React.FC = () => {
     <>
       <div className="register-page max-w-[600px] mx-auto text-center mt-5">
         <h2 className="text-[30px] inline-block mb-4 border-b-2 border-[brown]">
-          Đăng ký tài khoản
+          Đăng ký mở gian hàng
         </h2>
-
         <form
           onSubmit={handleRegister}
           className="flex flex-col gap-4 max-w-lg mx-auto p-6  rounded-2xl text-left "
@@ -117,7 +123,7 @@ const RegisterPage: React.FC = () => {
             Tôi đồng ý với các điều khoản
           </div>
           <button className="mx-auto p-5 bg-gray-800 text-white py-2 rounded hover:bg-red-800 cursor-pointer">
-            TẠO TÀI KHOẢN
+            TẠO TÀI KHOẢN NGƯỜI BÁN
           </button>
         </form>
         <div className="mb-8">
@@ -129,20 +135,11 @@ const RegisterPage: React.FC = () => {
               </span>
             </Link>
           </p>
-          <Link to="/seller/register" className="mx-auto w-full">
-            <button
-              type="button"
-              className="w-auto mt-2 p-5 bg-gray-800 text-white py-2 rounded hover:bg-red-800 cursor-pointer"
-            >
-              BẠN MUỐN KHỞI TẠO GIAN HÀNG?
-            </button>
-          </Link>
         </div>
       </div>
-
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
     </>
   );
 };
 
-export default RegisterPage;
+export default SellerRegisterPage;

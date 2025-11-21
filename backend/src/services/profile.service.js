@@ -1,6 +1,12 @@
 import bcrypt from "bcrypt";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from 'url';
 import User from "../models/auth.model.js";
 import Profile from "../models/profile.model.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export const getProfileService = async (userId) => {
   const userProfile = await User.findOne({
@@ -38,7 +44,7 @@ export const changePasswordService = async (
 ) => {
   const user = await User.findByPk(userId);
 
-  if (!user) throw new Error("Người dùng không tồn tại");
+  if (!user) throw new Error("Người dùng không tồn tại");
 
   const match = await bcrypt.compare(oldPassword, user.password);
   if (!match) throw new Error("Mật khẩu cũ không chính xác");
@@ -53,7 +59,21 @@ export const updateAvatar = async (userId, filePath) => {
 
   if (!profile) {
     // nếu chưa có profile thì tạo mới
-    return await Profile.create({ userId, avatar: filePath });
+    return await Profile.create({ user_id: userId, avatar: filePath });
+  }
+
+  // Xử lý xóa ảnh cũ nếu có
+  if (profile.avatar) {
+    // Đường dẫn file cũ (giả sử filePath chỉ là tên file, ví dụ: uuid.jpg)
+    const oldPath = path.join(__dirname, "..", "public", "avatar", path.basename(profile.avatar));
+    if (fs.existsSync(oldPath)) {
+      try {
+        fs.unlinkSync(oldPath);
+        console.log("Đã xóa avatar cũ:", oldPath);
+      } catch (err) {
+        console.error("Lỗi khi xóa ảnh cũ:", err);
+      }
+    }
   }
 
   // cập nhật avatar

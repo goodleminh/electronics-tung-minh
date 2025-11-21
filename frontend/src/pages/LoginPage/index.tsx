@@ -19,7 +19,14 @@ const LoginPage: React.FC = () => {
     // Kiểm tra login có thành công không
     if (loginUser.fulfilled.match(resultAction)) {
       toast.success(resultAction.payload.message);
-      setTimeout(() => navigate("/"), 1000);
+      const userRole = resultAction.payload.user?.role;
+      setTimeout(() => {
+        if (userRole === "seller") {
+          navigate("/seller/profile");
+        } else {
+          navigate("/");
+        }
+      }, 1000);
     } else {
       toast.error(resultAction.payload);
     }

@@ -8,6 +8,8 @@ export interface IStore {
   seller_id: number;
   name: string;
   description?: string | null;
+  image?: string | null;
+  status?: 'pending' | 'processing' | 'approved' | 'rejected';
   created_at?: string;
   updated_at?: string;
 }
@@ -52,7 +54,7 @@ export const fetchStoreById = createAsyncThunk<IStore, number | string, { reject
 
 export const createStore = createAsyncThunk<
   IStore,
-  { seller_id: number; name: string; description?: string },
+  { seller_id: number; name: string; description?: string; image?: string; status?: string },
   { rejectValue: string }
 >("stores/create", async (payload, { rejectWithValue }) => {
   try {
@@ -65,7 +67,7 @@ export const createStore = createAsyncThunk<
 
 export const updateStore = createAsyncThunk<
   IStore,
-  { id: number | string; data: { name?: string; description?: string } },
+  { id: number | string; data: { name?: string; description?: string; status?: string } },
   { rejectValue: string }
 >("stores/update", async ({ id, data }, { rejectWithValue }) => {
   try {

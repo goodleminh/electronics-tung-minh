@@ -1,4 +1,6 @@
 import { Store } from "../models/store.model.js";
+import fs from "fs";
+import path from "path";
 
 // lấy tất cả cửa hàng
 export const getAllStores = async () => {
@@ -12,6 +14,13 @@ export const getStoreById = async (id) => {
 };
 // tạo cửa hàng mới
 export const createStore = async (storeData) => {
+  // Nếu có image và file đã tồn tại thì xóa file cũ trước khi lưu (tránh rác do upload lại nhiều lần cùng tên)
+  if (storeData.image) {
+    const imgPath = path.join(process.cwd(), "src/public/store", storeData.image);
+    if (fs.existsSync(imgPath)) {
+      try { fs.unlinkSync(imgPath); } catch {}
+    }
+  }
   const newStore = await Store.create(storeData);
   return newStore;
 };
@@ -21,6 +30,13 @@ export const updateStore = async (id, storeData) => {
   if (!store) {
     throw new Error("Store not found");
   }
+  // Nếu có ảnh mới và đã có ảnh cũ thì xóa ảnh cũ
+  if (storeData.image && store.image && storeData.image !== store.image) {
+    const oldPath = path.join(process.cwd(), "src/public/store", store.image);
+    if (fs.existsSync(oldPath)) {
+      try { fs.unlinkSync(oldPath); } catch {}
+    }
+  }
   await store.update(storeData);
   return store;
 };
@@ -29,6 +45,13 @@ export const deleteStore = async (id) => {
   const store = await Store.findByPk(id);
   if (!store) {
     throw new Error("Store not found");
+  }
+  // Xóa ảnh khi xóa store
+  if (store.image) {
+    const imgPath = path.join(process.cwd(), "src/public/store", store.image);
+    if (fs.existsSync(imgPath)) {
+      try { fs.unlinkSync(imgPath); } catch {}
+    }
   }
   await store.destroy();
   return store;

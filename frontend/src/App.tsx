@@ -16,6 +16,8 @@ import ChangePasswordForm from "./components/ChangePasswordForm";
 import ForgotPasswordForm from "./pages/ForgotPasswordForm";
 import ResetPasswordPage from "./components/ResetPassword";
 import TrackOrderPage from "./pages/Trackorderpage";
+import SellerRegisterPage from "./pages/Seller_Register";
+import SellerProfilePage from "./pages/Seller_Profile";
 
 function App() {
   return (
@@ -34,6 +36,8 @@ function App() {
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/forgot" element={<ForgotPasswordForm />} />
           <Route path="/track-order" element={<TrackOrderPage />} />
+          <Route path="/seller/register" element={<SellerRegisterPage />} />
+          <Route path="/seller/profile" element={<SellerProfilePage />} />
           <Route
             path="/api/auth/reset-password/:token"
             element={<ResetPasswordPage />}
