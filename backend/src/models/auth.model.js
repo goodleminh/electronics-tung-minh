@@ -1,6 +1,7 @@
 import sequelize from "../config/dbConnection.js";
 import { DataTypes, Model } from "sequelize";
 import Profile from "./profile.model.js";
+import { Store } from "./store.model.js";
 
 export class User extends Model {}
 
@@ -32,6 +33,10 @@ User.init(
       type: DataTypes.ENUM("buyer", "seller", "admin"),
       allowNull: false,
       defaultValue: "buyer",
+    },
+    status: {
+      type: DataTypes.ENUM("Active", "Banned"),
+      defaultValue: "Active",
     },
     resetToken: {
       type: DataTypes.STRING,

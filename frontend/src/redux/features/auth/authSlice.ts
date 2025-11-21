@@ -9,6 +9,20 @@ export interface User {
   email: string;
   role?: string;
 }
+interface Users {
+  user_id: number;
+  username: string;
+  email: string;
+  role: string;
+  status: string;
+  Profile: {
+    phone?: string;
+    address?: string;
+    avatar?: string;
+    bio?: string;
+    birthday?: string;
+  };
+}
 
 interface AuthState {
   user: User | null;
@@ -18,6 +32,7 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   message: string | null;
+  users: Users[];
 }
 
 // State khởi tạo
@@ -31,6 +46,7 @@ const initialState: AuthState = {
   accessToken: localStorage.getItem("accessToken") || null,
   refreshToken: localStorage.getItem("refreshToken") || null,
   message: null,
+  users: [],
 };
 
 interface LoginPayload {
@@ -57,7 +73,7 @@ interface RegisterResponse {
 }
 
 //  Async Thunks
-
+// login
 export const loginUser = createAsyncThunk<
   LoginResponse,
   LoginPayload,
@@ -73,7 +89,7 @@ export const loginUser = createAsyncThunk<
     return rejectWithValue(err.message);
   }
 });
-
+//
 export const refreshAccessToken = createAsyncThunk(
   "auth/refresh",
   async (_, { rejectWithValue }) => {
@@ -86,7 +102,7 @@ export const refreshAccessToken = createAsyncThunk(
     }
   }
 );
-
+// register
 export const registerUser = createAsyncThunk<
   RegisterResponse,
   RegisterPayload,
@@ -99,7 +115,7 @@ export const registerUser = createAsyncThunk<
     return rejectWithValue(err.message);
   }
 });
-
+// lấy dữ liệu user đã đăng nhập
 export const fetchCurrentUser = createAsyncThunk(
   "auth/fetchCurrentUser",
   async (_, { rejectWithValue }) => {
@@ -107,14 +123,14 @@ export const fetchCurrentUser = createAsyncThunk(
     if (!accessToken) return rejectWithValue("No token");
 
     try {
-      const res = await authApis.getMe(accessToken);
+      const res = await authApis.getMe();
       return res.user;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || "Token invalid");
     }
   }
 );
-
+// quên mật khẩu
 export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
   async ({ email }: { email: string }, { rejectWithValue }) => {
@@ -123,6 +139,7 @@ export const forgotPassword = createAsyncThunk(
     return res.message;
   }
 );
+// reset password
 export const resetPassword = createAsyncThunk(
   "auth/resetPassword",
   async (
@@ -134,6 +151,54 @@ export const resetPassword = createAsyncThunk(
     return res.message;
   }
 );
+// get list users
+export const getAllUsers = createAsyncThunk("auth/getAllUsers", async () => {
+  try {
+    const res = await authApis.getAllUsers();
+    return res;
+  } catch (err: any) {
+    return err.response?.data?.message;
+  }
+});
+
+//delete user
+export const deleteUser = createAsyncThunk(
+  "auth/deleteUser",
+  async (id: number) => {
+    try {
+      const res = await authApis.deleteUser(id);
+      return res;
+    } catch (err: any) {
+      return err.response?.data?.message;
+    }
+  }
+);
+
+export const editUser = createAsyncThunk(
+  "auth/editUser",
+  async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
+    try {
+      const res = await authApis.editUser(id, data);
+      return res;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
+//create user
+export const createUser = createAsyncThunk(
+  "auth/createUser",
+  async (data: any, { rejectWithValue }) => {
+    try {
+      const res = await authApis.createUser(data);
+      return res;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || err);
+    }
+  }
+);
+
 //
 const authSlice = createSlice({
   name: "auth",
@@ -213,6 +278,60 @@ const authSlice = createSlice({
         state.message = action.payload as string;
       })
       .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Get all users
+      .addCase(getAllUsers.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getAllUsers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.users = action.payload;
+        console.log(action.payload);
+      })
+      .addCase(getAllUsers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      //Delete user
+      .addCase(deleteUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(deleteUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.users = state.users.filter(
+          (u) => u.user_id !== action.payload.user_id
+        );
+      })
+      .addCase(deleteUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      //edit user
+      .addCase(editUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(editUser.fulfilled, (state, action) => {
+        state.users = state.users.map((u) =>
+          u.user_id === action.payload.user_id ? action.payload : u
+        );
+      })
+      .addCase(editUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        console.log(action.payload);
+      })
+      //create user
+      .addCase(createUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        console.log(action.payload);
+      })
+      .addCase(createUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

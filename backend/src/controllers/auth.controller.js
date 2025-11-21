@@ -34,6 +34,7 @@ export const login = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        status: user.status,
       },
     });
   } catch (err) {
@@ -91,5 +92,47 @@ export const resetPassword = async (req, res) => {
     res.status(200).json({ message: "Đổi mật khẩu thành công!" });
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+};
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await authService.getAllUsers();
+    res.status(200).json(users);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const message = await authService.deleteUser(id);
+    res.status(200).json(message);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+//
+export const editUser = async (req, res) => {
+  try {
+    const data = req.body;
+
+    const updatedUser = await authService.editUser(Number(req.params.id), data);
+
+    res.status(200).json(updatedUser);
+  } catch (err) {
+    res.status(404).json({ message: err.message || "Server error" });
+  }
+};
+
+export const createUserByAdmin = async (req, res) => {
+  try {
+    const data = req.body;
+    const user = await authService.createUserByAdmin(data);
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -8,7 +9,10 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { type AppDispatch, type RootState } from "../../redux/store";
 import { Modal } from "antd";
-import { getFormattedPricing, getActivePricing } from "../../utils/price/priceUtil";
+import {
+  getFormattedPricing,
+  getActivePricing,
+} from "../../utils/price/priceUtil";
 import { actAddToCart } from "../../redux/features/cart/cartSlice";
 
 const ProductDetail = () => {
@@ -63,7 +67,9 @@ const ProductDetail = () => {
   //  tăng giảm (clamp by stock if provided)
   const handleIncrease = () => {
     const max = productDetail?.stock ?? Number.POSITIVE_INFINITY;
-    setQuantity((prev) => (Number.isFinite(max) ? Math.min(prev + 1, max as number) : prev + 1));
+    setQuantity((prev) =>
+      Number.isFinite(max) ? Math.min(prev + 1, max as number) : prev + 1
+    );
   };
   const handleDecrease = () => {
     // Không cho giảm dưới 1
@@ -88,7 +94,9 @@ const ProductDetail = () => {
   const decAdd = () => setAddQty((q) => (q > 1 ? q - 1 : 1));
   const incAdd = () => {
     const max = productDetail?.stock ?? Number.POSITIVE_INFINITY;
-    setAddQty((q) => (Number.isFinite(max) ? Math.min(q + 1, max as number) : q + 1));
+    setAddQty((q) =>
+      Number.isFinite(max) ? Math.min(q + 1, max as number) : q + 1
+    );
   };
   // NEW: helper to get buyer id robustly
   const getBuyerId = () => {
@@ -141,11 +149,13 @@ const ProductDetail = () => {
     }
     // Chốt số lượng hợp lệ theo tồn kho
     const max = productDetail.stock ?? Number.POSITIVE_INFINITY;
-    const finalQty = Number.isFinite(max) ? Math.min(quantity, max as number) : quantity;
+    const finalQty = Number.isFinite(max)
+      ? Math.min(quantity, max as number)
+      : quantity;
     const active = getActivePricing(productDetail as any);
     const unitPrice = Number(active.finalPrice);
     const total = unitPrice * finalQty;
-    navigate('/orders', {
+    navigate("/orders", {
       state: {
         checkout: {
           items: [
@@ -277,7 +287,10 @@ const ProductDetail = () => {
               <button
                 className="px-2 py-1 cursor-pointer"
                 onClick={handleIncrease}
-                disabled={Number.isFinite(productDetail?.stock) && quantity >= (productDetail?.stock ?? Infinity)}
+                disabled={
+                  Number.isFinite(productDetail?.stock) &&
+                  quantity >= (productDetail?.stock ?? Infinity)
+                }
                 title={productDetail?.stock === 0 ? "Hết hàng" : undefined}
               >
                 +
@@ -291,7 +304,9 @@ const ProductDetail = () => {
               className="flex-1 bg-[#8b2e0f] text-white py-3 hover:bg-[#2b2b2b] cursor-pointer"
               onClick={openAddModal}
               disabled={productDetail.stock === 0}
-              title={productDetail.stock === 0 ? "Hết hàng" : "Thêm vào giỏ hàng"}
+              title={
+                productDetail.stock === 0 ? "Hết hàng" : "Thêm vào giỏ hàng"
+              }
             >
               THÊM VÀO GIỎ HÀNG
             </button>
@@ -299,7 +314,7 @@ const ProductDetail = () => {
               className="flex-1 bg-[#8b2e0f] py-3 hover:bg-[#2b2b2b] text-white cursor-pointer"
               onClick={handleBuyNow}
               disabled={productDetail.stock === 0}
-              title={productDetail.stock === 0 ? 'Hết hàng' : 'Mua ngay'}
+              title={productDetail.stock === 0 ? "Hết hàng" : "Mua ngay"}
             >
               MUA NGAY
             </button>
@@ -329,18 +344,31 @@ const ProductDetail = () => {
                 {infoModal === "delivery" ? (
                   <>
                     <h2 className="text-2xl font-medium mb-3">Giao hàng</h2>
-                    <p>Tất cả đơn hàng được giao qua đơn vị vận chuyển tiêu chuẩn.</p>
+                    <p>
+                      Tất cả đơn hàng được giao qua đơn vị vận chuyển tiêu
+                      chuẩn.
+                    </p>
                     <p>Miễn phí giao hàng cho đơn trên 500.000đ.</p>
-                    <p className="mb-6">Tất cả đơn hàng đều có mã theo dõi vận chuyển.</p>
+                    <p className="mb-6">
+                      Tất cả đơn hàng đều có mã theo dõi vận chuyển.
+                    </p>
                     <h2 className="text-2xl font-medium mb-3">Đổi trả</h2>
                     <p>
-                      Sản phẩm đổi trả trong vòng 14 ngày kể từ ngày nhận hàng, giữ nguyên tình trạng ban đầu sẽ được hoàn tiền hoặc đổi sản phẩm khác.
+                      Sản phẩm đổi trả trong vòng 14 ngày kể từ ngày nhận hàng,
+                      giữ nguyên tình trạng ban đầu sẽ được hoàn tiền hoặc đổi
+                      sản phẩm khác.
                     </p>
-                    <p>Hoàn tiền sẽ được chuyển về phương thức thanh toán ban đầu.</p>
                     <p>
-                      Khách hàng chịu phí vận chuyển khi đổi trả, phí vận chuyển ban đầu không hoàn lại.
+                      Hoàn tiền sẽ được chuyển về phương thức thanh toán ban
+                      đầu.
                     </p>
-                    <p className="mb-6">Các sản phẩm giảm giá không áp dụng đổi trả.</p>
+                    <p>
+                      Khách hàng chịu phí vận chuyển khi đổi trả, phí vận chuyển
+                      ban đầu không hoàn lại.
+                    </p>
+                    <p className="mb-6">
+                      Các sản phẩm giảm giá không áp dụng đổi trả.
+                    </p>
                     <h2 className="text-2xl font-medium mb-3">Hỗ trợ</h2>
                     <p>Nếu bạn có thắc mắc, vui lòng liên hệ:</p>
                     <p>
@@ -352,10 +380,13 @@ const ProductDetail = () => {
                   </>
                 ) : (
                   <>
-                    <h2 className="text-2xl font-medium mb-3">Hỏi về sản phẩm</h2>
+                    <h2 className="text-2xl font-medium mb-3">
+                      Hỏi về sản phẩm
+                    </h2>
                     <p>Cần thêm thông tin về sản phẩm? Liên hệ:</p>
                     <p>
-                      Email:<span className="font-medium"> support@example.com</span>
+                      Email:
+                      <span className="font-medium"> support@example.com</span>
                     </p>
                     <p>
                       SĐT:<span className="font-medium"> 0123 456 789</span>
@@ -396,33 +427,27 @@ const ProductDetail = () => {
             <div>
               <h2 className="text-lg font-bold mb-4">Chi tiết sản phẩm</h2>
               <ul className="list-disc ml-6 space-y-2">
-                <li>
-                  Sản phẩm chính hãng, chất lượng đảm bảo.
-                </li>
-                <li>
-                  Đổi trả trong 14 ngày nếu có lỗi từ nhà sản xuất.
-                </li>
-                <li>
-                  Hỗ trợ bảo hành 12 tháng.
-                </li>
-                <li>
-                  Giao hàng toàn quốc, thanh toán khi nhận hàng.
-                </li>
-                <li>
-                  Liên hệ CSKH để được tư vấn chi tiết.
-                </li>
+                <li>Sản phẩm chính hãng, chất lượng đảm bảo.</li>
+                <li>Đổi trả trong 14 ngày nếu có lỗi từ nhà sản xuất.</li>
+                <li>Hỗ trợ bảo hành 12 tháng.</li>
+                <li>Giao hàng toàn quốc, thanh toán khi nhận hàng.</li>
+                <li>Liên hệ CSKH để được tư vấn chi tiết.</li>
               </ul>
 
-              <h3 className="text-lg font-bold mt-8 mb-4">Điểm nổi bật của sản phẩm</h3>
+              <h3 className="text-lg font-bold mt-8 mb-4">
+                Điểm nổi bật của sản phẩm
+              </h3>
               <ul className="list-disc ml-6 space-y-2">
                 <li>
                   Thiết kế hiện đại, sang trọng với vỏ kim loại nguyên khối.
                 </li>
                 <li>
-                  Hiệu năng mạnh mẽ, xử lý mượt mà các tác vụ văn phòng và đồ họa.
+                  Hiệu năng mạnh mẽ, xử lý mượt mà các tác vụ văn phòng và đồ
+                  họa.
                 </li>
                 <li>
-                  Màn hình có độ phân giải cao, mang lại trải nghiệm hình ảnh sống động, sắc nét.
+                  Màn hình có độ phân giải cao, mang lại trải nghiệm hình ảnh
+                  sống động, sắc nét.
                 </li>
                 <li>
                   Thời lượng pin ấn tượng, đủ dùng cho cả ngày dài làm việc.
@@ -449,7 +474,10 @@ const ProductDetail = () => {
           {activeTab === "reviews" && (
             <div>
               <h2 className="text-lg font-bold mb-4">Đánh giá (0)</h2>
-              <p>Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá sản phẩm này!</p>
+              <p>
+                Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá sản phẩm
+                này!
+              </p>
             </div>
           )}
         </div>
@@ -548,7 +576,13 @@ const ProductDetail = () => {
         centered
         styles={{ content: { borderRadius: 0, padding: 16 } }}
         className="rounded-none"
-        okButtonProps={{ style: { backgroundColor: '#8b2e0f', borderColor: '#8b2e0f', borderRadius: 0 } }}
+        okButtonProps={{
+          style: {
+            backgroundColor: "#8b2e0f",
+            borderColor: "#8b2e0f",
+            borderRadius: 0,
+          },
+        }}
         cancelButtonProps={{ style: { borderRadius: 0 } }}
       >
         {productDetail && (
@@ -572,12 +606,18 @@ const ProductDetail = () => {
                 const pr = getFormattedPricing(productDetail as any);
                 return (
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="text-[#8b2e0f] font-semibold">{pr.final}</span>
+                    <span className="text-[#8b2e0f] font-semibold">
+                      {pr.final}
+                    </span>
                     {pr.original && (
-                      <span className="text-gray-400 line-through text-sm">{pr.original}</span>
+                      <span className="text-gray-400 line-through text-sm">
+                        {pr.original}
+                      </span>
                     )}
                     {pr.isDiscount && pr.percent !== undefined && (
-                      <span className="bg-[#8b2e0f] text-white text-[10px] font-semibold px-2 py-0.5">-{pr.percent}%</span>
+                      <span className="bg-[#8b2e0f] text-white text-[10px] font-semibold px-2 py-0.5">
+                        -{pr.percent}%
+                      </span>
                     )}
                   </div>
                 );
@@ -592,13 +632,18 @@ const ProductDetail = () => {
                   >
                     -
                   </button>
-                  <span className="px-4 min-w-[2rem] text-center">{addQty}</span>
+                  <span className="px-4 min-w-[2rem] text-center">
+                    {addQty}
+                  </span>
                   <button
                     className="px-3 py-1 hover:bg-gray-50"
                     onClick={incAdd}
                     aria-label="Tăng"
-                    disabled={Number.isFinite(productDetail?.stock) && addQty >= (productDetail?.stock ?? Infinity)}
-                    title={productDetail?.stock === 0 ? 'Hết hàng' : undefined}
+                    disabled={
+                      Number.isFinite(productDetail?.stock) &&
+                      addQty >= (productDetail?.stock ?? Infinity)
+                    }
+                    title={productDetail?.stock === 0 ? "Hết hàng" : undefined}
                   >
                     +
                   </button>
@@ -623,7 +668,9 @@ const ProductDetail = () => {
         title={null}
         styles={{ content: { borderRadius: 0 } }}
         className="rounded-none"
-        okButtonProps={{ style: { backgroundColor: '#8b2e0f', borderRadius: 0 } }}
+        okButtonProps={{
+          style: { backgroundColor: "#8b2e0f", borderRadius: 0 },
+        }}
         cancelButtonProps={{ style: { borderRadius: 0 } }}
       >
         Bạn cần đăng nhập

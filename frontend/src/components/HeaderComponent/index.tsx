@@ -12,6 +12,7 @@ import { Link, useNavigate } from "react-router-dom";
 import type { ICategory } from "../../redux/features/category/categorySlice";
 import { fetchCurrentUser, logout } from "../../redux/features/auth/authSlice";
 import { actFetchCartItems } from "../../redux/features/cart/cartSlice";
+import { clearProfile } from "../../redux/features/profile/profileSlice";
 
 const Header = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -90,6 +91,7 @@ const Header = () => {
   //handle logout
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(clearProfile());
     setIsOpen(false);
     navigate("/login");
   };
@@ -186,18 +188,19 @@ const Header = () => {
                 {cartCount > 0 && (
                   <span
                     style={{
-                      position: 'absolute',
-                      top: '-6px',
-                      right: '-10px',
-                      background: '#e53935',
-                      color: 'white',
-                      borderRadius: '50%','fontSize': '12px',
-                      minWidth: '18px',
-                      height: '18px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '0 5px',
+                      position: "absolute",
+                      top: "-6px",
+                      right: "-10px",
+                      background: "#e53935",
+                      color: "white",
+                      borderRadius: "50%",
+                      fontSize: "12px",
+                      minWidth: "18px",
+                      height: "18px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "0 5px",
                       fontWeight: 600,
                       zIndex: 2,
                     }}
@@ -428,7 +431,9 @@ const Header = () => {
         title={null}
         styles={{ content: { borderRadius: 0 } }}
         className="rounded-none"
-        okButtonProps={{ style: { backgroundColor: '#8b2e0f', borderRadius: 0 } }}
+        okButtonProps={{
+          style: { backgroundColor: "#8b2e0f", borderRadius: 0 },
+        }}
         cancelButtonProps={{ style: { borderRadius: 0 } }}
       >
         Bạn cần đăng nhập
@@ -440,12 +445,14 @@ const Header = () => {
         onCancel={() => setSellerModalOpen(false)}
         onOk={() => setSellerModalOpen(false)}
         okText="Đã hiểu"
-        cancelButtonProps={{ style: { display: 'none' } }}
+        cancelButtonProps={{ style: { display: "none" } }}
         centered
         title={null}
         styles={{ content: { borderRadius: 0 } }}
         className="rounded-none"
-        okButtonProps={{ style: { backgroundColor: '#8b2e0f', borderRadius: 0 } }}
+        okButtonProps={{
+          style: { backgroundColor: "#8b2e0f", borderRadius: 0 },
+        }}
       >
         Bạn không phải là người mua hàng
       </Modal>
