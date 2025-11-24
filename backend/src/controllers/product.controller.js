@@ -31,35 +31,69 @@ export const getProductById = async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 };
-// Tạo sản phẩm mới
-export const createProduct = async (req, res) => {
+// create by seller
+// export const createProduct = async (req, res) => {
+//   try {
+//     const productData = req.body;
+//     if (req.file) {
+//       productData.image = req.file.filename;
+//     }
+//     const newProduct = await productService.createProduct(productData);
+//     res.status(201).send(newProduct);
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+//create by admin
+export const createProductAdmin = async (req, res) => {
   try {
     const productData = req.body;
-    if (req.file) {
-      productData.image = req.file.filename;
-    }
-    const newProduct = await productService.createProduct(productData);
-    res.status(201).send(newProduct);
+    const imageFile = req.file;
+    const newProduct = await productService.createProduct(
+      productData,
+      imageFile
+    );
+    res.status(201).json(newProduct);
   } catch (err) {
-    res.status(500).send({ message: err.message });
+    res.status(500).json({ message: err.message });
   }
 };
+
 // Sửa thông tin sản phẩm
-export const updateProduct = async (req, res) => {
+// export const updateProduct = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const productData = req.body;
+//     if (req.file) {
+//       productData.image = req.file.filename;
+//     }
+//     const updatedProduct = await productService.updateProduct(id, productData);
+//     if (!updatedProduct)
+//       return res.status(400).send({ message: "Không tìm thấy sản phẩm" });
+//     res.status(200).json(updatedProduct);
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+//update by admin
+export const updateProductByAdmin = async (req, res) => {
   try {
     const { id } = req.params;
     const productData = req.body;
-    if (req.file) {
-      productData.image = req.file.filename;
-    }
-    const updatedProduct = await productService.updateProduct(id, productData);
+    const imageFile = req.file;
+    const updatedProduct = await productService.updateProduct(
+      id,
+      productData,
+      imageFile
+    );
     if (!updatedProduct)
       return res.status(400).send({ message: "Không tìm thấy sản phẩm" });
-    res.status(200).send(updatedProduct);
+    res.status(200).json(updatedProduct);
   } catch (err) {
-    res.status(500).send({ message: err.message });
+    res.status(500).json({ message: err.message });
   }
 };
+
 // Xoá sản phẩm
 export const deleteProduct = async (req, res) => {
   try {

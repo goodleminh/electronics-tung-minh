@@ -78,6 +78,7 @@ const EditUserModal = ({ visible, onClose, user }: EditUserModalProps) => {
 
     const payload = {
       ...form,
+
       birthday: birthdayValue,
     };
 
@@ -98,52 +99,150 @@ const EditUserModal = ({ visible, onClose, user }: EditUserModalProps) => {
       onCancel={onClose}
       footer={null}
     >
-      <form className="grid gap-4 grid-cols-1 md:grid-cols-2">
-        <input
-          name="username"
-          placeholder="Username"
-          value={form.username}
-          onChange={handleChange}
-        />
-        <input
-          name="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-        />
-        <input
-          name="phone"
-          placeholder="Phone"
-          value={form.phone}
-          onChange={handleChange}
-        />
-        <input
-          name="address"
-          placeholder="Address"
-          value={form.address}
-          onChange={handleChange}
-        />
-        <input
-          name="birthday"
-          type="date"
-          placeholder="Birthday"
-          value={form.birthday}
-          onChange={handleChange}
-        />
-        <select name="role" value={form.role} onChange={handleChange}>
-          <option value="buyer">buyer</option>
-          <option value="seller">seller</option>
-          <option value="admin">admin</option>
-        </select>
-        <select name="status" value={form.status} onChange={handleChange}>
-          <option value="Active">Active</option>
-          <option value="Banned">Banned</option>
-        </select>
-        <div className="md:col-span-2 mt-2 flex gap-2">
-          <button type="button" onClick={handleEdit}>
+      <form
+        className="grid gap-4 sm:gap-6
+                 grid-cols-1 md:grid-cols-2
+                 items-start"
+      >
+        {/* Username */}
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Username
+          </label>
+          <input
+            type="text"
+            name="username"
+            value={form.username}
+            onChange={handleChange}
+            className="w-full px-4 py-2 rounded-lg border border-gray-200
+               bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400
+               transition"
+            placeholder="Nhập username"
+          />
+        </div>
+        {/* Email  */}
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Email
+          </label>
+          <input
+            type="text"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            className="w-full px-4 py-2 rounded-lg border border-gray-200
+                 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400
+                 transition"
+            placeholder="Nhập email"
+          />
+        </div>
+        {/* Phone */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Phone
+          </label>
+          <input
+            type="text"
+            name="phone"
+            value={form.phone}
+            onChange={handleChange}
+            className="w-full px-4 py-2 rounded-lg border border-gray-200
+                 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400
+                 transition"
+            placeholder="Số điện thoại"
+          />
+        </div>
+        {/* Birthday */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Birthday
+          </label>
+          <input
+            type="date"
+            name="birthday"
+            value={form.birthday}
+            onChange={handleChange}
+            className="w-full px-4 py-2 rounded-lg border border-gray-200
+                 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400
+                 transition"
+          />
+        </div>
+        {/* Address (full width) */}
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Address
+          </label>
+          <input
+            type="text"
+            name="address"
+            value={form.address}
+            onChange={handleChange}
+            className="w-full px-4 py-2 rounded-lg border border-gray-200
+                 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400
+                 transition"
+            placeholder="Địa chỉ"
+          />
+        </div>
+        {/* Role */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Role
+          </label>
+          <div className="relative">
+            <select
+              name="role"
+              value={form.role}
+              onChange={handleChange}
+              className="appearance-none w-full px-4 py-2 rounded-lg border border-gray-200
+                   bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400
+                   transition pr-8"
+            >
+              <option value="buyer">buyer</option>
+              <option value="seller">seller</option>
+              <option value="admin">admin</option>
+            </select>
+            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
+              ▾
+            </span>
+          </div>
+        </div>
+        {/* Status */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Status
+          </label>
+          <div className="relative">
+            <select
+              name="status"
+              value={form.status}
+              onChange={handleChange}
+              className="appearance-none w-full px-4 py-2 rounded-lg border border-gray-200
+                   bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400
+                   transition pr-8"
+            >
+              <option value="Active">Active</option>
+              <option value="Banned">Banned</option>
+            </select>
+            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
+              ▾
+            </span>
+          </div>
+        </div>
+        {/* Submit */}
+        <div className="md:col-span-2 flex items-center justify-start gap-3 mt-1">
+          <button
+            type="button"
+            onClick={handleEdit}
+            className="px-5 py-2 bg-[#8b2e0f] hover:bg-[#2b2b2b] text-white rounded-lg transition cursor-pointer"
+          >
             Lưu
           </button>
-          <button type="button" onClick={onClose}>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2 border rounded-lg text-gray-700 hover:bg-gray-50 transition cursor-pointer"
+          >
             Hủy
           </button>
         </div>

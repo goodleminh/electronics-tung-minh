@@ -1,8 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "../../redux/store";
-import { updateProfileThunk, fetchProfile } from "../../redux/features/profile/profileSlice";
-import { fetchStores, createStore, updateStore, fetchStoreBySellerId } from "../../redux/features/store/storeSlice";
+import {
+  updateProfileThunk,
+  fetchProfile,
+} from "../../redux/features/profile/profileSlice";
+import {
+  fetchStores,
+  createStore,
+  updateStore,
+  fetchStoreBySellerId,
+} from "../../redux/features/store/storeSlice";
 import { Modal, Button, message } from "antd";
 import { useAddress } from "../../hooks/useAddress";
 import "./style.css";
@@ -28,7 +37,7 @@ const SellerProfilePage: React.FC = () => {
   React.useEffect(() => {
     if (profile?.user_id) {
       dispatch(fetchStoreBySellerId(profile.user_id) as any);
-      console.log('Fetching store for seller_id:', profile.user_id);
+      console.log("Fetching store for seller_id:", profile.user_id);
     }
   }, [dispatch, profile?.user_id]);
   // ✅ BƯỚC 3: Log dữ liệu profile để debug
@@ -69,11 +78,15 @@ const SellerProfilePage: React.FC = () => {
   const isValidPhone = /^0\d{9,10}$/.test(editForm.phone.trim());
   const isValidAddress = !!editForm.address.trim();
 
-  const showEmailError = (touched.email || saving) && (!editForm.email.trim() || !isValidEmail);
-  const showPhoneError = (touched.phone || saving) && (!editForm.phone.trim() || !isValidPhone);
+  const showEmailError =
+    (touched.email || saving) && (!editForm.email.trim() || !isValidEmail);
+  const showPhoneError =
+    (touched.phone || saving) && (!editForm.phone.trim() || !isValidPhone);
   const showAddressError = (touched.address || saving) && !isValidAddress;
 
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleEditChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setEditForm((prev) => ({ ...prev, [name]: value }));
     setTouched((prev) => ({ ...prev, [name]: true }));
@@ -100,15 +113,17 @@ const SellerProfilePage: React.FC = () => {
           avatar = data.avatar;
         }
       }
-      await dispatch(updateProfileThunk({
-        username: editForm.username,
-        email: editForm.email,
-        phone: editForm.phone,
-        bio: editForm.bio,
-        birthday: editForm.birthday,
-        address: editForm.address,
-        avatar,
-      }) as any);
+      await dispatch(
+        updateProfileThunk({
+          username: editForm.username,
+          email: editForm.email,
+          phone: editForm.phone,
+          bio: editForm.bio,
+          birthday: editForm.birthday,
+          address: editForm.address,
+          avatar,
+        }) as any
+      );
       await dispatch(fetchProfile() as any);
       setEditModal(false);
       message.success("Cập nhật thành công!");
@@ -123,26 +138,38 @@ const SellerProfilePage: React.FC = () => {
 
   // Địa chỉ động dùng custom hook
   const {
-    provinces, districts, wards,
-    selectedProvince, selectedDistrict, selectedWard,
-    setSelectedProvince, setSelectedDistrict, setSelectedWard,
-    fetchDistricts, fetchWards
+    provinces,
+    districts,
+    wards,
+    selectedProvince,
+    selectedDistrict,
+    selectedWard,
+    setSelectedProvince,
+    setSelectedDistrict,
+    setSelectedWard,
+    fetchDistricts,
+    fetchWards,
   } = useAddress();
   const [detailAddress, setDetailAddress] = useState("");
 
   React.useEffect(() => {
     if (!selectedProvince || !selectedDistrict || !selectedWard) return;
-    const province = provinces.find(p => p.code == selectedProvince)?.name || '';
-    const district = districts.find(d => d.code == selectedDistrict)?.name || '';
-    const ward = wards.find(w => w.code == selectedWard)?.name || '';
-    setEditForm(prev => ({ ...prev, address: `${detailAddress}, ${ward}, ${district}, ${province}` }));
+    const province =
+      provinces.find((p) => p.code == selectedProvince)?.name || "";
+    const district =
+      districts.find((d) => d.code == selectedDistrict)?.name || "";
+    const ward = wards.find((w) => w.code == selectedWard)?.name || "";
+    setEditForm((prev) => ({
+      ...prev,
+      address: `${detailAddress}, ${ward}, ${district}, ${province}`,
+    }));
   }, [selectedProvince, selectedDistrict, selectedWard, detailAddress]);
 
   // Hàm phân tích ngược địa chỉ và set lại dropdown khi mở modal
   const handleOpenEditModal = async () => {
     if (editForm.address) {
       // Tách địa chỉ: "chi tiết, phường/xã, quận/huyện, tỉnh/thành"
-      const parts = editForm.address.split(',').map(s => s.trim());
+      const parts = editForm.address.split(",").map((s) => s.trim());
       if (parts.length === 4) {
         setDetailAddress(parts[0]);
         // Tìm code tỉnh
@@ -150,7 +177,9 @@ const SellerProfilePage: React.FC = () => {
         if (provinceObj) {
           setSelectedProvince(provinceObj.code);
           const districtsData = await fetchDistricts(provinceObj.code);
-          const districtObj = districtsData.find((d: any) => d.name === parts[2]);
+          const districtObj = districtsData.find(
+            (d: any) => d.name === parts[2]
+          );
           if (districtObj) {
             setSelectedDistrict(districtObj.code);
             const wardsData = await fetchWards(districtObj.code);
@@ -167,7 +196,11 @@ const SellerProfilePage: React.FC = () => {
 
   // Thêm state và logic cho modal cửa hàng
   const [storeModal, setStoreModal] = useState(false);
-  const [storeForm, setStoreForm] = useState<{ name: string; description: string; image: string | File }>({
+  const [storeForm, setStoreForm] = useState<{
+    name: string;
+    description: string;
+    image: string | File;
+  }>({
     name: "",
     description: "",
     image: "",
@@ -177,12 +210,14 @@ const SellerProfilePage: React.FC = () => {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
   // Thêm state cho logo store preview và file upload
-  const [storeImagePreview, setStoreImagePreview] = useState<string | null>(null);
+  const [storeImagePreview, setStoreImagePreview] = useState<string | null>(
+    null
+  );
   const [newStoreImageFile, setNewStoreImageFile] = useState<File | null>(null);
 
   // Khi mở modal: nếu là cập nhật thì fill dữ liệu, nếu tạo mới thì reset trắng
   const handleOpenStoreModal = () => {
-    console.log('myStore', myStore); // Log dữ liệu store lấy từ Redux
+    console.log("myStore", myStore); // Log dữ liệu store lấy từ Redux
     if (myStore) {
       setStoreForm({
         name: myStore.name || "",
@@ -196,10 +231,14 @@ const SellerProfilePage: React.FC = () => {
   };
 
   // Helper hiển thị ảnh linh hoạt
-  const getImageUrl = (imgName: string | File | undefined | null, type: 'avatar' | 'store') => {
+  const getImageUrl = (
+    imgName: string | File | undefined | null,
+    type: "avatar" | "store"
+  ) => {
     if (!imgName) return "https://i.imgur.com/your-logo.png";
     if (imgName instanceof File) return URL.createObjectURL(imgName);
-    if (typeof imgName === "string" && imgName.startsWith("http")) return imgName;
+    if (typeof imgName === "string" && imgName.startsWith("http"))
+      return imgName;
     return `${import.meta.env.VITE_API_URL}/public/${type}/${imgName}`;
   };
 
@@ -212,11 +251,14 @@ const SellerProfilePage: React.FC = () => {
         const formData = new FormData();
         formData.append("image", newStoreImageFile);
         const token = localStorage.getItem("accessToken");
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/stores/image`, {
-          method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          body: formData,
-        });
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/stores/image`,
+          {
+            method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: formData,
+          }
+        );
         const data = await res.json();
         if (data && data.image) {
           imageFileName = data.image; // Đảm bảo lấy đúng tên file trả về
@@ -226,7 +268,7 @@ const SellerProfilePage: React.FC = () => {
         }
       }
       const payload = {
-        seller_id: profile?.user_id!, // Đảm bảo luôn có seller_id
+        seller_id: profile?.user_id, // Đảm bảo luôn có seller_id
         name: storeForm.name,
         description: storeForm.description,
         image: imageFileName,
@@ -235,7 +277,9 @@ const SellerProfilePage: React.FC = () => {
         await dispatch(createStore(payload) as any);
         message.success("Tạo cửa hàng thành công!");
       } else {
-        await dispatch(updateStore({ id: myStore.store_id, data: payload }) as any);
+        await dispatch(
+          updateStore({ id: myStore.store_id, data: payload }) as any
+        );
         message.success("Cập nhật cửa hàng thành công!");
       }
       setStoreModal(false);
@@ -243,7 +287,7 @@ const SellerProfilePage: React.FC = () => {
       setStoreImagePreview(null);
       setNewStoreImageFile(null);
     } catch (error) {
-      console.error('STORE SUBMIT ERROR', error);
+      console.error("STORE SUBMIT ERROR", error);
       message.error("Có lỗi xảy ra khi lưu cửa hàng!");
     }
   };
@@ -288,33 +332,56 @@ const SellerProfilePage: React.FC = () => {
                 })()}
                 alt="avatar"
                 className="w-full h-full object-cover"
-                onError={e => {
+                onError={(e) => {
                   e.currentTarget.src = "o.png";
                 }}
               />
             </div>
             <div className="w-full">
               <div className="font-bold text-xl text-[#8b2e0f] mb-2 text-center md:text-left">
-                {user?.username || <span className="text-red-600">bạn chưa thêm thông tin</span>}
+                {user?.username || (
+                  <span className="text-red-600">bạn chưa thêm thông tin</span>
+                )}
               </div>
               <div className="mb-2">
                 <span className="font-semibold">Ngày sinh:</span>{" "}
-                {profile?.Profile?.birthday ? profile.Profile.birthday : <span className="text-red-600">bạn chưa thêm thông tin</span>}
+                {profile?.Profile?.birthday ? (
+                  profile.Profile.birthday
+                ) : (
+                  <span className="text-red-600">bạn chưa thêm thông tin</span>
+                )}
               </div>
               <div className="mb-2">
-                <span className="font-semibold">Email:</span> {user?.email || <span className="text-red-600">bạn chưa thêm thông tin</span>}
+                <span className="font-semibold">Email:</span>{" "}
+                {user?.email || (
+                  <span className="text-red-600">bạn chưa thêm thông tin</span>
+                )}
               </div>
               <div className="mb-2">
                 <span className="font-semibold">Số điện thoại:</span>{" "}
-                {profile?.Profile?.phone ? profile.Profile.phone : <span className="text-red-600">bạn chưa thêm thông tin</span>}
+                {profile?.Profile?.phone ? (
+                  profile.Profile.phone
+                ) : (
+                  <span className="text-red-600">bạn chưa thêm thông tin</span>
+                )}
               </div>
               <div className="mb-2">
                 <span className="font-semibold">Địa chỉ:</span>{" "}
-                {profile?.Profile?.address ? profile.Profile.address : <span className="text-red-600">bạn chưa thêm thông tin</span>}
+                {profile?.Profile?.address ? (
+                  profile.Profile.address
+                ) : (
+                  <span className="text-red-600">bạn chưa thêm thông tin</span>
+                )}
               </div>
               <div className="mb-2">
                 <span className="font-semibold">Bio:</span>{" "}
-                {profile?.Profile?.bio ? <span className="italic text-gray-600">{profile.Profile.bio}</span> : <span className="text-red-600">bạn chưa thêm thông tin</span>}
+                {profile?.Profile?.bio ? (
+                  <span className="italic text-gray-600">
+                    {profile.Profile.bio}
+                  </span>
+                ) : (
+                  <span className="text-red-600">bạn chưa thêm thông tin</span>
+                )}
               </div>
             </div>
             <button
@@ -327,7 +394,11 @@ const SellerProfilePage: React.FC = () => {
               open={editModal}
               onCancel={() => setEditModal(false)}
               footer={null}
-              title={<span className="text-xl font-bold">Cập nhật thông tin cá nhân</span>}
+              title={
+                <span className="text-xl font-bold">
+                  Cập nhật thông tin cá nhân
+                </span>
+              }
               width={480}
               styles={{ content: { borderRadius: 0 }, body: { padding: 24 } }}
             >
@@ -335,17 +406,21 @@ const SellerProfilePage: React.FC = () => {
               <div className="flex flex-col items-center mb-4">
                 <div className="w-28 h-28 rounded-full overflow-hidden border border-[#8b2e0f] bg-gray-100 flex items-center justify-center mb-2">
                   <img
-                    src={avatarPreview || (() => {
-                      const API_URL = import.meta.env.VITE_API_URL;
-                      let avatarSrc = editForm.avatar || profile?.Profile?.avatar || "";
-                      if (avatarSrc && !avatarSrc.startsWith("http")) {
-                        avatarSrc = `${API_URL}/public/avatar/${avatarSrc}`;
-                      }
-                      return avatarSrc || "o.png";
-                    })()}
+                    src={
+                      avatarPreview ||
+                      (() => {
+                        const API_URL = import.meta.env.VITE_API_URL;
+                        let avatarSrc =
+                          editForm.avatar || profile?.Profile?.avatar || "";
+                        if (avatarSrc && !avatarSrc.startsWith("http")) {
+                          avatarSrc = `${API_URL}/public/avatar/${avatarSrc}`;
+                        }
+                        return avatarSrc || "o.png";
+                      })()
+                    }
                     alt="avatar"
                     className="w-full h-full object-cover"
-                    onError={e => {
+                    onError={(e) => {
                       e.currentTarget.src = "o.png";
                     }}
                   />
@@ -361,7 +436,7 @@ const SellerProfilePage: React.FC = () => {
                 </label>
               </div>
               <form
-                onSubmit={e => {
+                onSubmit={(e) => {
                   e.preventDefault();
                   handleEditSave();
                 }}
@@ -383,13 +458,17 @@ const SellerProfilePage: React.FC = () => {
                     name="email"
                     value={editForm.email}
                     onChange={handleEditChange}
-                    onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
+                    onBlur={() =>
+                      setTouched((prev) => ({ ...prev, email: true }))
+                    }
                     className="border border-[#8b2e0f] p-2 w-full rounded-none"
                     required
                   />
                   {showEmailError && (
                     <div className="text-red-600 text-sm mt-1">
-                      { !editForm.email.trim() ? 'Email không được để trống' : 'Email không hợp lệ' }
+                      {!editForm.email.trim()
+                        ? "Email không được để trống"
+                        : "Email không hợp lệ"}
                     </div>
                   )}
                 </div>
@@ -409,13 +488,17 @@ const SellerProfilePage: React.FC = () => {
                     name="phone"
                     value={editForm.phone}
                     onChange={handleEditChange}
-                    onBlur={() => setTouched((prev) => ({ ...prev, phone: true }))}
+                    onBlur={() =>
+                      setTouched((prev) => ({ ...prev, phone: true }))
+                    }
                     className="border border-[#8b2e0f] p-2 w-full rounded-none"
                     required
                   />
                   {showPhoneError && (
                     <div className="text-red-600 text-sm mt-1">
-                      { !editForm.phone.trim() ? 'Số điện thoại không được để trống' : 'Số điện thoại phải bắt đầu bằng 0, gồm 10-11 chữ số' }
+                      {!editForm.phone.trim()
+                        ? "Số điện thoại không được để trống"
+                        : "Số điện thoại phải bắt đầu bằng 0, gồm 10-11 chữ số"}
                     </div>
                   )}
                 </div>
@@ -425,50 +508,79 @@ const SellerProfilePage: React.FC = () => {
                     <select
                       className="w-full border border-[#8b2e0f] p-2 rounded-none text-base focus:outline-none"
                       value={selectedProvince}
-                      onChange={e => { setSelectedProvince(e.target.value); setTouched(prev => ({ ...prev, address: true })); }}
-                      onBlur={() => setTouched(prev => ({ ...prev, address: true }))}
+                      onChange={(e) => {
+                        setSelectedProvince(e.target.value);
+                        setTouched((prev) => ({ ...prev, address: true }));
+                      }}
+                      onBlur={() =>
+                        setTouched((prev) => ({ ...prev, address: true }))
+                      }
                     >
                       <option value="">Chọn tỉnh/thành</option>
                       {provinces.map((p: any) => (
-                        <option key={p.code} value={p.code}>{p.name}</option>
+                        <option key={p.code} value={p.code}>
+                          {p.name}
+                        </option>
                       ))}
                     </select>
                     <select
                       className="w-full border border-[#8b2e0f] p-2 rounded-none text-base focus:outline-none"
                       value={selectedDistrict}
-                      onChange={e => { setSelectedDistrict(e.target.value); setTouched(prev => ({ ...prev, address: true })); }}
-                      onBlur={() => setTouched(prev => ({ ...prev, address: true }))}
+                      onChange={(e) => {
+                        setSelectedDistrict(e.target.value);
+                        setTouched((prev) => ({ ...prev, address: true }));
+                      }}
+                      onBlur={() =>
+                        setTouched((prev) => ({ ...prev, address: true }))
+                      }
                       disabled={!selectedProvince}
                     >
                       <option value="">Chọn quận/huyện</option>
                       {districts.map((d: any) => (
-                        <option key={d.code} value={d.code}>{d.name}</option>
+                        <option key={d.code} value={d.code}>
+                          {d.name}
+                        </option>
                       ))}
                     </select>
                     <select
                       className="w-full border border-[#8b2e0f] p-2 rounded-none text-base focus:outline-none"
                       value={selectedWard}
-                      onChange={e => { setSelectedWard(e.target.value); setTouched(prev => ({ ...prev, address: true })); }}
-                      onBlur={() => setTouched(prev => ({ ...prev, address: true }))}
+                      onChange={(e) => {
+                        setSelectedWard(e.target.value);
+                        setTouched((prev) => ({ ...prev, address: true }));
+                      }}
+                      onBlur={() =>
+                        setTouched((prev) => ({ ...prev, address: true }))
+                      }
                       disabled={!selectedDistrict}
                     >
                       <option value="">Chọn phường/xã</option>
                       {wards.map((w: any) => (
-                        <option key={w.code} value={w.code}>{w.name}</option>
+                        <option key={w.code} value={w.code}>
+                          {w.name}
+                        </option>
                       ))}
                     </select>
                     <input
                       type="text"
                       value={detailAddress}
-                      onChange={e => { setDetailAddress(e.target.value); setTouched(prev => ({ ...prev, address: true })); }}
-                      onBlur={() => setTouched(prev => ({ ...prev, address: true }))}
+                      onChange={(e) => {
+                        setDetailAddress(e.target.value);
+                        setTouched((prev) => ({ ...prev, address: true }));
+                      }}
+                      onBlur={() =>
+                        setTouched((prev) => ({ ...prev, address: true }))
+                      }
                       placeholder="Số nhà, tên đường..."
                       className="w-full border border-[#8b2e0f] p-2 rounded-none text-base focus:outline-none"
                       required
                     />
                   </div>
                   {showAddressError && (
-                    <div className="text-red-600 text-sm mt-1">Vui lòng nhập đầy đủ địa chỉ (Số nhà, phường/xã, quận/huyện, tỉnh/thành)</div>
+                    <div className="text-red-600 text-sm mt-1">
+                      Vui lòng nhập đầy đủ địa chỉ (Số nhà, phường/xã,
+                      quận/huyện, tỉnh/thành)
+                    </div>
                   )}
                 </div>
                 <div>
@@ -484,7 +596,7 @@ const SellerProfilePage: React.FC = () => {
                   <Button
                     onClick={() => setEditModal(false)}
                     className="rounded-none"
-                    style={{ backgroundColor: '#ffffffff', borderRadius: 0 }}
+                    style={{ backgroundColor: "#ffffffff", borderRadius: 0 }}
                   >
                     Hủy
                   </Button>
@@ -492,7 +604,12 @@ const SellerProfilePage: React.FC = () => {
                     htmlType="submit"
                     loading={saving}
                     className="bg-[#8b2e0f] text-white px-6 py-2 border border-[#8b2e0f] hover:bg-[#a9441a] transition w-full rounded-none"
-                    style={{ borderRadius: 0, width: '30%', backgroundColor: '#8b2e0f', color: '#ffffff' }}
+                    style={{
+                      borderRadius: 0,
+                      width: "30%",
+                      backgroundColor: "#8b2e0f",
+                      color: "#ffffff",
+                    }}
                   >
                     Cập Nhật
                   </Button>
@@ -509,26 +626,40 @@ const SellerProfilePage: React.FC = () => {
                   src={(() => {
                     const API_URL = import.meta.env.VITE_API_URL;
                     let storeImg = myStore?.image || "";
-                    if (storeImg && typeof storeImg === "string" && !storeImg.startsWith("http")) {
+                    if (
+                      storeImg &&
+                      typeof storeImg === "string" &&
+                      !storeImg.startsWith("http")
+                    ) {
                       storeImg = `${API_URL}/public/store/${storeImg}`;
                     }
                     return storeImg || "https://i.imgur.com/your-logo.png";
                   })()}
                   alt="logo"
                   className="w-full h-full object-cover"
-                  onError={e => {
+                  onError={(e) => {
                     e.currentTarget.src = "https://i.imgur.com/your-logo.png";
                   }}
                 />
               </div>
               <div>
-                <div className="font-bold text-2xl text-[#8b2e0f] mb-1" style={{ fontSize: '2.5rem', fontStyle: 'italic' }}>
-                  {myStore?.name || <span className="italic">Chưa có tên cửa hàng</span>}
+                <div
+                  className="font-bold text-2xl text-[#8b2e0f] mb-1"
+                  style={{ fontSize: "2.5rem", fontStyle: "italic" }}
+                >
+                  {myStore?.name || (
+                    <span className="italic">Chưa có tên cửa hàng</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-semibold">Trạng thái:</span>
                   {myStore?.status && (
-                    <span style={{ color: statusMap[myStore.status]?.color || '#333', fontWeight: 'bold' }}>
+                    <span
+                      style={{
+                        color: statusMap[myStore.status]?.color || "#333",
+                        fontWeight: "bold",
+                      }}
+                    >
                       {statusMap[myStore.status]?.text || myStore.status}
                     </span>
                   )}
@@ -551,7 +682,11 @@ const SellerProfilePage: React.FC = () => {
               open={storeModal}
               onCancel={() => setStoreModal(false)}
               footer={null}
-              title={<span className="text-xl font-bold">{myStore ? "Cập nhật cửa hàng" : "Tạo cửa hàng"}</span>}
+              title={
+                <span className="text-xl font-bold">
+                  {myStore ? "Cập nhật cửa hàng" : "Tạo cửa hàng"}
+                </span>
+              }
               width={480}
               styles={{ content: { borderRadius: 0 }, body: { padding: 24 } }}
             >
@@ -560,7 +695,10 @@ const SellerProfilePage: React.FC = () => {
                 <div className="flex flex-col items-center mb-4">
                   <div className="w-28 h-28 rounded-full overflow-hidden border border-[#8b2e0f] bg-gray-100 flex items-center justify-center mb-2">
                     <img
-                      src={storeImagePreview || getImageUrl(storeForm.image, 'store')}
+                      src={
+                        storeImagePreview ||
+                        getImageUrl(storeForm.image, "store")
+                      }
                       alt="preview"
                       className="w-full h-full object-cover"
                     />
@@ -581,7 +719,12 @@ const SellerProfilePage: React.FC = () => {
                   <input
                     name="name"
                     value={storeForm.name}
-                    onChange={(e) => setStoreForm((prev) => ({ ...prev, name: e.target.value }))}
+                    onChange={(e) =>
+                      setStoreForm((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
                     className="border border-[#8b2e0f] p-2 w-full rounded-none mt-1"
                     required
                   />
@@ -592,20 +735,33 @@ const SellerProfilePage: React.FC = () => {
                   <textarea
                     name="description"
                     value={storeForm.description}
-                    onChange={(e) => setStoreForm((prev) => ({ ...prev, description: e.target.value }))}
+                    onChange={(e) =>
+                      setStoreForm((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
                     className="border border-[#8b2e0f] p-2 w-full rounded-none mt-1 h-24"
                   />
                 </div>
                 {/* Action Buttons */}
                 <div className="flex gap-4 justify-end pt-4 border-t mt-4">
-                  <Button 
+                  <Button
                     className="rounded-none"
-                    style={{ backgroundColor: '#ffffffff', borderRadius: 0 }}
-                    onClick={() => setStoreModal(false)}>Hủy</Button>
+                    style={{ backgroundColor: "#ffffffff", borderRadius: 0 }}
+                    onClick={() => setStoreModal(false)}
+                  >
+                    Hủy
+                  </Button>
                   <Button
                     htmlType="submit"
                     className="bg-[#8b2e0f] text-white hover:!bg-[#a9441a] hover:!text-white border-none rounded-none"
-                    style={{ borderRadius: 0, width: '30%', backgroundColor: '#8b2e0f', color: '#ffffff' }}
+                    style={{
+                      borderRadius: 0,
+                      width: "30%",
+                      backgroundColor: "#8b2e0f",
+                      color: "#ffffff",
+                    }}
                   >
                     {myStore ? "Lưu thay đổi" : "Tạo mới"}
                   </Button>

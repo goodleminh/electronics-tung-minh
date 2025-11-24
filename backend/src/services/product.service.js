@@ -1,11 +1,14 @@
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
 import { Product } from "../models/product.model.js";
 import fs from "fs";
 import path from "path";
+import { Category } from "../models/category.model.js";
 
 // lấy tất cả sản phẩm
 export const getAllProducts = async () => {
-  const products = await Product.findAll();
+  const products = await Product.findAll({
+    include: { model: Category, attributes: ["name"] },
+  });
   return products;
 };
 
@@ -25,10 +28,26 @@ export const getProductById = async (id) => {
   return product;
 };
 // tạo sản phẩm mới
-export const createProduct = async (productData) => {
-  const newProduct = await Product.create(productData);
+export const createProduct = async (data, file) => {
+  const { name, category_id, description, price, stock, status, store_id } =
+    data;
+
+  // Lấy file nếu có
+  const imageFileName = file ? file.filename : null;
+
+  const newProduct = await Product.create({
+    name,
+    category_id,
+    description,
+    price,
+    stock,
+    status,
+    store_id,
+    image: imageFileName,
+  });
   return newProduct;
 };
+
 // sửa thông tin sản phẩm
 export const updateProduct = async (id, productData) => {
   const product = await Product.findByPk(id);
@@ -55,15 +74,48 @@ export const updateProduct = async (id, productData) => {
   await product.update(productData);
   return product;
 };
+
+//edit product by admin
+export const updateProductByAdmin = async (id, data, file) => {
+  if (!data) return null;
+
+  const { name, category_id, description, price, stock, status, store_id } =
+    data;
+  const product = await Product.findByPk(id);
+  if (!product) return null;
+  // Chỉ update image nếu có file mới, nếu không giữ nguyên ảnh cũ
+  const updatedData = {
+    name,
+    category_id,
+    description,
+    price,
+    stock,
+    status,
+    store_id,
+  };
+
+  if (file) updatedData.image = file.filename;
+
+  const updatedProduct = await product.update(updatedData);
+  console.log(updatedProduct);
+  return updatedProduct;
+};
+
 // xoá sản phẩm
 export const deleteProduct = async (id) => {
   const product = await Product.findByPk(id);
   if (!product) return null;
   // Xóa ảnh khi xóa sản phẩm
   if (product.image) {
-    const imgPath = path.join(process.cwd(), "src/public/product", product.image);
+    const imgPath = path.join(
+      process.cwd(),
+      "src/public/product",
+      product.image
+    );
     if (fs.existsSync(imgPath)) {
-      try { fs.unlinkSync(imgPath); } catch {}
+      try {
+        fs.unlinkSync(imgPath);
+      } catch {}
     }
   }
   await product.destroy();

@@ -245,6 +245,15 @@ const Header = () => {
                 {/* Menu xuất hiện khi hover */}
                 {isOpen && (
                   <div className="absolute left-0 mt-1 w-48 bg-white  rounded-sm  shadow-lg">
+                    {user?.role === "admin" && (
+                      <button
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 hover:text-green-400 cursor-pointer"
+                        onClick={() => navigate("/dash-board")}
+                      >
+                        Dash Board
+                      </button>
+                    )}
+
                     <button
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100 hover:text-green-400 cursor-pointer"
                       onClick={() => {
