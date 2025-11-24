@@ -1,8 +1,6 @@
 import cron from 'node-cron';
 import { Op } from 'sequelize';
 import Order from '../models/order.model.js';
-// import OrderItem from '../models/orderItem.model.js';
-// import Product from '../models/product.model.js';
 
 const startOrderCleanupJob = () => {
   cron.schedule('* * * * *', async () => {

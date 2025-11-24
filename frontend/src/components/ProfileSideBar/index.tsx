@@ -20,7 +20,7 @@ const ProfileSidebar = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const { profile } = useSelector((state: RootState) => state.profile);
   const avatarUrl = profile?.Profile?.avatar
-    ? `${import.meta.env.VITE_API_URL}/${profile.Profile?.avatar}`
+    ? `${import.meta.env.VITE_API_URL}/public/avatar/${profile.Profile?.avatar}`
     : null;
   return (
     <div className="pr-6">

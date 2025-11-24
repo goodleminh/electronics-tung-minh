@@ -20,6 +20,8 @@ const upload = multer({ storage });
 
 // Lấy tất cả cửa hàng
 router.get("/", storeController.getStores);
+// Lấy cửa hàng theo seller_id
+router.get("/seller/:seller_id", storeController.getStoreBySellerId);
 // Lấy cửa hàng theo ID
 router.get("/:id", storeController.getStore);
 // Tạo cửa hàng mới

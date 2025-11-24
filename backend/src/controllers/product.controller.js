@@ -9,6 +9,16 @@ export const getAllProducts = async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 };
+// Lấy sản phẩm theo cửa hàng
+export const getProductsByStoreId = async (req, res) => {
+  try {
+    const { storeId } = req.params;
+    const products = await productService.getProductsByStoreId(storeId);
+    res.status(200).send(products);
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
 // Lấy sản phẩm theo ID
 export const getProductById = async (req, res) => {
   try {
@@ -25,6 +35,9 @@ export const getProductById = async (req, res) => {
 export const createProduct = async (req, res) => {
   try {
     const productData = req.body;
+    if (req.file) {
+      productData.image = req.file.filename;
+    }
     const newProduct = await productService.createProduct(productData);
     res.status(201).send(newProduct);
   } catch (err) {
@@ -36,6 +49,9 @@ export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const productData = req.body;
+    if (req.file) {
+      productData.image = req.file.filename;
+    }
     const updatedProduct = await productService.updateProduct(id, productData);
     if (!updatedProduct)
       return res.status(400).send({ message: "Không tìm thấy sản phẩm" });

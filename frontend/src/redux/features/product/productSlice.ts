@@ -7,7 +7,7 @@ import { ProductApi } from "../../../apis/productApis";
 export interface IProduct {
   product_id: number;
   store_id?: number;
-  category_id?: number | null;
+  category_id?: number;
   name: string;
   description?: string;
   price: number;
@@ -74,6 +74,19 @@ export const actFetchProducts = createAsyncThunk<IProduct[]>(
       return rejectWithValue(
         error.message || "Không thể tải danh sách sản phẩm"
       );
+    }
+  }
+);
+
+// Lấy sản phẩm theo cửa hàng
+export const fetchProductsByStoreId = createAsyncThunk(
+  "products/fetchByStoreId",
+  async (storeId: string | number, { rejectWithValue }) => {
+    try {
+      const products = await ProductApi.getProductsByStoreId(storeId);
+      return products;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
     }
   }
 );
@@ -197,6 +210,7 @@ const productSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
+      // lấy tất cả sản phẩm
       .addCase(
         actFetchProducts.fulfilled,
         (state, action: PayloadAction<IProduct[]>) => {
@@ -204,10 +218,19 @@ const productSlice = createSlice({
           state.products = action.payload;
         }
       )
+      // lấy tất cả sản phẩm thất bại
       .addCase(actFetchProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
+      // Lấy sản phẩm theo cửa hàng
+      .addCase(
+        fetchProductsByStoreId.fulfilled,
+        (state, action: PayloadAction<IProduct[]>) => {
+          state.loading = false;
+          state.products = action.payload;
+        }
+      )
       .addCase(fetchProductById.pending, (state) => {
         state.loading = true;
         state.error = null;

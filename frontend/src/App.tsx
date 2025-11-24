@@ -23,6 +23,7 @@ import ContentUsers from "./components/UserDashboard";
 import ProtectedRoute from "./components/ProtectRoute";
 import NoAccess from "./pages/NoAccess";
 import ContentProducts from "./components/ProductsDashboard";
+import SellerProduct from "./pages/Seller_Store";
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
           <Route path="/track-order" element={<TrackOrderPage />} />
           <Route path="/seller/register" element={<SellerRegisterPage />} />
           <Route path="/seller/profile" element={<SellerProfilePage />} />
+          <Route path="/seller/store" element={<SellerProduct />} />
           <Route
             path="/api/auth/reset-password/:token"
             element={<ResetPasswordPage />}

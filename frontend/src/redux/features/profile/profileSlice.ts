@@ -8,10 +8,10 @@ import {
 import * as profileApi from "../../../apis/profileApis.ts";
 
 export interface IProfile {
+  user_id: number;
   username: string;
   email: string;
   Profile: {
-    user_id: string;
     phone?: string;
     address?: string;
     avatar?: string;
@@ -33,6 +33,7 @@ interface UpdateProfilePayload {
   bio: string;
   birthday: string | null; // yyyy-mm-dd
   address: string; // thêm dòng này để fix lỗi truyền address
+  avatar?: string; // thêm dòng này để truyền avatar khi cập nhật
 }
 
 const initialState: ProfileState = {

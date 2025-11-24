@@ -51,7 +51,7 @@ const Cartpage: React.FC = () => {
     setSelectedIds([]); // reset selection on account switch
   }, [dispatch, authUser?.user_id]);
 
-  // Join cart items with product info
+  // hợp nhất dữ liệu cart items với product details
   const rows = useMemo(() => {
     return items
       .map((it: ICartItem) => {

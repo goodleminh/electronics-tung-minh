@@ -34,7 +34,7 @@ export const updateStore = async (id, storeData) => {
   if (storeData.image && store.image && storeData.image !== store.image) {
     const oldPath = path.join(process.cwd(), "src/public/store", store.image);
     if (fs.existsSync(oldPath)) {
-      try { fs.unlinkSync(oldPath); } catch {}
+      try { fs.unlinkSync(oldPath); } catch (err) { console.error("Lỗi xóa ảnh cũ:", err); }
     }
   }
   await store.update(storeData);
@@ -55,4 +55,26 @@ export const deleteStore = async (id) => {
   }
   await store.destroy();
   return store;
+};
+// lấy cửa hàng theo seller_id
+export const getStoreBySellerId = async (seller_id) => {
+  const store = await Store.findOne({ where: { seller_id } });
+  return store;
+};
+// cập nhật ảnh cửa hàng
+export const updateStoreImage = async (seller_id, newFileName) => {
+  const store = await Store.findOne({ where: { seller_id } });
+  if (store && store.image && store.image !== newFileName) {
+    const path = require("path");
+    const fs = require("fs");
+    const oldPath = path.join(process.cwd(), "src/public/store", store.image);
+    if (fs.existsSync(oldPath)) {
+      try { fs.unlinkSync(oldPath); } catch (err) { console.error("Lỗi xóa ảnh cũ:", err); }
+    }
+  }
+  // Cập nhật tên file mới vào DB
+  if (store) {
+    await store.update({ image: newFileName });
+  }
+  return newFileName;
 };

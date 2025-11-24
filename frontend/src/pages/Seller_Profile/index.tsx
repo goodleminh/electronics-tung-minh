@@ -2,34 +2,39 @@ import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "../../redux/store";
 import { updateProfileThunk, fetchProfile } from "../../redux/features/profile/profileSlice";
-import { fetchStores, createStore, updateStore } from "../../redux/features/store/storeSlice";
+import { fetchStores, createStore, updateStore, fetchStoreBySellerId } from "../../redux/features/store/storeSlice";
 import { Modal, Button, message } from "antd";
+import { useAddress } from "../../hooks/useAddress";
 import "./style.css";
 
 const statusMap = {
-  pending: { color: "#e67e22", text: "Đang duyệt" },
+  pending: { color: "#a7a4a2ff", text: "Chưa đăng kí" },
+  processing: { color: "#e67e22", text: "Đang chờ duyệt" },
   approved: { color: "#27ae60", text: "Hoạt động" },
   rejected: { color: "#c0392b", text: "Bị khóa" },
 };
-type StoreStatus = keyof typeof statusMap;
 
 const SellerProfilePage: React.FC = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
   const profile = useSelector((state: RootState) => state.profile.profile);
   // Lấy store thật từ Redux
-  const stores = useSelector((state: RootState) => state.store.stores);
-  const myStore = stores.find(s => s.seller_id === user?.user_id);
+  const myStore = useSelector((state: RootState) => state.store.current);
 
   // ✅ BƯỚC 1: Gọi API lấy dữ liệu mới nhất khi vào trang
   React.useEffect(() => {
     dispatch(fetchProfile() as any);
-    if (user?.user_id) {
-      dispatch(fetchStores() as any);
+  }, [dispatch]);
+  React.useEffect(() => {
+    if (profile?.user_id) {
+      dispatch(fetchStoreBySellerId(profile.user_id) as any);
+      console.log('Fetching store for seller_id:', profile.user_id);
     }
-  }, [dispatch, user?.user_id]);
+  }, [dispatch, profile?.user_id]);
   // ✅ BƯỚC 3: Log dữ liệu profile để debug
   console.log("Dữ liệu Profile từ Redux:", profile);
+  // ✅ Log dữ liệu store để debug
+  console.log("Dữ liệu Store từ Redux:", myStore);
   // TODO: Lấy store thực tế từ redux nếu có
   const [editModal, setEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -78,7 +83,23 @@ const SellerProfilePage: React.FC = () => {
     if (!isValidEmail) return;
     setSaving(true);
     try {
-      // Gọi updateProfileThunk với payload bao gồm address
+      let avatar = editForm.avatar;
+      if (newAvatarFile) {
+        const formData = new FormData();
+        formData.append("avatar", newAvatarFile);
+        const API_URL = import.meta.env.VITE_API_URL;
+        const res = await fetch(`${API_URL}/profile/avatar`, {
+          method: "POST",
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        });
+        const data = await res.json();
+        if (data?.avatar) {
+          avatar = data.avatar;
+        }
+      }
       await dispatch(updateProfileThunk({
         username: editForm.username,
         email: editForm.email,
@@ -86,11 +107,13 @@ const SellerProfilePage: React.FC = () => {
         bio: editForm.bio,
         birthday: editForm.birthday,
         address: editForm.address,
+        avatar,
       }) as any);
-      // Gọi lại fetchProfile để reload dữ liệu mới nhất
       await dispatch(fetchProfile() as any);
       setEditModal(false);
       message.success("Cập nhật thành công!");
+      setAvatarPreview(null);
+      setNewAvatarFile(null);
     } catch {
       message.error("Cập nhật thất bại!");
     } finally {
@@ -98,67 +121,45 @@ const SellerProfilePage: React.FC = () => {
     }
   };
 
-  // Địa chỉ động như OrderPage
-  const [provinces, setProvinces] = useState<any[]>([]);
-  const [districts, setDistricts] = useState<any[]>([]);
-  const [wards, setWards] = useState<any[]>([]);
-  const [selectedProvince, setSelectedProvince] = useState('');
-  const [selectedDistrict, setSelectedDistrict] = useState('');
-  const [selectedWard, setSelectedWard] = useState('');
-  const [detailAddress, setDetailAddress] = useState('');
+  // Địa chỉ động dùng custom hook
+  const {
+    provinces, districts, wards,
+    selectedProvince, selectedDistrict, selectedWard,
+    setSelectedProvince, setSelectedDistrict, setSelectedWard,
+    fetchDistricts, fetchWards
+  } = useAddress();
+  const [detailAddress, setDetailAddress] = useState("");
 
   React.useEffect(() => {
-    fetch('https://provinces.open-api.vn/api/p/')
-      .then(res => res.json())
-      .then(data => setProvinces(data));
-  }, []);
-  React.useEffect(() => {
-    if (selectedProvince) {
-      fetch(`https://provinces.open-api.vn/api/p/${selectedProvince}?depth=2`)
-        .then(res => res.json())
-        .then(data => setDistricts(data.districts || []));
-      setSelectedDistrict(''); setWards([]); setSelectedWard('');
-    }
-  }, [selectedProvince]);
-  React.useEffect(() => {
-    if (selectedDistrict) {
-      fetch(`https://provinces.open-api.vn/api/d/${selectedDistrict}?depth=2`)
-        .then(res => res.json())
-        .then(data => setWards(data.wards || []));
-      setSelectedWard('');
-    }
-  }, [selectedDistrict]);
-  React.useEffect(() => {
-    if (selectedProvince && selectedDistrict && selectedWard) {
-      const province = provinces.find(p => p.code == selectedProvince)?.name || '';
-      const district = districts.find(d => d.code == selectedDistrict)?.name || '';
-      const ward = wards.find(w => w.code == selectedWard)?.name || '';
-      setEditForm(prev => ({ ...prev, address: `${detailAddress}, ${ward}, ${district}, ${province}` }));
-    } else {
-      setEditForm(prev => ({ ...prev, address: '' }));
-    }
+    if (!selectedProvince || !selectedDistrict || !selectedWard) return;
+    const province = provinces.find(p => p.code == selectedProvince)?.name || '';
+    const district = districts.find(d => d.code == selectedDistrict)?.name || '';
+    const ward = wards.find(w => w.code == selectedWard)?.name || '';
+    setEditForm(prev => ({ ...prev, address: `${detailAddress}, ${ward}, ${district}, ${province}` }));
   }, [selectedProvince, selectedDistrict, selectedWard, detailAddress]);
 
   // Hàm phân tích ngược địa chỉ và set lại dropdown khi mở modal
-  const handleOpenEditModal = () => {
+  const handleOpenEditModal = async () => {
     if (editForm.address) {
       // Tách địa chỉ: "chi tiết, phường/xã, quận/huyện, tỉnh/thành"
       const parts = editForm.address.split(',').map(s => s.trim());
       if (parts.length === 4) {
         setDetailAddress(parts[0]);
         // Tìm code tỉnh
-        const provinceObj = provinces.find(p => p.name === parts[3]);
-        setSelectedProvince(provinceObj?.code || '');
-        // Sau khi setSelectedProvince, districts sẽ được fetch lại
-        setTimeout(() => {
-          const districtObj = districts.find(d => d.name === parts[2]);
-          setSelectedDistrict(districtObj?.code || '');
-          // Sau khi setSelectedDistrict, wards sẽ được fetch lại
-          setTimeout(() => {
-            const wardObj = wards.find(w => w.name === parts[1]);
-            setSelectedWard(wardObj?.code || '');
-          }, 200);
-        }, 200);
+        const provinceObj = provinces.find((p: any) => p.name === parts[3]);
+        if (provinceObj) {
+          setSelectedProvince(provinceObj.code);
+          const districtsData = await fetchDistricts(provinceObj.code);
+          const districtObj = districtsData.find((d: any) => d.name === parts[2]);
+          if (districtObj) {
+            setSelectedDistrict(districtObj.code);
+            const wardsData = await fetchWards(districtObj.code);
+            const wardObj = wardsData.find((w: any) => w.name === parts[1]);
+            if (wardObj) {
+              setSelectedWard(wardObj.code);
+            }
+          }
+        }
       }
     }
     setEditModal(true);
@@ -171,6 +172,13 @@ const SellerProfilePage: React.FC = () => {
     description: "",
     image: "",
   });
+
+  // Thêm state cho avatar preview và file upload
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null);
+  // Thêm state cho logo store preview và file upload
+  const [storeImagePreview, setStoreImagePreview] = useState<string | null>(null);
+  const [newStoreImageFile, setNewStoreImageFile] = useState<File | null>(null);
 
   // Khi mở modal: nếu là cập nhật thì fill dữ liệu, nếu tạo mới thì reset trắng
   const handleOpenStoreModal = () => {
@@ -199,13 +207,10 @@ const SellerProfilePage: React.FC = () => {
   const handleStoreSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      let imageFileName = "";
-      if (typeof storeForm.image === "string") {
-        imageFileName = storeForm.image;
-      }
-      if (storeForm.image instanceof File) {
+      let imageFileName = storeForm.image as string;
+      if (newStoreImageFile) {
         const formData = new FormData();
-        formData.append("image", storeForm.image);
+        formData.append("image", newStoreImageFile);
         const token = localStorage.getItem("accessToken");
         const res = await fetch(`${import.meta.env.VITE_API_URL}/stores/image`, {
           method: "POST",
@@ -214,32 +219,50 @@ const SellerProfilePage: React.FC = () => {
         });
         const data = await res.json();
         if (data && data.image) {
-          imageFileName = data.image;
+          imageFileName = data.image; // Đảm bảo lấy đúng tên file trả về
         } else {
           message.error("Lỗi upload ảnh cửa hàng!");
           return;
         }
       }
       const payload = {
+        seller_id: profile?.user_id!, // Đảm bảo luôn có seller_id
         name: storeForm.name,
         description: storeForm.description,
         image: imageFileName,
       };
-      console.log('STORE SUBMIT PAYLOAD', payload, myStore ? 'UPDATE' : 'CREATE');
       if (!myStore) {
-        if (user?.user_id) {
-          await dispatch(createStore({ seller_id: user.user_id, ...payload }) as any);
-          message.success("Tạo cửa hàng thành công!");
-        }
+        await dispatch(createStore(payload) as any);
+        message.success("Tạo cửa hàng thành công!");
       } else {
         await dispatch(updateStore({ id: myStore.store_id, data: payload }) as any);
         message.success("Cập nhật cửa hàng thành công!");
       }
       setStoreModal(false);
       dispatch(fetchStores() as any);
+      setStoreImagePreview(null);
+      setNewStoreImageFile(null);
     } catch (error) {
       console.error('STORE SUBMIT ERROR', error);
       message.error("Có lỗi xảy ra khi lưu cửa hàng!");
+    }
+  };
+
+  // Thêm hàm handleAvatarChange
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Thêm hàm handleStoreImageChange
+  const handleStoreImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewStoreImageFile(file);
+      setStoreImagePreview(URL.createObjectURL(file));
     }
   };
 
@@ -251,26 +274,24 @@ const SellerProfilePage: React.FC = () => {
         </h2>
         <div className="flex flex-col md:flex-row bg-white border border-[#8b2e0f]">
           {/* Sidebar trái */}
-          <aside className="md:w-1/3 w-full border-r border-[#8b2e0f] p-8 flex flex-col items-center md:items-start bg-[#faf7f5]">
-            <div className="w-40 h-40 border border-[#8b2e0f] rounded-full bg-gray-100 flex items-center justify-center overflow-hidden mb-6">
-              {/* ✅ Sửa logic avatar */}
-              {(() => {
-                const API_URL = import.meta.env.VITE_API_URL; 
-                let avatarSrc = profile?.Profile?.avatar || "";
-                if (avatarSrc && !avatarSrc.startsWith("http")) {
-                  avatarSrc = `${API_URL}/public/avatar/${avatarSrc}`;
-                }
-                return (
-                  <img
-                    src={avatarSrc || "o.png"}
-                    alt="avatar"
-                    className="w-full h-full object-cover"
-                    onError={e => {
-                      e.currentTarget.src = "o.png";
-                    }}
-                  />
-                );
-              })()}
+          <aside className="md:w-1/3 w-full border-r border-[#8b2e0f] p-8 flex flex-col items-center md:items-start bg-[#f5ddce]">
+            <div className="w-45 h-45 border border-[#8b2e0f] rounded-full bg-gray-100 flex items-center justify-center overflow-hidden mb-6">
+              {/* ✅ Sửa logic avatar: chỉ show ảnh cũ ngoài trang */}
+              <img
+                src={(() => {
+                  const API_URL = import.meta.env.VITE_API_URL;
+                  let avatarSrc = profile?.Profile?.avatar || "";
+                  if (avatarSrc && !avatarSrc.startsWith("http")) {
+                    avatarSrc = `${API_URL}/public/avatar/${avatarSrc}`;
+                  }
+                  return avatarSrc || "o.png";
+                })()}
+                alt="avatar"
+                className="w-full h-full object-cover"
+                onError={e => {
+                  e.currentTarget.src = "o.png";
+                }}
+              />
             </div>
             <div className="w-full">
               <div className="font-bold text-xl text-[#8b2e0f] mb-2 text-center md:text-left">
@@ -314,7 +335,7 @@ const SellerProfilePage: React.FC = () => {
               <div className="flex flex-col items-center mb-4">
                 <div className="w-28 h-28 rounded-full overflow-hidden border border-[#8b2e0f] bg-gray-100 flex items-center justify-center mb-2">
                   <img
-                    src={(() => {
+                    src={avatarPreview || (() => {
                       const API_URL = import.meta.env.VITE_API_URL;
                       let avatarSrc = editForm.avatar || profile?.Profile?.avatar || "";
                       if (avatarSrc && !avatarSrc.startsWith("http")) {
@@ -335,33 +356,7 @@ const SellerProfilePage: React.FC = () => {
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={async e => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const formData = new FormData();
-                        formData.append("avatar", file);
-                        try {
-                          // Gọi API upload avatar
-                          const API_URL = import.meta.env.VITE_API_URL;
-                          const res = await fetch(`${API_URL}/profile/avatar`, {
-                            method: "POST",
-                            body: formData,
-                            headers: {
-                              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-                            },
-                          });
-                          const data = await res.json();
-                          if (data?.avatar) {
-                            setEditForm(prev => ({ ...prev, avatar: data.avatar }));
-                            message.success("Tải ảnh lên thành công!");
-                          } else {
-                            message.error("Tải ảnh thất bại!");
-                          }
-                        } catch {
-                          message.error("Tải ảnh thất bại!");
-                        }
-                      }
-                    }}
+                    onChange={handleAvatarChange}
                   />
                 </label>
               </div>
@@ -496,8 +491,8 @@ const SellerProfilePage: React.FC = () => {
                   <Button
                     htmlType="submit"
                     loading={saving}
-                    className="rounded-none"
-                    style={{ backgroundColor: '#8b2e0f', borderRadius: 0 }}
+                    className="bg-[#8b2e0f] text-white px-6 py-2 border border-[#8b2e0f] hover:bg-[#a9441a] transition w-full rounded-none"
+                    style={{ borderRadius: 0, width: '30%', backgroundColor: '#8b2e0f', color: '#ffffff' }}
                   >
                     Cập Nhật
                   </Button>
@@ -507,18 +502,17 @@ const SellerProfilePage: React.FC = () => {
           </aside>
 
           {/* Phần phải: Thông tin cửa hàng */}
-          <section className="md:w-2/3 w-full p-8">
+          <section className="md:w-2/3 w-full p-8 bg-[#faf7f5]">
             <div className="flex items-center gap-6 mb-6">
-              <div className="w-24 h-24 border-2 border-[#8b2e0f] bg-gray-100 flex items-center justify-center overflow-hidden rounded-full">
+              <div className="w-30 h-30 border border-[#8b2e0f] rounded-full bg-gray-100 flex items-center justify-center overflow-hidden mb-6">
                 <img
                   src={(() => {
-                    if (typeof storeForm.image === "string" && storeForm.image) {
-                      return `${import.meta.env.VITE_API_URL}/public/store/${storeForm.image}`;
-                    } else if (storeForm.image instanceof File) {
-                      return URL.createObjectURL(storeForm.image);
-                    } else {
-                      return "https://i.imgur.com/your-logo.png";
+                    const API_URL = import.meta.env.VITE_API_URL;
+                    let storeImg = myStore?.image || "";
+                    if (storeImg && typeof storeImg === "string" && !storeImg.startsWith("http")) {
+                      storeImg = `${API_URL}/public/store/${storeImg}`;
                     }
+                    return storeImg || "https://i.imgur.com/your-logo.png";
                   })()}
                   alt="logo"
                   className="w-full h-full object-cover"
@@ -528,25 +522,23 @@ const SellerProfilePage: React.FC = () => {
                 />
               </div>
               <div>
-                <div className="text-2xl font-extrabold text-[#8b2e0f] mb-1 uppercase tracking-wide">
-                  {storeForm.name || <span className="italic text-gray-400">Tên cửa hàng</span>}
+                <div className="font-bold text-2xl text-[#8b2e0f] mb-1" style={{ fontSize: '2.5rem', fontStyle: 'italic' }}>
+                  {myStore?.name || <span className="italic">Chưa có tên cửa hàng</span>}
                 </div>
-                {myStore && (
-                  <span
-                    className="px-4 py-1 font-semibold text-white"
-                    style={{
-                      background: statusMap[myStore.status as StoreStatus]?.color || "#888",
-                    }}
-                  >
-                    {statusMap[myStore.status as StoreStatus]?.text || myStore.status}
-                  </span>
-                )}
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-semibold">Trạng thái:</span>
+                  {myStore?.status && (
+                    <span style={{ color: statusMap[myStore.status]?.color || '#333', fontWeight: 'bold' }}>
+                      {statusMap[myStore.status]?.text || myStore.status}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <div className="mb-4">
               <span className="font-semibold">Mô tả cửa hàng:</span>
               <div className="mt-1 text-gray-800">
-                {storeForm.description || <span className="italic text-gray-400">Chưa có mô tả</span>}
+                {myStore?.description || "Chưa có mô tả"}
               </div>
             </div>
             <button
@@ -561,27 +553,25 @@ const SellerProfilePage: React.FC = () => {
               footer={null}
               title={<span className="text-xl font-bold">{myStore ? "Cập nhật cửa hàng" : "Tạo cửa hàng"}</span>}
               width={480}
+              styles={{ content: { borderRadius: 0 }, body: { padding: 24 } }}
             >
               <form onSubmit={handleStoreSubmit} className="space-y-4 mt-4">
                 {/* Avatar Upload */}
                 <div className="flex flex-col items-center mb-4">
                   <div className="w-28 h-28 rounded-full overflow-hidden border border-[#8b2e0f] bg-gray-100 flex items-center justify-center mb-2">
                     <img
-                      src={getImageUrl(storeForm.image, 'store')}
+                      src={storeImagePreview || getImageUrl(storeForm.image, 'store')}
                       alt="preview"
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <label className="bg-gray-100 border px-4 py-1 rounded cursor-pointer hover:bg-gray-200 text-sm">
-                    Chọn ảnh logo
+                    Chọn ảnh
                     <input
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) setStoreForm((prev) => ({ ...prev, image: file }));
-                      }}
+                      onChange={handleStoreImageChange}
                     />
                   </label>
                 </div>
@@ -608,10 +598,14 @@ const SellerProfilePage: React.FC = () => {
                 </div>
                 {/* Action Buttons */}
                 <div className="flex gap-4 justify-end pt-4 border-t mt-4">
-                  <Button onClick={() => setStoreModal(false)}>Hủy</Button>
+                  <Button 
+                    className="rounded-none"
+                    style={{ backgroundColor: '#ffffffff', borderRadius: 0 }}
+                    onClick={() => setStoreModal(false)}>Hủy</Button>
                   <Button
                     htmlType="submit"
                     className="bg-[#8b2e0f] text-white hover:!bg-[#a9441a] hover:!text-white border-none rounded-none"
+                    style={{ borderRadius: 0, width: '30%', backgroundColor: '#8b2e0f', color: '#ffffff' }}
                   >
                     {myStore ? "Lưu thay đổi" : "Tạo mới"}
                   </Button>

@@ -1,11 +1,24 @@
 import { Op } from "sequelize";
 import { Product } from "../models/product.model.js";
+import fs from "fs";
+import path from "path";
 
 // lấy tất cả sản phẩm
 export const getAllProducts = async () => {
   const products = await Product.findAll();
   return products;
 };
+
+// lấy sản phẩm theo cửa hàng
+export const getProductsByStoreId = async (storeId) => {
+  const products = await Product.findAll({
+    where: {
+      store_id: storeId,
+    },
+  });
+  return products;
+};
+
 // lấy sản phẩm theo ID
 export const getProductById = async (id) => {
   const product = await Product.findByPk(id);
@@ -20,6 +33,25 @@ export const createProduct = async (productData) => {
 export const updateProduct = async (id, productData) => {
   const product = await Product.findByPk(id);
   if (!product) return null;
+  // Nếu có ảnh mới và đã có ảnh cũ thì xóa ảnh cũ
+  if (
+    productData.image &&
+    product.image &&
+    productData.image !== product.image
+  ) {
+    const oldPath = path.join(
+      process.cwd(),
+      "src/public/product",
+      product.image
+    );
+    if (fs.existsSync(oldPath)) {
+      try {
+        fs.unlinkSync(oldPath);
+      } catch (err) {
+        console.error("Lỗi xóa ảnh cũ:", err);
+      }
+    }
+  }
   await product.update(productData);
   return product;
 };
@@ -27,6 +59,13 @@ export const updateProduct = async (id, productData) => {
 export const deleteProduct = async (id) => {
   const product = await Product.findByPk(id);
   if (!product) return null;
+  // Xóa ảnh khi xóa sản phẩm
+  if (product.image) {
+    const imgPath = path.join(process.cwd(), "src/public/product", product.image);
+    if (fs.existsSync(imgPath)) {
+      try { fs.unlinkSync(imgPath); } catch {}
+    }
+  }
   await product.destroy();
   return product;
 };

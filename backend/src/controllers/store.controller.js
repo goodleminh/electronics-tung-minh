@@ -30,15 +30,20 @@ export const getStore = async (req, res) => {
 // Tạo cửa hàng mới
 export const createStoreController = async (req, res) => {
   try {
-    // Log dữ liệu nhận được từ frontend
     console.log('POST /stores BODY:', req.body);
     const { seller_id, name, description, image } = req.body;
     if (!seller_id || !name) {
       console.log('POST /stores ERROR: thiếu seller_id hoặc name');
       return res.status(400).json({ message: "seller_id và name là bắt buộc" });
     }
+    // Kiểm tra seller đã có store chưa (1-1)
+    const existedStore = await storeService.getStoreBySellerId(seller_id);
+    if (existedStore) {
+      // Chuyển sang gọi updateStoreController cho đồng bộ RESTful
+      req.params.id = existedStore.store_id;
+      return await updateStoreController(req, res);
+    }
     const newStore = await storeService.createStore({ seller_id, name, description, image });
-    // Log store vừa tạo
     console.log('POST /stores CREATED:', newStore?.toJSON ? newStore.toJSON() : newStore);
     return res.status(201).json({ store: newStore });
   } catch (error) {
@@ -83,10 +88,39 @@ export const deleteStoreController = async (req, res) => {
 };
 
 // Upload ảnh store (placeholder tránh crash)
-export const uploadStoreImage = (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: "No file uploaded" });
+export const uploadStoreImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    // Lấy seller_id từ body hoặc query
+    const seller_id = req.body.seller_id || req.query.seller_id;
+    let imageName = req.file.filename;
+    if (seller_id) {
+      // Gọi service để xử lý xóa ảnh cũ và cập nhật tên file mới
+      await storeService.updateStoreImage(Number(seller_id), imageName);
+    }
+    // Trả về tên file mới để frontend lưu vào DB
+    return res.status(200).json({ image: imageName });
+  } catch (err) {
+    console.error("Lỗi upload ảnh store:", err);
+    return res.status(500).json({ message: "Lỗi khi upload ảnh store" });
   }
-  // Trả về tên file để frontend lưu vào DB
-  return res.status(200).json({ image: req.file.filename });
+};
+
+// Lấy cửa hàng theo seller_id
+export const getStoreBySellerId = async (req, res) => {
+  try {
+    const seller_id = Number(req.params.seller_id);
+    if (Number.isNaN(seller_id)) {
+      return res.status(400).json({ message: "Invalid seller id" });
+    }
+    const store = await storeService.getStoreBySellerId(seller_id);
+    if (!store) {
+      return res.status(404).json({ message: "Store not found" });
+    }
+    return res.status(200).json({ store });
+  } catch (error) {
+    return res.status(500).json({ message: error.message || "Server error" });
+  }
 };
