@@ -51,7 +51,7 @@ const OrderPage: React.FC = () => {
     setCheckoutItems((prev) => prev.map((it) => (it.product_id === pid ? { ...it, quantity: Math.max(1, it.quantity - 1) } : it)));
   };
 
-  // Prefill address from user profile if available
+  //  địa chỉ, điện thoại, phương thức thanh toán
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [provinces, setProvinces] = useState<any[]>([]);

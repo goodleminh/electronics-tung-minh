@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   SafetyCertificateOutlined,
   SyncOutlined,
@@ -8,8 +8,16 @@ import {
   TrophyOutlined,
 } from "@ant-design/icons";
 import "./style.css";
+import type { AppDispatch } from "../../redux/store";
+import { useDispatch } from "react-redux";
+import { actFetchCategories } from "../../redux/features/category/categorySlice";
 
 const Intropage: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  useEffect(() => {
+      // Fetch categories for header/menus if not loaded elsewhere
+      dispatch(actFetchCategories());
+    }, [dispatch]);
   return (
     <main>
       {/* HERO */}

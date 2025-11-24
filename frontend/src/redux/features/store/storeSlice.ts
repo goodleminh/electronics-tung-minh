@@ -32,10 +32,11 @@ export const fetchStores = createAsyncThunk<IStore[], void, { rejectValue: strin
   "stores/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await StoreApi.getAllStores();
-      return res as IStore[];
+      const stores = await StoreApi.getAllStores();
+      if (!Array.isArray(stores)) throw new Error("Dữ liệu cửa hàng trả về sai định dạng");
+      return stores;
     } catch (err: any) {
-      return rejectWithValue(err?.message || "Không thể tải cửa hàng");
+      return rejectWithValue(err.message || "Không thể tải cửa hàng");
     }
   }
 );
@@ -44,37 +45,53 @@ export const fetchStoreById = createAsyncThunk<IStore, number | string, { reject
   "stores/fetchById",
   async (id, { rejectWithValue }) => {
     try {
-      const res = await StoreApi.getStoreById(id);
-      return res as IStore;
+      const store = await StoreApi.getStoreById(id);
+      if (!store?.store_id) throw new Error("Store không hợp lệ");
+      return store;
     } catch (err: any) {
-      return rejectWithValue(err?.message || "Không thể tải cửa hàng");
+      return rejectWithValue(err.message || "Không thể tải cửa hàng");
     }
   }
 );
-
+// lấy store theo seller_id
+export const fetchStoreBySellerId = createAsyncThunk<IStore, number | string, { rejectValue: string }>(
+  "stores/fetchBySellerId",
+  async (seller_id, { rejectWithValue }) => {
+    try {
+      const store = await StoreApi.getStoreBySellerId(seller_id);
+      if (!store?.store_id) throw new Error("Store không hợp lệ");
+      return store;
+    } catch (err: any) {
+      return rejectWithValue(err.message || "Không thể tải cửa hàng");
+    }
+  }
+);
+// tạo mới store
 export const createStore = createAsyncThunk<
   IStore,
   { seller_id: number; name: string; description?: string; image?: string; status?: string },
   { rejectValue: string }
 >("stores/create", async (payload, { rejectWithValue }) => {
   try {
-    const res = await StoreApi.createStore(payload);
-    return res as IStore;
+    const store = await StoreApi.createStore(payload);
+    if (!store?.store_id) throw new Error("Tạo store thất bại");
+    return store;
   } catch (err: any) {
-    return rejectWithValue(err?.message || "Không thể tạo cửa hàng");
+    return rejectWithValue(err.message || "Không thể tạo cửa hàng");
   }
 });
-
+// cập nhật store
 export const updateStore = createAsyncThunk<
   IStore,
-  { id: number | string; data: { name?: string; description?: string; status?: string } },
+  { id: number | string; data: { name?: string; description?: string; status?: string; image?: string } },
   { rejectValue: string }
 >("stores/update", async ({ id, data }, { rejectWithValue }) => {
   try {
-    const res = await StoreApi.updateStore(id, data);
-    return res as IStore;
+    const store = await StoreApi.updateStore(id, data);
+    if (!store?.store_id) throw new Error("Cập nhật store thất bại");
+    return store;
   } catch (err: any) {
-    return rejectWithValue(err?.message || "Không thể cập nhật cửa hàng");
+    return rejectWithValue(err.message || "Không thể cập nhật cửa hàng");
   }
 });
 
@@ -114,6 +131,10 @@ const storeSlice = createSlice({
       })
 
       .addCase(fetchStoreById.fulfilled, (state, action: PayloadAction<IStore>) => {
+        state.current = action.payload;
+      })
+
+      .addCase(fetchStoreBySellerId.fulfilled, (state, action: PayloadAction<IStore>) => {
         state.current = action.payload;
       })
 

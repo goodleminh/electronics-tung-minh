@@ -257,6 +257,16 @@ const Header = () => {
                     >
                       Tài khoản của bạn
                     </button>
+                    {user?.role === "seller" && (
+                      <button
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 hover:text-blue-600 cursor-pointer"
+                        onClick={() => {
+                          navigate("/seller/store");
+                        }}
+                      >
+                        Gian hàng của bạn
+                      </button>
+                    )}
                     <button
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100 hover:text-green-400 cursor-pointer"
                       onClick={() => {

@@ -16,6 +16,10 @@ const StoreApi = {
     const res = await axios.get(`${BASE_URL}/stores/${id}`);
     return res.data.store; // lấy từ key store
   },
+  getStoreBySellerId: async (seller_id: number | string) => {
+    const res = await axios.get(`${BASE_URL}/stores/seller/${seller_id}`);
+    return res.data.store;
+  },
   createStore: async (data: { seller_id: number; name: string; description?: string; image?: string; status?: string }) => {
     try {
       const res = await axios.post(`${BASE_URL}/stores`, data, { headers: getAuthHeaders() });

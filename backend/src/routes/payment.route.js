@@ -86,6 +86,17 @@ router.post("/zalopay", async (req, res) => {
     console.log("👈 [Backend] ZaloPay phản hồi:", data);
 
     if (data.return_code === 1) {
+      // Cập nhật trạng thái đơn hàng thành 'processing' khi thanh toán thành công
+      try {
+        const Order = (await import('../models/order.model.js')).Order;
+        await Order.update(
+          { status: 'processing' },
+          { where: { order_id: orderId } }
+        );
+        console.log(`[ZaloPay] Đã cập nhật đơn ${orderId} thành processing sau khi thanh toán thành công.`);
+      } catch (err) {
+        console.error('[ZaloPay] Lỗi khi cập nhật trạng thái đơn:', err);
+      }
       return res.status(200).json({
         order_url: data.order_url,
         app_trans_id: app_trans_id,
@@ -125,8 +136,15 @@ router.get("/zalopay-result", async (req, res) => {
       }
     }
   }
-  // Trả về JSON hoặc redirect về frontend
-  res.json({ success: true });
+  let redirectUrl = 'http://localhost:5173/track-order';
+  if (apptransid) {
+    const parts = String(apptransid).split("_");
+    const orderId = parts.length >= 2 ? Number(parts[1]) : null;
+    if (orderId) {
+      redirectUrl += `?orderId=${orderId}`;
+    }
+  }
+  res.redirect(redirectUrl);
 });
 
 export default router;

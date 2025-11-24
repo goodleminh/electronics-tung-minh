@@ -14,6 +14,7 @@ import {
   getActivePricing,
 } from "../../utils/price/priceUtil";
 import { actAddToCart } from "../../redux/features/cart/cartSlice";
+import { fetchStoreById } from "../../redux/features/store/storeSlice";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -37,6 +38,10 @@ const ProductDetail = () => {
   // NEW: modal cho seller không phải là người mua hàng
   const [sellerModalOpen, setSellerModalOpen] = useState(false);
 
+  // NEW: store selector
+  const storeState = useSelector((state: RootState) => state.store);
+  const [storeOwner, setStoreOwner] = useState<any>(null);
+
   useEffect(() => {
     if (id) dispatch(fetchProductById(Number(id)));
   }, [id, dispatch]);
@@ -51,6 +56,19 @@ const ProductDetail = () => {
       })
     );
   }, [dispatch, productDetail?.category_id, productDetail?.product_id]);
+
+  // NEW: fetch store owner info
+  useEffect(() => {
+    if (productDetail?.store_id) {
+      dispatch(fetchStoreById(productDetail.store_id));
+    }
+  }, [dispatch, productDetail?.store_id]);
+
+  useEffect(() => {
+    if (storeState.current && storeState.current.store_id === productDetail?.store_id) {
+      setStoreOwner(storeState.current);
+    }
+  }, [storeState.current, productDetail?.store_id]);
 
   const pricing = productDetail ? getFormattedPricing(productDetail) : null;
 
@@ -398,6 +416,34 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
+      {/* Label cửa hàng sở hữu sản phẩm */}
+      {storeOwner && (
+        <div className="max-w-7xl mx-auto px-4 w-full mb-8">
+          <div className="flex items-center justify-between gap-4 w-full bg-gradient-to-b from-orange-100 to-yellow-50 border-b border-[#8b2e0f] py-8 px-15" style={{ borderRadius: 0, margin: 0 }}>
+            <div className="flex items-center gap-4">
+              <div className="w-25 h-25 border-1 border-[#8b2e0f] rounded-full bg-white flex items-center justify-center overflow-hidden" style={{ borderRadius: '50%' }}>
+                <img
+                  src={storeOwner.image ? `${API_BASE}/public/store/${storeOwner.image}` : "https://i.imgur.com/your-logo.png"}
+                  alt={storeOwner.name}
+                  className="w-full h-full object-cover"
+                  style={{ borderRadius: '50%' }}
+                />
+              </div>
+              <h2 className="font-bold text-[#8b2e0f] mb-0" style={{ fontSize: '2.2rem', fontStyle: 'italic', borderRadius: 0 }}>
+                {storeOwner.name}
+              </h2>
+            </div>
+            <button
+              className="bg-[#8b2e0f] text-white px-6 py-2 rounded-none font-semibold hover:bg-[#2b2b2b] transition"
+              style={{ borderRadius: 0 }}
+              onClick={() => navigate(`/seller/store`)}
+            >
+              Xem cửa hàng
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* description , review , additional info */}
       <div className="max-w-7xl mx-auto mt-10 px-12">
         {/* Tabs */}

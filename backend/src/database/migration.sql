@@ -43,7 +43,7 @@ CREATE TABLE stores (
     seller_id INT NOT NULL,
     name VARCHAR(150) NOT NULL,
     description TEXT,
-    image VARCHAR(255),image VARCHAR(255) DEFAULT NULL,
+    image VARCHAR(255) DEFAULT NULL,
     status ENUM('pending', 'processing', 'approved', 'rejected') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

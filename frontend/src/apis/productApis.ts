@@ -8,6 +8,11 @@ const ProductApi = {
     const response = await axios.get(`${BASE_URL}/products`);
     return response.data;
   },
+  // Lấy sản phẩm theo cửa hàng
+  getProductsByStoreId: async (storeId: string | number) => {
+    const res = await axios.get(`${BASE_URL}/products/store/${storeId}`);
+    return res.data;
+  },
   // Lấy sản phẩm theo id
   getProductById: async (id: string | number) => {
     const res = await axios.get(`${BASE_URL}/products/${id}`);
