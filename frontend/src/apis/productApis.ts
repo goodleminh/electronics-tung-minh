@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
@@ -20,25 +21,35 @@ const ProductApi = {
   },
   // Tạo sản phẩm mới
   createProduct: async (data: FormData) => {
+    const token = localStorage.getItem("accessToken");
     const res = await axios.post(`${BASE_URL}/products`, data, {
       headers: {
         "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`,
       },
     });
     return res.data;
   },
+
   // Cập nhật sản phẩm
   updateProduct: async (id: string | number, data: FormData) => {
+    const token = localStorage.getItem("accessToken");
     const res = await axios.put(`${BASE_URL}/products/${id}`, data, {
       headers: {
         "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`,
       },
     });
     return res.data;
   },
   // Xóa sản phẩm
   deleteProduct: async (id: string | number) => {
-    const res = await axios.delete(`${BASE_URL}/products/${id}`);
+    const token = localStorage.getItem("accessToken");
+    const res = await axios.delete(`${BASE_URL}/products/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return res.data;
   },
   // lấy sản phẩm liên quan

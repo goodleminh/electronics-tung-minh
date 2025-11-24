@@ -288,7 +288,6 @@ const authSlice = createSlice({
       .addCase(getAllUsers.fulfilled, (state, action) => {
         state.loading = false;
         state.users = action.payload;
-        console.log(action.payload);
       })
       .addCase(getAllUsers.rejected, (state, action) => {
         state.loading = false;

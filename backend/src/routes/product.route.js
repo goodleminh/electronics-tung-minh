@@ -1,19 +1,28 @@
 import { Router } from "express";
 import * as productController from "../controllers/product.controller.js";
 import multer from "multer";
-import fs from "fs";
-import path from "path";
+import { verifyAdmin } from "../middlewares/auth.middleware.js";
+// import fs from "fs";
+// import path from "path";
 
 const router = Router();
 
 // Multer setup for product image upload
-const productDir = path.join(process.cwd(), "src/public/product");
-if (!fs.existsSync(productDir)) {
-  fs.mkdirSync(productDir, { recursive: true });
-}
+// const productDir = path.join(process.cwd(), "src/public/product");
+// if (!fs.existsSync(productDir)) {
+//   fs.mkdirSync(productDir, { recursive: true });
+// }
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => cb(null, "src/public/product"),
+//   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+// });
+
+// const upload = multer({ storage });
+
+// Multer setup
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "src/public/product"),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+  filename: (req, file, cb) => cb(null, `${file.originalname}`),
 });
 const upload = multer({ storage });
 
@@ -31,11 +40,27 @@ router.get(
 );
 // Lấy sản phẩm theo id
 router.get("/:id", productController.getProductById);
+
 // Tạo sản phẩm mới
-router.post("/", upload.single("image"), productController.createProduct);
+// router.post("/", upload.single("image"), productController.createProduct);
+//tạo sản phẩm (dash-board)
+router.post(
+  "/",
+  verifyAdmin,
+  upload.single("image"),
+  productController.createProductAdmin
+);
 // Sửa thông tin sản phẩm
-router.put("/:id", upload.single("image"), productController.updateProduct);
+// router.put("/:id", upload.single("image"), productController.updateProduct);
+
+// Sửa thông tin sản phẩm (dash-board)
+router.put(
+  "/:id",
+  verifyAdmin,
+  upload.single("image"),
+  productController.updateProductByAdmin
+);
 // Xoá sản phẩm
-router.delete("/:id", productController.deleteProduct);
+router.delete("/:id", verifyAdmin, productController.deleteProduct);
 
 export default router;

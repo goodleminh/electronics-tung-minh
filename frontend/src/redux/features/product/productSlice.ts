@@ -16,6 +16,9 @@ export interface IProduct {
   stock: number;
   image?: string;
   status?: "pending" | "approved" | "rejected";
+  Category: {
+    name: string;
+  };
   created_at?: string;
   updated_at?: string;
 }
@@ -69,6 +72,7 @@ export const actFetchProducts = createAsyncThunk<IProduct[]>(
   async (_, { rejectWithValue }) => {
     try {
       const products = await ProductApi.getAllProducts();
+      console.log("products in component:", products);
       return products;
     } catch (error: any) {
       return rejectWithValue(
@@ -108,8 +112,8 @@ export const createProduct = createAsyncThunk(
   "products/create",
   async (data: FormData, { rejectWithValue }) => {
     try {
-      const product = await ProductApi.createProduct(data);
-      return product;
+      const res = await ProductApi.createProduct(data);
+      return res;
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
@@ -123,8 +127,8 @@ export const updateProduct = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const product = await ProductApi.updateProduct(id, data);
-      return product;
+      const res = await ProductApi.updateProduct(id, data);
+      return res;
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
@@ -206,6 +210,7 @@ const productSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      //get all products
       .addCase(actFetchProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -231,6 +236,7 @@ const productSlice = createSlice({
           state.products = action.payload;
         }
       )
+      //get product by id (product detail)
       .addCase(fetchProductById.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -247,18 +253,20 @@ const productSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      // Sản phẩm liên quan
+      // related product
       .addCase(fetchRelatedProducts.fulfilled, (state, action) => {
         state.productRelated = action.payload as IProduct[];
       })
       // Search products
       .addCase(searchProducts.pending, (state, action) => {
         const page = (action.meta.arg && action.meta.arg.page) || 1;
-        if (page > 1) state.searchLoadingMore = true; else state.searchLoading = true;
+        if (page > 1) state.searchLoadingMore = true;
+        else state.searchLoading = true;
         if (page === 1) state.searchError = null;
       })
       .addCase(searchProducts.fulfilled, (state, action) => {
-        const { items, total, page, pageSize, hasMore, reset } = action.payload as any;
+        const { items, total, page, pageSize, hasMore, reset } =
+          action.payload as any;
         if (reset || page === 1) {
           state.searchItems = items;
         } else {
@@ -275,6 +283,35 @@ const productSlice = createSlice({
         state.searchError = action.payload as string;
         state.searchLoading = false;
         state.searchLoadingMore = false;
+      })
+      //create new product
+      .addCase(createProduct.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createProduct.fulfilled, (state, action) => {
+        state.loading = false;
+        state.products = action.payload;
+      })
+      .addCase(createProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      //delete product
+      .addCase(deleteProduct.fulfilled, (state, action) => {
+        state.loading = false;
+        state.products = action.payload;
+      })
+      //edit product
+      .addCase(updateProduct.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateProduct.fulfilled, (state, action) => {
+        state.loading = false;
+        state.products = action.payload;
+      })
+      .addCase(updateProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });

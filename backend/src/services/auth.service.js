@@ -157,7 +157,7 @@ export const editUser = async (id, data) => {
   const existingUser = await User.findOne({
     where: {
       [Op.or]: [{ email }],
-      user_id: { [Op.ne]: id }, //  rất quan trọng tránh tự trùng chính mình
+      user_id: { [Op.ne]: id }, //  tránh tự trùng chính mình
     },
   });
 
@@ -198,7 +198,6 @@ export const editUser = async (id, data) => {
   });
 };
 export const createUserByAdmin = async (data) => {
-  console.log("Backend nhận body:", data);
   const {
     username,
     email,

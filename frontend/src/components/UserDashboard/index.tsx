@@ -30,7 +30,8 @@ interface IUserRecord {
   avatar: string | null;
   raw?: any;
 }
-const API_IMG = `http://localhost:3000`;
+const API_IMG = import.meta.env.VITE_API_URL;
+
 // ===================== COMPONENT =====================
 const ContentUsers = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -56,14 +57,14 @@ const ContentUsers = () => {
       key: u.user_id,
       username: u.username,
       email: u.email,
-      address: u.Profile?.address || "-",
+      address: u.Profile?.address || "",
       role: u.role,
-      phone: u.Profile?.phone || "-",
+      phone: u.Profile?.phone || "",
       birthday: u.Profile?.birthday
         ? dayjs(u.Profile.birthday).format("DD-MM-YYYY")
-        : "-",
+        : "",
       status: u.status,
-      avatar: u.Profile.avatar || null,
+      avatar: u.Profile?.avatar || null,
       raw: u,
     }));
     setTableData(formatted);
@@ -133,6 +134,7 @@ const ContentUsers = () => {
   //   setForm({ ...form, [name]: value });
   // };
   // ===================== TABLE COLUMNS =====================
+
   const columns: TableProps<IUserRecord>["columns"] = [
     {
       title: "Tên",
@@ -142,7 +144,7 @@ const ContentUsers = () => {
         <div className="flex items-center space-x-3">
           {record.avatar ? (
             <img
-              src={`${API_IMG}/${record.avatar}`}
+              src={`${API_IMG}/public/avatar/${record.avatar}`}
               alt={record.username}
               className="w-10 h-10 rounded-full object-cover "
             />
@@ -164,6 +166,7 @@ const ContentUsers = () => {
       title: "Địa chỉ",
       dataIndex: "address",
       key: "address",
+      render: (text: string) => text || "-", // nếu rỗng thì hiển thị "-"
     },
     {
       title: "Role",
@@ -174,11 +177,13 @@ const ContentUsers = () => {
       title: "Số điện thoại",
       dataIndex: "phone",
       key: "phone",
+      render: (text: string) => text || "-", // nếu rỗng thì hiển thị "-"
     },
     {
       title: "Ngày sinh",
       dataIndex: "birthday",
       key: "birthday",
+      render: (text: string) => text || "-", // nếu rỗng thì hiển thị "-"
     },
     {
       title: "Trạng thái",

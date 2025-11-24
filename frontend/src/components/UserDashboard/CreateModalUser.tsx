@@ -6,12 +6,12 @@ import { Modal } from "antd";
 import { toast } from "react-toastify";
 import { createUser, getAllUsers } from "../../redux/features/auth/authSlice";
 
-interface CreateUserModalProps {
+export interface CreateModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-const CreateUserModal = ({ visible, onClose }: CreateUserModalProps) => {
+const CreateUserModal = ({ visible, onClose }: CreateModalProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const [form, setForm] = useState({
     username: "",
@@ -147,7 +147,7 @@ const CreateUserModal = ({ visible, onClose }: CreateUserModalProps) => {
                  transition"
           />
         </div>
-        {/* Address (full width) */}
+        {/* Address */}
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Address
@@ -208,7 +208,7 @@ const CreateUserModal = ({ visible, onClose }: CreateUserModalProps) => {
             </span>
           </div>
         </div>
-        {/* Actions (full width) */}
+        {/* Submit */}
         <div className="md:col-span-2 flex items-center justify-start gap-3 mt-1">
           <button
             type="button"
