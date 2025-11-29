@@ -4,6 +4,7 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 import { StoreApi } from "../../../apis/storeApis";
 
 export interface IStore {
+  User: any;
   store_id: number;
   seller_id: number;
   name: string;
@@ -112,6 +113,23 @@ export const updateStore = createAsyncThunk<
     return rejectWithValue(err.message || "Không thể cập nhật cửa hàng");
   }
 });
+// cập nhật status store và send mail cho seller
+export const sendMailToSeller = createAsyncThunk<
+  IStore,
+  {
+    id: number | string;
+    status: string;
+  },
+  { rejectValue: string }
+>("stores/sendMail", async ({ id, status }, { rejectWithValue }) => {
+  try {
+    const store = await StoreApi.sendMailToSeller(id, { status });
+    if (!store?.store_id) throw new Error("Cập nhật store thất bại");
+    return store;
+  } catch (err: any) {
+    return rejectWithValue(err.message || "Không thể cập nhật cửa hàng");
+  }
+});
 
 export const deleteStore = createAsyncThunk<
   { id: number | string },
@@ -203,7 +221,28 @@ const storeSlice = createSlice({
             state.current = null;
           }
         }
-      );
+      )
+
+      //  Gửi mail (approved/rejected) — pending
+      .addCase(sendMailToSeller.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      //cập nhật status store và send mail
+      .addCase(sendMailToSeller.fulfilled, (state, action) => {
+        state.loading = false;
+
+        const { store_id, status } = action.payload;
+
+        state.stores = state.stores.map((store) =>
+          store.store_id === store_id ? { ...store, status } : store
+        );
+      })
+      //error
+      .addCase(sendMailToSeller.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 

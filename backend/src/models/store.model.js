@@ -29,8 +29,8 @@ Store.init(
       defaultValue: null,
     },
     status: {
-      type: DataTypes.ENUM('processing', 'approved', 'rejected'),
-      defaultValue: 'processing',
+      type: DataTypes.ENUM("processing", "approved", "rejected"),
+      defaultValue: "processing",
     },
     created_at: {
       type: DataTypes.DATE,
@@ -49,3 +49,6 @@ Store.init(
     underscored: true,
   }
 );
+
+Store.belongsTo(User, { foreignKey: "seller_id" });
+User.hasOne(Store, { foreignKey: "seller_id" });

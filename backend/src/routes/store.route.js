@@ -1,7 +1,11 @@
 import { Router } from "express";
 import * as storeController from "../controllers/store.controller.js";
 import multer from "multer";
-import { verifyToken } from "../middlewares/auth.middleware.js";
+import {
+  verifyAdmin,
+  verifySeller,
+  verifyToken,
+} from "../middlewares/auth.middleware.js";
 import fs from "fs";
 import path from "path";
 
@@ -27,14 +31,15 @@ router.get("/:id", storeController.getStore);
 // Tạo cửa hàng mới
 router.post("/", storeController.createStoreController);
 // Cập nhật cửa hàng
-router.put("/:id", storeController.updateStoreController);
+router.put("/:id", verifySeller, storeController.updateStoreController);
+router.put("/:id/send-mail", verifyAdmin, storeController.sendMailToSeller);
 // Xoá cửa hàng
 router.delete("/:id", storeController.deleteStoreController);
 // Upload ảnh store
 router.post(
   "/image",
   upload.single("image"),
-  verifyToken,
+  verifySeller,
   storeController.uploadStoreImage
 );
 

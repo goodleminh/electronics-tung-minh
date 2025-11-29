@@ -1,7 +1,6 @@
 import sequelize from "../config/dbConnection.js";
 import { DataTypes, Model } from "sequelize";
 import Profile from "./profile.model.js";
-import { Store } from "./store.model.js";
 
 export class User extends Model {}
 

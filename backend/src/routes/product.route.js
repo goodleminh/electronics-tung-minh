@@ -1,23 +1,12 @@
 import { Router } from "express";
 import * as productController from "../controllers/product.controller.js";
 import multer from "multer";
-import { verifyAdmin } from "../middlewares/auth.middleware.js";
-// import fs from "fs";
-// import path from "path";
+import {
+  verifyAdmin,
+  verifyAdminAndSeller,
+} from "../middlewares/auth.middleware.js";
 
 const router = Router();
-
-// Multer setup for product image upload
-// const productDir = path.join(process.cwd(), "src/public/product");
-// if (!fs.existsSync(productDir)) {
-//   fs.mkdirSync(productDir, { recursive: true });
-// }
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => cb(null, "src/public/product"),
-//   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
-// });
-
-// const upload = multer({ storage });
 
 // Multer setup
 const storage = multer.diskStorage({
@@ -46,7 +35,7 @@ router.get("/:id", productController.getProductById);
 //tạo sản phẩm (dash-board)
 router.post(
   "/",
-  verifyAdmin,
+  verifyAdminAndSeller,
   upload.single("image"),
   productController.createProductAdmin
 );
@@ -56,7 +45,7 @@ router.post(
 // Sửa thông tin sản phẩm (dash-board)
 router.put(
   "/:id",
-  verifyAdmin,
+  verifyAdminAndSeller,
   upload.single("image"),
   productController.updateProductByAdmin
 );

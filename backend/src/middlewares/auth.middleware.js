@@ -27,8 +27,40 @@ export const verifyAdmin = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findByPk(decoded.id);
     if (!user) return res.status(401).json({ message: "No user" });
-    if (user.role !== "admin" && user.role !== "seller")
+    if (user.role !== "admin")
       return res.status(403).json({ message: "Require admin" });
+    req.user = user;
+    next();
+  } catch (err) {
+    res.status(401).json({ message: "Invalid token" });
+  }
+};
+export const verifyAdminAndSeller = async (req, res, next) => {
+  try {
+    const auth = req.headers.authorization;
+    if (!auth) return res.status(401).json({ message: "No token" });
+    const token = auth.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findByPk(decoded.id);
+    if (!user) return res.status(401).json({ message: "No user" });
+    if (user.role !== "admin" && user.role !== "seller")
+      return res.status(403).json({ message: "Require admin or seller" });
+    req.user = user;
+    next();
+  } catch (err) {
+    res.status(401).json({ message: "Invalid token" });
+  }
+};
+export const verifySeller = async (req, res, next) => {
+  try {
+    const auth = req.headers.authorization;
+    if (!auth) return res.status(401).json({ message: "No token" });
+    const token = auth.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findByPk(decoded.id);
+    if (!user) return res.status(401).json({ message: "No user" });
+    if (user.role !== "seller")
+      return res.status(403).json({ message: "Require seller" });
     req.user = user;
     next();
   } catch (err) {

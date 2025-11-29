@@ -246,11 +246,13 @@ const CreateModalProduct = ({ onClose, visible }: CreateModalProps) => {
              transition pr-8"
             >
               <option value="">-- Chọn cửa hàng --</option>
-              {stores.map((s) => (
-                <option key={s.store_id} value={s.store_id}>
-                  {s.name}
-                </option>
-              ))}
+              {stores
+                .filter((s) => s.status === "approved")
+                .map((s) => (
+                  <option key={s.store_id} value={s.store_id}>
+                    {s.name}
+                  </option>
+                ))}
             </select>
             <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
               ▾
@@ -284,7 +286,7 @@ const CreateModalProduct = ({ onClose, visible }: CreateModalProps) => {
           <button
             type="button"
             onClick={handleCreate}
-            className="px-5 py-2 bg-[#8b2e0f] hover:bg-[#2b2b2b] text-white rounded-lg transition cursor-pointer"
+            className="px-5 py-2 bg-[#FF9F45] hover:bg-[#2b2b2b] text-white rounded-lg transition cursor-pointer"
           >
             Tạo
           </button>

@@ -233,7 +233,7 @@ const EditUserModal = ({ visible, onClose, user }: EditUserModalProps) => {
           <button
             type="button"
             onClick={handleEdit}
-            className="px-5 py-2 bg-[#8b2e0f] hover:bg-[#2b2b2b] text-white rounded-lg transition cursor-pointer"
+            className="px-5 py-2 bg-[#FF9F45] hover:bg-[#2b2b2b] text-white rounded-lg transition cursor-pointer"
           >
             Lưu
           </button>

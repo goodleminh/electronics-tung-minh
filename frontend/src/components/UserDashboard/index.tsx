@@ -245,14 +245,14 @@ const ContentUsers = () => {
 
   // ===================== RENDER =====================
   return (
-    <div className="space-y-8">
-      <h1 className="text-3xl font-semibold text-gray-800">Users</h1>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-semibold ">Users</h1>
       <div className="bg-white shadow p-5 border border-gray-100 flex items-center justify-between">
         <div className="flex items-center max-w-md w-full px-4 py-3 border border-gray-300 rounded-xl space-x-3">
           <i className="ri-search-line text-xl text-gray-500"></i>
           <input
             type="text"
-            placeholder="Search user..."
+            placeholder="Tìm người dùng, email..."
             className="w-full outline-none text-gray-700"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -261,7 +261,7 @@ const ContentUsers = () => {
 
         <button
           onClick={() => setCreateModalVisible(true)}
-          className="px-4 py-3 bg-[#8b2e0f] hover:bg-[#2b2b2b] text-white rounded-xl cursor-pointer"
+          className="px-4 py-3 bg-[#FF9F45] hover:bg-[#2b2b2b] text-white rounded-xl cursor-pointer"
         >
           New user
         </button>

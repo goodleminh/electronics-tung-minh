@@ -1,17 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useLocation } from 'react-router-dom';
-import type { AppDispatch, RootState } from '../../redux/store';
-import { createOrder } from '../../redux/features/order/orderSlice';
-import { createOrderItem } from '../../redux/features/order_item/order_itemSlice';
-import { Button, Alert, message, Modal } from 'antd';
-import { actFetchProducts } from '../../redux/features/product/productSlice';
-import { actSendConfirmationEmail } from '../../redux/features/order/orderSlice';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useLocation } from "react-router-dom";
+import type { AppDispatch, RootState } from "../../redux/store";
+import { createOrder } from "../../redux/features/order/orderSlice";
+import { createOrderItem } from "../../redux/features/order_item/order_itemSlice";
+import { Button, Alert, message, Modal } from "antd";
+import { actFetchProducts } from "../../redux/features/product/productSlice";
+import { actSendConfirmationEmail } from "../../redux/features/order/orderSlice";
+import axios from "axios";
 
 const formatCurrency = (n?: number) => {
-  if (typeof n !== 'number') return '0₫';
-  return n.toLocaleString('vi-VN') + '₫';
+  if (typeof n !== "number") return "0₫";
+  return n.toLocaleString("vi-VN") + "₫";
 };
 
 const OrderPage: React.FC = () => {
@@ -26,94 +26,127 @@ const OrderPage: React.FC = () => {
   const API_BASE: string | undefined = import.meta.env.VITE_API_URL;
   const buildImageUrl = (img?: string | null) => {
     if (!img) return null;
-    if (img.startsWith('http')) return img;
-    const normalized = img.includes('/') ? img : `product/${img}`;
+    if (img.startsWith("http")) return img;
+    const normalized = img.includes("/") ? img : `product/${img}`;
     return `${API_BASE}/public/${normalized}`;
   };
 
   const checkout = (location.state as any)?.checkout as
-    | { items: Array<{ product_id: number; quantity: number; price: number }>; total: number }
+    | {
+        items: Array<{ product_id: number; quantity: number; price: number }>;
+        total: number;
+      }
     | undefined;
 
   // Local editable checkout items (allow quantity changes)
-  const [checkoutItems, setCheckoutItems] = useState<Array<{ product_id: number; quantity: number; price: number }>>(
-    checkout?.items || []
-  );
+  const [checkoutItems, setCheckoutItems] = useState<
+    Array<{ product_id: number; quantity: number; price: number }>
+  >(checkout?.items || []);
 
   useEffect(() => {
     if (checkout?.items) setCheckoutItems(checkout.items);
   }, [checkout?.items]);
 
   const incQty = (pid: number) => {
-    setCheckoutItems((prev) => prev.map((it) => (it.product_id === pid ? { ...it, quantity: it.quantity + 1 } : it)));
+    setCheckoutItems((prev) =>
+      prev.map((it) =>
+        it.product_id === pid ? { ...it, quantity: it.quantity + 1 } : it
+      )
+    );
   };
   const decQty = (pid: number) => {
-    setCheckoutItems((prev) => prev.map((it) => (it.product_id === pid ? { ...it, quantity: Math.max(1, it.quantity - 1) } : it)));
+    setCheckoutItems((prev) =>
+      prev.map((it) =>
+        it.product_id === pid
+          ? { ...it, quantity: Math.max(1, it.quantity - 1) }
+          : it
+      )
+    );
   };
 
   //  địa chỉ, điện thoại, phương thức thanh toán
-  const [address, setAddress] = useState('');
-  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
   const [provinces, setProvinces] = useState<any[]>([]);
   const [districts, setDistricts] = useState<any[]>([]);
   const [wards, setWards] = useState<any[]>([]);
-  const [selectedProvince, setSelectedProvince] = useState('');
-  const [selectedDistrict, setSelectedDistrict] = useState('');
-  const [selectedWard, setSelectedWard] = useState('');
-  const [detailAddress, setDetailAddress] = useState('');
+  const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedDistrict, setSelectedDistrict] = useState("");
+  const [selectedWard, setSelectedWard] = useState("");
+  const [detailAddress, setDetailAddress] = useState("");
   const [creating, setCreating] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [payment, setPayment] = useState<'cash' | 'zalopay'>('cash');
+  const [payment, setPayment] = useState<"cash" | "zalopay">("cash");
 
   // Fetch provinces on mount
   useEffect(() => {
-    axios.get('https://provinces.open-api.vn/api/p/').then(res => setProvinces(res.data));
+    axios
+      .get("https://provinces.open-api.vn/api/p/")
+      .then((res) => setProvinces(res.data));
   }, []);
 
   // Fetch districts when province changes
   useEffect(() => {
     if (selectedProvince) {
-      axios.get(`https://provinces.open-api.vn/api/p/${selectedProvince}?depth=2`).then(res => setDistricts(res.data.districts || []));
-      setSelectedDistrict(''); setWards([]); setSelectedWard('');
+      axios
+        .get(`https://provinces.open-api.vn/api/p/${selectedProvince}?depth=2`)
+        .then((res) => setDistricts(res.data.districts || []));
+      setSelectedDistrict("");
+      setWards([]);
+      setSelectedWard("");
     }
   }, [selectedProvince]);
 
   // Fetch wards when district changes
   useEffect(() => {
     if (selectedDistrict) {
-      axios.get(`https://provinces.open-api.vn/api/d/${selectedDistrict}?depth=2`).then(res => setWards(res.data.wards || []));
-      setSelectedWard('');
+      axios
+        .get(`https://provinces.open-api.vn/api/d/${selectedDistrict}?depth=2`)
+        .then((res) => setWards(res.data.wards || []));
+      setSelectedWard("");
     }
   }, [selectedDistrict]);
 
   // Update address when all selected
   useEffect(() => {
     if (selectedProvince && selectedDistrict && selectedWard) {
-      const province = provinces.find(p => p.code == selectedProvince)?.name || '';
-      const district = districts.find(d => d.code == selectedDistrict)?.name || '';
-      const ward = wards.find(w => w.code == selectedWard)?.name || '';
+      const province =
+        provinces.find((p) => p.code == selectedProvince)?.name || "";
+      const district =
+        districts.find((d) => d.code == selectedDistrict)?.name || "";
+      const ward = wards.find((w) => w.code == selectedWard)?.name || "";
       setAddress(`${detailAddress}, ${ward}, ${district}, ${province}`);
     } else {
-      setAddress('');
+      setAddress("");
     }
   }, [selectedProvince, selectedDistrict, selectedWard, detailAddress]);
 
   // Dynamic total for checkout flow
-  const checkoutTotal = checkoutItems.reduce((s, it) => s + Number(it.price) * Number(it.quantity), 0);
+  const checkoutTotal = checkoutItems.reduce(
+    (s, it) => s + Number(it.price) * Number(it.quantity),
+    0
+  );
 
   const placeOrder = async () => {
-    console.log("[DEBUG] placeOrder called", { checkout, creating, address, phone });
+    console.log("[DEBUG] placeOrder called", {
+      checkout,
+      creating,
+      address,
+      phone,
+    });
     if (!checkout || creating) {
-      message.error('Không có dữ liệu đơn hàng (checkout) hoặc đang tạo đơn hàng.');
+      message.error(
+        "Không có dữ liệu đơn hàng (checkout) hoặc đang tạo đơn hàng."
+      );
       return;
     }
     if (!address.trim()) {
-      message.warning('Vui lòng nhập địa chỉ giao hàng');
+      message.warning("Vui lòng nhập địa chỉ giao hàng");
       return;
     }
     if (!phone.trim()) {
-      message.warning('Vui lòng nhập số điện thoại liên hệ');
+      message.warning("Vui lòng nhập số điện thoại liên hệ");
       return;
     }
     try {
@@ -123,7 +156,7 @@ const OrderPage: React.FC = () => {
         createOrder({
           total_amount: checkoutTotal,
           address,
-          payment_method: payment
+          payment_method: payment,
         })
       ).unwrap();
       console.log("[DEBUG] Order created in DB:", created);
@@ -131,7 +164,12 @@ const OrderPage: React.FC = () => {
       await Promise.all(
         checkoutItems.map((it) =>
           dispatch(
-            createOrderItem({ order_id: newId, product_id: it.product_id, quantity: it.quantity, price: it.price })
+            createOrderItem({
+              order_id: newId,
+              product_id: it.product_id,
+              quantity: it.quantity,
+              price: it.price,
+            })
           ).unwrap()
         )
       );
@@ -143,14 +181,21 @@ const OrderPage: React.FC = () => {
             orderId: newId,
           });
           if (res.status === 200 && res.data.order_url) {
-            window.open(res.data.order_url, "_blank");
+            window.open(res.data.order_url, "_self");
             return;
           } else {
             message.error("Không nhận được link thanh toán.");
           }
         } catch (err) {
           let msg = "Lỗi kết nối ZaloPay";
-          if (err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response) {
+          if (
+            err &&
+            typeof err === "object" &&
+            "response" in err &&
+            err.response &&
+            typeof err.response === "object" &&
+            "data" in err.response
+          ) {
             // @ts-ignore
             msg = err.response.data?.message || msg;
           }
@@ -161,15 +206,17 @@ const OrderPage: React.FC = () => {
       }
       // BƯỚC 3: NẾU LÀ COD -> HOÀN TẤT LUÔN
       setCreatedOrderId(newId);
-      message.success('Đặt hàng thành công');
+      message.success("Đặt hàng thành công");
       try {
         const userEmail = (auth.user as any)?.email;
         const orderCode = (created as any).order_code;
         const totalAmount = checkoutTotal;
         const addressValue = address;
-        const itemsWithDetails = checkoutItems.map(item => {
-          const product = productState.products.find(p => p.product_id === item.product_id);
-          return { name: product?.name || 'Sản phẩm', ...item };
+        const itemsWithDetails = checkoutItems.map((item) => {
+          const product = productState.products.find(
+            (p) => p.product_id === item.product_id
+          );
+          return { name: product?.name || "Sản phẩm", ...item };
         });
         if (userEmail) {
           dispatch(
@@ -183,13 +230,13 @@ const OrderPage: React.FC = () => {
           );
         }
       } catch (emailError) {
-        console.error('[DEBUG] Lỗi gửi email:', emailError);
+        console.error("[DEBUG] Lỗi gửi email:", emailError);
       }
     } catch (e: any) {
       console.error("[DEBUG] Error in placeOrder", e);
-      message.error(e?.message || 'Đặt hàng thất bại');
+      message.error(e?.message || "Đặt hàng thất bại");
     } finally {
-      if (payment !== 'zalopay') {
+      if (payment !== "zalopay") {
         setCreating(false);
       }
     }
@@ -220,8 +267,15 @@ const OrderPage: React.FC = () => {
   if (!checkout) {
     return (
       <div className="max-w-4xl mx-auto p-6">
-        <Alert type="error" message="Không có dữ liệu đơn hàng. Vui lòng quay lại giỏ hàng để đặt hàng." />
-        <Button className="mt-4" onClick={() => navigate('/cart')} type="primary">
+        <Alert
+          type="error"
+          message="Không có dữ liệu đơn hàng. Vui lòng quay lại giỏ hàng để đặt hàng."
+        />
+        <Button
+          className="mt-4"
+          onClick={() => navigate("/cart")}
+          type="primary"
+        >
           Quay lại giỏ hàng
         </Button>
       </div>
@@ -232,7 +286,11 @@ const OrderPage: React.FC = () => {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <Alert type="warning" message="Bạn cần đăng nhập để xem đơn hàng" />
-        <Button className="mt-4" onClick={() => navigate('/login')} type="primary">
+        <Button
+          className="mt-4"
+          onClick={() => navigate("/login")}
+          type="primary"
+        >
           Đăng nhập
         </Button>
       </div>
@@ -241,32 +299,47 @@ const OrderPage: React.FC = () => {
 
   // Validate phone and address
   const isValidPhone = /^0\d{9,10}$/.test(phone.trim());
-  const isValidAddress = !!(selectedProvince && selectedDistrict && selectedWard && detailAddress.trim());
+  const isValidAddress = !!(
+    selectedProvince &&
+    selectedDistrict &&
+    selectedWard &&
+    detailAddress.trim()
+  );
   const [addressTouched, setAddressTouched] = useState(false);
   const [phoneTouched, setPhoneTouched] = useState(false);
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-[30px] inline-block border-b-2 border-[#8b2e0f] mb-6">Chi tiết đơn hàng</h1>
+      <h1 className="text-[30px] inline-block border-b-2 border-[#8b2e0f] mb-6">
+        Chi tiết đơn hàng
+      </h1>
 
       {/* Checkout flow when navigating from Cart */}
       {checkout && !createdOrderId && (
         <div className="border border-gray-200 bg-white rounded-none p-8 mb-10">
-          <h2 className="text-[26px] font-semibold mb-6 inline-block border-b-2 border-[#8b2e0f]">Xác nhận đơn hàng</h2>
+          <h2 className="text-[26px] font-semibold mb-6 inline-block border-b-2 border-[#8b2e0f]">
+            Xác nhận đơn hàng
+          </h2>
 
           {/* Buyer info */}
           <div className="flex flex-col md:flex-row md:items-start gap-8 text-lg mb-6">
             <div className="flex-1">
               <div className="font-semibold mb-1">Người mua</div>
-              <div className="text-[#8b2e0f] font-extrabold text-2xl">{auth.user?.username || `User #${auth.user?.user_id}`}</div>
+              <div className="text-[#8b2e0f] font-extrabold text-2xl">
+                {auth.user?.username || `User #${auth.user?.user_id}`}
+              </div>
             </div>
             <div className="flex-1">
               <div className="font-semibold mb-1">Số điện thoại</div>
-              <div className="text-gray-800">{(auth.user as any)?.phone || 'Chưa có'}</div>
+              <div className="text-gray-800">
+                {(auth.user as any)?.phone || "Chưa có"}
+              </div>
             </div>
             <div className="flex-1">
               <div className="font-semibold mb-1">Địa chỉ mặc định</div>
-              <div className="text-gray-800">{(auth.user as any)?.address || 'Chưa có'}</div>
+              <div className="text-gray-800">
+                {(auth.user as any)?.address || "Chưa có"}
+              </div>
             </div>
           </div>
 
@@ -283,7 +356,9 @@ const OrderPage: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {checkoutItems.map((it) => {
-                  const p = productState.products?.find((prod) => prod.product_id === it.product_id);
+                  const p = productState.products?.find(
+                    (prod) => prod.product_id === it.product_id
+                  );
                   const imgUrl = buildImageUrl(p?.image);
                   return (
                     <tr key={it.product_id}>
@@ -291,25 +366,49 @@ const OrderPage: React.FC = () => {
                         <div className="flex items-center gap-5">
                           <div className="w-24 h-24 bg-white flex items-center justify-center overflow-hidden border border-gray-200">
                             {imgUrl ? (
-                              <img src={imgUrl} alt={p?.name} className="max-w-[85%] max-h-[85%] object-contain" />
+                              <img
+                                src={imgUrl}
+                                alt={p?.name}
+                                className="max-w-[85%] max-h-[85%] object-contain"
+                              />
                             ) : (
                               <div className="text-3xl text-gray-400">📦</div>
                             )}
                           </div>
                           <div className="min-w-0">
-                            <div className="font-semibold text-gray-900 text-xl leading-snug line-clamp-2">{p?.name || `Product #${it.product_id}`}</div>
+                            <div className="font-semibold text-gray-900 text-xl leading-snug line-clamp-2">
+                              {p?.name || `Product #${it.product_id}`}
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="p-5 whitespace-nowrap text-gray-900">{formatCurrency(it.price)}</td>
+                      <td className="p-5 whitespace-nowrap text-gray-900">
+                        {formatCurrency(it.price)}
+                      </td>
                       <td className="p-5">
                         <div className="inline-flex items-center border border-gray-300">
-                          <button className="px-3 py-2 hover:bg-gray-50" onClick={() => decQty(it.product_id)} aria-label="Giảm">-</button>
-                          <span className="px-5 min-w-[2.5rem] text-center">{it.quantity}</span>
-                          <button className="px-3 py-2 hover:bg-gray-50" onClick={() => incQty(it.product_id)} aria-label="Tăng">+</button>
+                          <button
+                            className="px-3 py-2 hover:bg-gray-50"
+                            onClick={() => decQty(it.product_id)}
+                            aria-label="Giảm"
+                          >
+                            -
+                          </button>
+                          <span className="px-5 min-w-[2.5rem] text-center">
+                            {it.quantity}
+                          </span>
+                          <button
+                            className="px-3 py-2 hover:bg-gray-50"
+                            onClick={() => incQty(it.product_id)}
+                            aria-label="Tăng"
+                          >
+                            +
+                          </button>
                         </div>
                       </td>
-                      <td className="p-5 font-semibold text-gray-900">{formatCurrency(it.price * it.quantity)}</td>
+                      <td className="p-5 font-semibold text-gray-900">
+                        {formatCurrency(it.price * it.quantity)}
+                      </td>
                     </tr>
                   );
                 })}
@@ -320,47 +419,67 @@ const OrderPage: React.FC = () => {
           {/* Address & payment */}
           <div className="flex flex-col md:flex-row gap-8 mb-6">
             <div className="flex-1">
-              <label className="block text-sm font-medium mb-2">Địa chỉ giao hàng <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium mb-2">
+                Địa chỉ giao hàng <span className="text-red-500">*</span>
+              </label>
               <div className="flex flex-col gap-3 mb-2">
                 <select
                   className="w-full border border-gray-300 p-3 rounded-none text-base focus:outline-none focus:border-[#8b2e0f]"
                   value={selectedProvince}
-                  onChange={e => { setSelectedProvince(e.target.value); setAddressTouched(true); }}
+                  onChange={(e) => {
+                    setSelectedProvince(e.target.value);
+                    setAddressTouched(true);
+                  }}
                   onBlur={() => setAddressTouched(true)}
                 >
                   <option value="">Chọn tỉnh/thành</option>
                   {provinces.map((p: any) => (
-                    <option key={p.code} value={p.code}>{p.name}</option>
+                    <option key={p.code} value={p.code}>
+                      {p.name}
+                    </option>
                   ))}
                 </select>
                 <select
                   className="w-full border border-gray-300 p-3 rounded-none text-base focus:outline-none focus:border-[#8b2e0f]"
                   value={selectedDistrict}
-                  onChange={e => { setSelectedDistrict(e.target.value); setAddressTouched(true); }}
+                  onChange={(e) => {
+                    setSelectedDistrict(e.target.value);
+                    setAddressTouched(true);
+                  }}
                   onBlur={() => setAddressTouched(true)}
                   disabled={!selectedProvince}
                 >
                   <option value="">Chọn quận/huyện</option>
                   {districts.map((d: any) => (
-                    <option key={d.code} value={d.code}>{d.name}</option>
+                    <option key={d.code} value={d.code}>
+                      {d.name}
+                    </option>
                   ))}
                 </select>
                 <select
                   className="w-full border border-gray-300 p-3 rounded-none text-base focus:outline-none focus:border-[#8b2e0f]"
                   value={selectedWard}
-                  onChange={e => { setSelectedWard(e.target.value); setAddressTouched(true); }}
+                  onChange={(e) => {
+                    setSelectedWard(e.target.value);
+                    setAddressTouched(true);
+                  }}
                   onBlur={() => setAddressTouched(true)}
                   disabled={!selectedDistrict}
                 >
                   <option value="">Chọn phường/xã</option>
                   {wards.map((w: any) => (
-                    <option key={w.code} value={w.code}>{w.name}</option>
+                    <option key={w.code} value={w.code}>
+                      {w.name}
+                    </option>
                   ))}
                 </select>
                 <input
                   type="text"
                   value={detailAddress}
-                  onChange={e => { setDetailAddress(e.target.value); setAddressTouched(true); }}
+                  onChange={(e) => {
+                    setDetailAddress(e.target.value);
+                    setAddressTouched(true);
+                  }}
                   onBlur={() => setAddressTouched(true)}
                   placeholder="Số nhà, tên đường..."
                   className="w-full border border-gray-300 p-4 rounded-none text-base focus:outline-none focus:border-[#8b2e0f]"
@@ -368,13 +487,21 @@ const OrderPage: React.FC = () => {
                 />
               </div>
               {addressTouched && !isValidAddress && (
-                <p className="mt-1 text-sm text-red-600">Vui lòng nhập đầy đủ địa chỉ giao hàng (Số nhà, phường/xã, quận/huyện, tỉnh/thành)</p>
+                <p className="mt-1 text-sm text-red-600">
+                  Vui lòng nhập đầy đủ địa chỉ giao hàng (Số nhà, phường/xã,
+                  quận/huyện, tỉnh/thành)
+                </p>
               )}
-              <label className="block text-sm font-medium mb-2 mt-4">Số điện thoại liên hệ <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium mb-2 mt-4">
+                Số điện thoại liên hệ <span className="text-red-500">*</span>
+              </label>
               <input
                 type="tel"
                 value={phone}
-                onChange={(e) => { setPhone(e.target.value); setPhoneTouched(true); }}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  setPhoneTouched(true);
+                }}
                 onBlur={() => setPhoneTouched(true)}
                 placeholder="VD: 0901234567"
                 className="w-full border border-gray-300 p-4 rounded-none text-base focus:outline-none focus:border-[#8b2e0f]"
@@ -382,27 +509,47 @@ const OrderPage: React.FC = () => {
                 maxLength={11}
               />
               {phoneTouched && !isValidPhone && (
-                <p className="mt-1 text-sm text-red-600">Số điện thoại phải bắt đầu bằng 0, gồm 10-11 chữ số</p>
+                <p className="mt-1 text-sm text-red-600">
+                  Số điện thoại phải bắt đầu bằng 0, gồm 10-11 chữ số
+                </p>
               )}
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-medium mb-2">Phương thức thanh toán</label>
+              <label className="block text-sm font-medium mb-2">
+                Phương thức thanh toán
+              </label>
               <div className="flex flex-wrap gap-4">
                 <label
                   className={`cursor-pointer select-none px-4 py-3 border rounded-none flex items-center gap-3 text-base ${
-                    payment === 'cash' ? 'bg-[#8b2e0f] text-white border-[#8b2e0f]' : 'border-gray-300 hover:border-[#8b2e0f]'
+                    payment === "cash"
+                      ? "bg-[#8b2e0f] text-white border-[#8b2e0f]"
+                      : "border-gray-300 hover:border-[#8b2e0f]"
                   }`}
                 >
-                  <input type="radio" name="pay" className="hidden" checked={payment === 'cash'} onChange={() => setPayment('cash')} />
+                  <input
+                    type="radio"
+                    name="pay"
+                    className="hidden"
+                    checked={payment === "cash"}
+                    onChange={() => setPayment("cash")}
+                  />
                   <span className="font-semibold">COD</span>
                   <span className="opacity-90">Thanh toán khi nhận hàng</span>
                 </label>
                 <label
                   className={`cursor-pointer select-none px-4 py-3 border rounded-none flex items-center gap-3 text-base ${
-                    payment === 'zalopay' ? 'bg-[#8b2e0f] text-white border-[#8b2e0f]' : 'border-gray-300 hover:border-[#8b2e0f]'
+                    payment === "zalopay"
+                      ? "bg-[#8b2e0f] text-white border-[#8b2e0f]"
+                      : "border-gray-300 hover:border-[#8b2e0f]"
                   }`}
                 >
-                  <input type="radio" name="pay" className="hidden" checked={payment === 'zalopay'} onChange={() => setPayment('zalopay')} />
+                  <input
+                    type="radio"
+                    name="pay"
+                    className="hidden"
+                    checked={payment === "zalopay"}
+                    onChange={() => setPayment("zalopay")}
+                  />
                   <span className="font-semibold">ZaloPay</span>
                   <span className="opacity-90">Thanh toán qua ZaloPay</span>
                 </label>
@@ -411,13 +558,25 @@ const OrderPage: React.FC = () => {
           </div>
 
           <div className="flex flex-col items-center gap-4">
-            <div className="text-2xl font-extrabold text-center">Tổng thanh toán: <span className="text-[#8b2e0f]">{formatCurrency(checkoutTotal)}</span></div>
+            <div className="text-2xl font-extrabold text-center">
+              Tổng thanh toán:{" "}
+              <span className="text-[#8b2e0f]">
+                {formatCurrency(checkoutTotal)}
+              </span>
+            </div>
             <Button
               type="primary"
               loading={creating}
               onClick={handlePlaceOrder}
               className="rounded-none w-1/3 py-5 text-xl font-extrabold mx-auto"
-              style={{ backgroundColor: '#8b2e0f', borderColor: '#8b2e0f', borderRadius: 0, height: '45px', fontSize: '20px', fontWeight: '400' }}
+              style={{
+                backgroundColor: "#8b2e0f",
+                borderColor: "#8b2e0f",
+                borderRadius: 0,
+                height: "45px",
+                fontSize: "20px",
+                fontWeight: "400",
+              }}
               disabled={!isValidAddress || !isValidPhone}
             >
               Đặt Hàng
@@ -441,15 +600,26 @@ const OrderPage: React.FC = () => {
                   key="ok"
                   type="primary"
                   onClick={handleConfirmOrder}
-                  style={{ backgroundColor: '#8b2e0f', borderColor: '#8b2e0f', borderRadius: 0 }}
+                  style={{
+                    backgroundColor: "#8b2e0f",
+                    borderColor: "#8b2e0f",
+                    borderRadius: 0,
+                  }}
                 >
                   Xác nhận
                 </Button>,
               ]}
               styles={{ content: { borderRadius: 0 } }}
             >
-              <div className="text-lg font-semibold mb-2">Bạn có chắc chắn đặt hàng?</div>
-              <div className="text-base">Tổng thanh toán: <span className="text-[#8b2e0f] font-bold">{formatCurrency(checkoutTotal)}</span></div>
+              <div className="text-lg font-semibold mb-2">
+                Bạn có chắc chắn đặt hàng?
+              </div>
+              <div className="text-base">
+                Tổng thanh toán:{" "}
+                <span className="text-[#8b2e0f] font-bold">
+                  {formatCurrency(checkoutTotal)}
+                </span>
+              </div>
             </Modal>
           </div>
         </div>

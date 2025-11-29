@@ -24,6 +24,8 @@ import ProtectedRoute from "./components/ProtectRoute";
 import NoAccess from "./pages/NoAccess";
 import ContentProducts from "./components/ProductsDashboard";
 import SellerProduct from "./pages/Seller_Store";
+import Dashboard from "./components/MainContentDashboard";
+import ContentStores from "./components/StoreDashboard";
 
 function App() {
   return (
@@ -68,8 +70,10 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<ContentUsers />} />
+          <Route index element={<Dashboard />} />
+          <Route path="/dash-board/users" element={<ContentUsers />} />
           <Route path="/dash-board/products" element={<ContentProducts />} />
+          <Route path="/dash-board/stores" element={<ContentStores />} />
         </Route>
       </Routes>
     </BrowserRouter>
