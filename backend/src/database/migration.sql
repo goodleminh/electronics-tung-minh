@@ -44,7 +44,7 @@ CREATE TABLE stores (
     name VARCHAR(150) NOT NULL,
     description TEXT,
     image VARCHAR(255) DEFAULT NULL,
-    status ENUM('pending', 'processing', 'approved', 'rejected') DEFAULT 'pending',
+    status ENUM('processing', 'approved', 'rejected') DEFAULT 'processing',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (seller_id) REFERENCES users(user_id) ON DELETE CASCADE

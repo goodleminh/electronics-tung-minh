@@ -17,7 +17,6 @@ import { useAddress } from "../../hooks/useAddress";
 import "./style.css";
 
 const statusMap = {
-  pending: { color: "#a7a4a2ff", text: "Chưa đăng kí" },
   processing: { color: "#e67e22", text: "Đang chờ duyệt" },
   approved: { color: "#27ae60", text: "Hoạt động" },
   rejected: { color: "#c0392b", text: "Bị khóa" },
@@ -33,13 +32,17 @@ const SellerProfilePage: React.FC = () => {
   // ✅ BƯỚC 1: Gọi API lấy dữ liệu mới nhất khi vào trang
   React.useEffect(() => {
     dispatch(fetchProfile() as any);
-  }, [dispatch]);
-  React.useEffect(() => {
     if (profile?.user_id) {
       dispatch(fetchStoreBySellerId(profile.user_id) as any);
       console.log("Fetching store for seller_id:", profile.user_id);
     }
   }, [dispatch, profile?.user_id]);
+  // React.useEffect(() => {
+  //   if (profile?.user_id) {
+  //     dispatch(fetchStoreBySellerId(profile.user_id) as any);
+  //     console.log("Fetching store for seller_id:", profile.user_id);
+  //   }
+  // }, [dispatch, profile?.user_id]);
   // ✅ BƯỚC 3: Log dữ liệu profile để debug
   console.log("Dữ liệu Profile từ Redux:", profile);
   // ✅ Log dữ liệu store để debug
@@ -268,7 +271,7 @@ const SellerProfilePage: React.FC = () => {
         }
       }
       const payload = {
-        seller_id: profile?.user_id, // Đảm bảo luôn có seller_id
+        seller_id: profile?.user_id!, // Đảm bảo luôn có seller_id
         name: storeForm.name,
         description: storeForm.description,
         image: imageFileName,
@@ -648,7 +651,7 @@ const SellerProfilePage: React.FC = () => {
                   style={{ fontSize: "2.5rem", fontStyle: "italic" }}
                 >
                   {myStore?.name || (
-                    <span className="italic">Chưa có tên cửa hàng</span>
+                    <span className="italic">Bạn chưa đăng ký cửa hàng</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2 mb-1">
@@ -672,6 +675,20 @@ const SellerProfilePage: React.FC = () => {
                 {myStore?.description || "Chưa có mô tả"}
               </div>
             </div>
+            {myStore?.status === "approved" && (
+              <button
+                className="bg-[#8b2e0f] text-white px-6 py-2 border border-[#8b2e0f] hover:bg-[#a9441a] transition mt-4 mr-4"
+                style={{ borderRadius: 0 }}
+                onClick={() => window.open(`/store/${myStore.store_id}`)}
+              >
+                Đi đến cửa hàng của bạn
+              </button>
+            )}
+            {myStore?.status === "rejected" && (
+              <div className="mb-4 text-red-600 font-semibold border border-red-300 p-3">
+                Cửa hàng của bạn không được chấp thuận từ hệ thống
+              </div>
+            )}
             <button
               className="bg-[#8b2e0f] text-white px-6 py-2 border border-[#8b2e0f] hover:bg-[#a9441a] transition mt-4"
               onClick={handleOpenStoreModal}
@@ -763,7 +780,7 @@ const SellerProfilePage: React.FC = () => {
                       color: "#ffffff",
                     }}
                   >
-                    {myStore ? "Lưu thay đổi" : "Tạo mới"}
+                    {myStore ? "Lưu thay đổi" : "Đăng kí cửa hàng"}
                   </Button>
                 </div>
               </form>

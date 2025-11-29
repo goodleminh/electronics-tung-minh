@@ -9,7 +9,7 @@ export interface IStore {
   name: string;
   description?: string | null;
   image?: string | null;
-  status?: "pending" | "processing" | "approved" | "rejected";
+  status?: "processing" | "approved" | "rejected";
   created_at?: string;
   updated_at?: string;
 }
@@ -132,6 +132,8 @@ const storeSlice = createSlice({
   reducers: {
     clearCurrent(state) {
       state.current = null;
+      state.stores = [];
+
     },
   },
   extraReducers: (builder) => {

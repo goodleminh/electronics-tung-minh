@@ -13,11 +13,13 @@ import type { ICategory } from "../../redux/features/category/categorySlice";
 import { fetchCurrentUser, logout } from "../../redux/features/auth/authSlice";
 import { actFetchCartItems } from "../../redux/features/cart/cartSlice";
 import { clearProfile } from "../../redux/features/profile/profileSlice";
+import { clearCurrent } from "../../redux/features/store/storeSlice";
 
 const Header = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { categories } = useSelector((state: RootState) => state.category);
+  const { stores } = useSelector((state: RootState) => state.store);
   const { isLoggedIn, user } = useSelector((state: RootState) => state.auth);
   const { items } = useSelector((state: RootState) => state.cart);
   // Đếm số loại sản phẩm khác nhau trong giỏ hàng
@@ -92,6 +94,7 @@ const Header = () => {
   const handleLogout = () => {
     dispatch(logout());
     dispatch(clearProfile());
+    dispatch(clearCurrent())
     setIsOpen(false);
     navigate("/login");
   };

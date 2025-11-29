@@ -21,7 +21,7 @@ const statusColor: Record<string, string> = {
 
 const statusLabel: Record<string, string> = {
   pending: 'Chờ thanh toán', // Chỉ dùng cho đơn ZaloPay chưa thanh toán
-  processing: 'Chờ xử lý',   // Đơn đã thanh toán ZaloPay hoặc đơn COD vừa tạo
+  processing: 'Đang đóng gói',   // Đơn đã thanh toán ZaloPay hoặc đơn COD vừa tạo
   shipping: 'Đang vận chuyển',
   completed: 'Đã hoàn thành',
   cancelled: 'Đã hủy',
@@ -211,7 +211,7 @@ const TrackOrderPage: React.FC = () => {
       <Tabs activeKey={tab} onChange={setTab} className="mb-4">
         <Tabs.TabPane tab="Tất cả" key="all" />
         <Tabs.TabPane tab="Chờ thanh toán" key="pending" />
-        <Tabs.TabPane tab="Đang xử lý" key="processing" />
+        <Tabs.TabPane tab="Đang đóng gói" key="processing" />
         <Tabs.TabPane tab="Đang vận chuyển" key="shipping" />
         <Tabs.TabPane tab="Đã hoàn thành" key="completed" />
         <Tabs.TabPane tab="Đã hủy" key="cancelled" />
