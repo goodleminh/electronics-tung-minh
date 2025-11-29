@@ -29,8 +29,8 @@ Store.init(
       defaultValue: null,
     },
     status: {
-      type: DataTypes.ENUM('pending', 'processing', 'approved', 'rejected'),
-      defaultValue: 'pending',
+      type: DataTypes.ENUM('processing', 'approved', 'rejected'),
+      defaultValue: 'processing',
     },
     created_at: {
       type: DataTypes.DATE,

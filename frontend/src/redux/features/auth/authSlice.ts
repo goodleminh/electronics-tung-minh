@@ -211,6 +211,7 @@ const authSlice = createSlice({
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
+      // state.stores= null
     },
   },
   extraReducers: (builder) => {
