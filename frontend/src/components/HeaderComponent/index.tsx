@@ -19,7 +19,6 @@ const Header = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { categories } = useSelector((state: RootState) => state.category);
-  const { stores } = useSelector((state: RootState) => state.store);
   const { isLoggedIn, user } = useSelector((state: RootState) => state.auth);
   const { items } = useSelector((state: RootState) => state.cart);
   // Đếm số loại sản phẩm khác nhau trong giỏ hàng
@@ -94,7 +93,7 @@ const Header = () => {
   const handleLogout = () => {
     dispatch(logout());
     dispatch(clearProfile());
-    dispatch(clearCurrent())
+    dispatch(clearCurrent());
     setIsOpen(false);
     navigate("/login");
   };
