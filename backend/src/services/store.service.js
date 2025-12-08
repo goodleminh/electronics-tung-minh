@@ -23,19 +23,6 @@ export const getStoreById = async (id) => {
 };
 // tạo cửa hàng mới
 export const createStore = async (storeData) => {
-  // Nếu có image và file đã tồn tại thì xóa file cũ trước khi lưu (tránh rác do upload lại nhiều lần cùng tên)
-  if (storeData.image) {
-    const imgPath = path.join(
-      process.cwd(),
-      "src/public/store",
-      storeData.image
-    );
-    if (fs.existsSync(imgPath)) {
-      try {
-        fs.unlinkSync(imgPath);
-      } catch {}
-    }
-  }
   const newStore = await Store.create(storeData);
   return newStore;
 };
