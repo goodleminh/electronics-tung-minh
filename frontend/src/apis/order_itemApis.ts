@@ -17,9 +17,9 @@ const OrderItemApi = {
     });
     return res.data;
   },
-  // Lấy theo id
-  getById: async (id: number | string, token: string) => {
-    const res = await axios.get(`${BASE_URL}/order-items/${id}`, {
+  // Lấy theo id (chuẩn REST, đúng với DB: order_item_id là PK)
+  getById: async (order_item_id: number | string, token: string) => {
+    const res = await axios.get(`${BASE_URL}/order-items/${order_item_id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return res.data;

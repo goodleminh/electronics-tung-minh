@@ -13,6 +13,7 @@ import authRouter from "./routes/auth.route.js";
 import profileRouter from "./routes/profile.route.js";
 import paymentRouter from "./routes/payment.route.js";
 import dashBoardRouter from "./routes/dashboard.route.js";
+import storeOrderRouter from "./routes/store_order.route.js"; // Router cho store_order
 
 const app = express();
 
@@ -42,5 +43,6 @@ app.use("/api/auth", authRouter);
 app.use("/profile", profileRouter);
 app.use("/payment", paymentRouter);
 app.use("/dashboard", dashBoardRouter);
+app.use("/store-orders", storeOrderRouter);
 
 export default app;

@@ -34,8 +34,8 @@ const SearchPage: React.FC = () => {
 
   const [q, setQ] = useState(qParam);
   const [cat, setCat] = useState(catParam);
-  const [minPrice, setMinPrice] = useState(minParam);
-  const [maxPrice, setMaxPrice] = useState(maxParam);
+  const [minPrice, setMinPrice] = useState<string>(""); // lưu raw: "10000"
+  const [maxPrice, setMaxPrice] = useState<string>("");
   const [sortBy, setSortBy] = useState(sortParam);
 
   // Dynamic sticky offset: stick below header when scrolling down, at top when at page top
@@ -147,6 +147,23 @@ const SearchPage: React.FC = () => {
 
   const canLoadMore = searchHasMore && !searchLoading && !searchLoadingMore;
 
+  const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\./g, ""); // bỏ dấu chấm
+    if (/^\d*$/.test(raw)) setMinPrice(raw);       // chỉ cho số
+  };
+
+  const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\./g, "");
+    if (/^\d*$/.test(raw)) setMaxPrice(raw);
+  };
+
+  const formatVND = (raw: string) => {
+    if (!raw) return "";
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return "";
+    return n.toLocaleString("vi-VN", { maximumFractionDigits: 0 });
+  };
+
   return (
     <main className="py-8">
       <div className="max-w-7xl mx-auto px-4">
@@ -204,21 +221,25 @@ const SearchPage: React.FC = () => {
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <input
-                    type="number"
-                    min={0}
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(e.target.value)}
+                    type="text"
+                    inputMode="numeric"
+                    value={formatVND(minPrice)}
+                    onChange={handleMinPriceChange}
                     placeholder="Từ"
                     className="w-full bg-white border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#8b2e0f]"
                   />
                   <input
-                    type="number"
-                    min={0}
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
+                    type="text"
+                    inputMode="numeric"
+                    value={formatVND(maxPrice)}
+                    onChange={handleMaxPriceChange}
                     placeholder="Đến"
                     className="w-full bg-white border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#8b2e0f]"
                   />
+                </div>
+                <div className="flex gap-2 mt-1 text-xs text-gray-500">
+                  {minPrice && <span>Từ: {formatVND(minPrice)}đ</span>}
+                  {maxPrice && <span>Đến: {formatVND(maxPrice)}đ</span>}
                 </div>
               </div>
               <div>

@@ -165,3 +165,34 @@ CREATE TABLE chat_messages (
     FOREIGN KEY (seller_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
+-- =========================================================
+-- Bảng Store_Orders (Đơn hàng theo cửa hàng)
+-- =========================================================
+CREATE TABLE store_orders (
+    store_order_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    store_id INT NOT NULL,
+    status ENUM('pending','processing','shipping','completed','cancelled') NOT NULL DEFAULT 'pending',
+    subtotal DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    shipping_fee DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
+    FOREIGN KEY (store_id) REFERENCES stores(store_id) ON DELETE CASCADE
+);
+
+-- =========================================================
+-- Bảng Store_Order_Items (Chi tiết đơn hàng theo cửa hàng)
+-- =========================================================
+CREATE TABLE store_order_items (
+    store_order_id INT NOT NULL,
+    order_item_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (store_order_id, order_item_id),
+
+    CONSTRAINT fk_store_order_items_store_order
+        FOREIGN KEY (store_order_id) REFERENCES store_orders(store_order_id) ON DELETE CASCADE,
+    CONSTRAINT fk_store_order_items_order_item
+        FOREIGN KEY (order_item_id) REFERENCES order_items(order_item_id) ON DELETE CASCADE
+);

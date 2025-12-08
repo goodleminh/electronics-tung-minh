@@ -21,6 +21,7 @@ export interface IProduct {
   };
   created_at?: string;
   updated_at?: string;
+  sold?: number; // số lượng đã bán
 }
 
 // Interface cho state

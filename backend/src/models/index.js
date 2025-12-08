@@ -1,9 +1,10 @@
 import User from "./auth.model.js";
-import Order from "./order.model.js";
+import { Order } from "./order.model.js";
 import OrderItem from "./order_item.model.js";
 import { Product } from "./product.model.js";
+import { StoreOrder } from "./store_order.model.js";
 
-const models = { User, Order, OrderItem, Product };
+const models = { User, Order, OrderItem, Product, StoreOrder };
 
 //Associate
 
@@ -16,5 +17,9 @@ models.OrderItem.belongsTo(models.Order, { foreignKey: "order_id" });
 models.Product.hasMany(models.OrderItem, { foreignKey: "product_id" });
 
 models.User.hasMany(models.Order, { foreignKey: "buyer_id" });
+
+// Association between StoreOrder and Order
+models.StoreOrder.belongsTo(models.Order, { foreignKey: "order_id" });
+models.Order.hasMany(models.StoreOrder, { foreignKey: "order_id" });
 
 export default models;
