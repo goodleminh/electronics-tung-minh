@@ -24,8 +24,8 @@ interface IOrderItemDetailed extends IOrderItem {
 
 const statusColor: Record<string, string> = {
   pending: "gold",
-  processing: "blue",
-  shipping: "geekblue",
+  processing: "orange",
+  shipping: "blue",
   completed: "green",
   cancelled: "red",
 };
@@ -335,7 +335,7 @@ const TrackOrderPage: React.FC = () => {
                   <div className="font-semibold text-gray-800 text-right ml-4">
                     <div>{formatCurrency(item.price * item.quantity)}</div>
                     <div className="text-sm font-normal text-gray-500">
-                      ({formatCurrency(item.price)}/sp)
+                      ({formatCurrency(item.quantity > 0 ? (item.price * item.quantity) / item.quantity : 0)}/sp)
                     </div>
                   </div>
                 </div>

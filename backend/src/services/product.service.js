@@ -180,7 +180,7 @@ export const searchProducts = async ({
       break;
     case "bestseller":
       // No sold column available; fallback to newest
-      order = [["created_at", "DESC"]];
+      order = [["created_at", "ASC"]];
       break;
     default:
       // relevance/default

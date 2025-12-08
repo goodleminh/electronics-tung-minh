@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import type { RootState } from "../../redux/store";
 import {
   updateProfileThunk,
@@ -29,7 +30,7 @@ const SellerProfilePage: React.FC = () => {
   const profile = useSelector((state: RootState) => state.profile.profile);
   // Lấy store thật từ Redux
   const myStore = useSelector((state: RootState) => state.store.current);
-
+  const navigate = useNavigate();
   // ✅ BƯỚC 1: Gọi API lấy dữ liệu mới nhất khi vào trang
   React.useEffect(() => {
     dispatch(fetchProfile() as any);
@@ -677,13 +678,22 @@ const SellerProfilePage: React.FC = () => {
               </div>
             </div>
             {myStore?.status === "approved" && (
-              <button
-                className="bg-[#8b2e0f] text-white px-6 py-2 border border-[#8b2e0f] hover:bg-[#a9441a] transition mt-4 mr-4"
-                style={{ borderRadius: 0 }}
-                onClick={() => window.open(`/store/${myStore.store_id}`)}
-              >
-                Đi đến cửa hàng của bạn
-              </button>
+              <>
+                <button
+                  className="bg-[#8b2e0f] text-white px-6 py-2 border border-[#8b2e0f] hover:bg-[#a9441a] transition mt-4 mr-4"
+                  style={{ borderRadius: 0 }}
+                  onClick={() => navigate(`/store/${myStore.store_id}`)}
+                >
+                  Đi đến cửa hàng của bạn
+                </button>
+                <button
+                  className="bg-[#8b2e0f] text-white px-6 py-2 border border-[#8b2e0f] hover:bg-[#a9441a] transition mt-4 mr-4"
+                  style={{ borderRadius: 0 }}
+                  onClick={() => navigate(`/store-order/${myStore?.store_id}`)}
+                >
+                  Đơn hàng cần xử lí
+                </button>
+              </>
             )}
             {myStore?.status === "rejected" && (
               <div className="mb-4 text-red-600 font-semibold border border-red-300 p-3">

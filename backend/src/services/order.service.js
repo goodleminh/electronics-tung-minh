@@ -1,4 +1,9 @@
+import { Op } from "sequelize";
 import { Order } from "../models/order.model.js";
+import sequelize from "../config/dbConnection.js";
+import { OrderItem } from "../models/order_item.model.js";
+import { Product } from "../models/product.model.js";
+import * as storeOrderService from "./store_order.service.js";
 
 // lấy tất cả đơn hàng
 export const getAllOrders = async () => {
@@ -53,10 +58,29 @@ export const createOrder = async (orderData) => {
   return newOrder;
 };
 // sửa thông tin đơn hàng
+// Cập nhật trạng thái đơn hàng, nếu chuyển sang cancelled thì trả lại số lượng sản phẩm vào kho
 export const updateOrder = async (id, orderData) => {
   const order = await Order.findByPk(id);
   if (!order) {
     throw new Error("Order not found");
+  }
+  // Nếu trạng thái chuyển sang cancelled và trước đó không phải cancelled
+  if (orderData.status === "cancelled" && order.status !== "cancelled") {
+    await sequelize.transaction(async (t) => {
+      // Lấy tất cả order items của đơn hàng
+      const items = await OrderItem.findAll({ where: { order_id: id }, transaction: t });
+      for (const item of items) {
+        const product = await Product.findByPk(item.product_id, { transaction: t });
+        if (product) {
+          product.stock += item.quantity;
+          await product.save({ transaction: t });
+        }
+      }
+      // Cập nhật trạng thái tất cả store_orders về cancelled (truyền transaction)
+      await storeOrderService.cancelAllStoreOrdersByOrderId(id, t);
+      await order.update(orderData, { transaction: t });
+    });
+    return await Order.findByPk(id); // trả về bản ghi đã cập nhật
   }
   await order.update(orderData);
   return order;

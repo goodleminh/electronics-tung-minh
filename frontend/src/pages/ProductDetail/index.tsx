@@ -436,7 +436,11 @@ const ProductDetail = () => {
             <button
               className="bg-[#8b2e0f] text-white px-6 py-2 rounded-none font-semibold hover:bg-[#2b2b2b] transition"
               style={{ borderRadius: 0 }}
-              onClick={() => navigate(`/seller/store`)}
+              onClick={() => {
+                if (storeOwner?.store_id) {
+                  navigate(`/store/${storeOwner.store_id}`);
+                }
+              }}
             >
               Xem cửa hàng
             </button>

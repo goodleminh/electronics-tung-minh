@@ -13,9 +13,9 @@ export const getAllOrderItems = async (req, res) => {
 // Lấy theo ID
 export const getOrderItemById = async (req, res) => {
   try {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id)) return res.status(400).json({ message: 'Invalid id' });
-    const item = await orderItemService.getOrderItemById(id);
+    const order_item_id = Number(req.params.id);
+    if (Number.isNaN(order_item_id)) return res.status(400).json({ message: 'Invalid id' });
+    const item = await orderItemService.getOrderItemById(order_item_id);
     if (!item) return res.status(404).json({ message: 'Order item not found' });
     return res.status(200).json(item);
   } catch (err) {

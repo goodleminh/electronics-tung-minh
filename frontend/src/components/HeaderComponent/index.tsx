@@ -268,28 +268,14 @@ const Header = () => {
                     >
                       Tài khoản của bạn
                     </button>
-                    {user?.role === "seller" && (
+                    {user?.role !== "seller" && (
                       <button
-                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 hover:text-blue-600 cursor-pointer"
-                        onClick={() => {
-                          navigate("/seller/store");
-                        }}
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 hover:text-green-400 cursor-pointer"
+                        onClick={() => navigate("/track-order")}
                       >
-                        Gian hàng của bạn
+                        Đơn hàng
                       </button>
                     )}
-                    <button
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-100 hover:text-green-400 cursor-pointer"
-                      onClick={() => {
-                        if (user?.role === "seller") {
-                          setSellerModalOpen(true);
-                        } else {
-                          navigate("/track-order");
-                        }
-                      }}
-                    >
-                      Đơn hàng
-                    </button>
                     <button
                       className="block w-full text-left px-4 py-2 hover:text-red-600 hover:bg-gray-100 cursor-pointer"
                       onClick={handleLogout}
