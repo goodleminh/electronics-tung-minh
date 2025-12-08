@@ -151,7 +151,6 @@ const storeSlice = createSlice({
     clearCurrent(state) {
       state.current = null;
       state.stores = [];
-
     },
   },
   extraReducers: (builder) => {
@@ -190,6 +189,7 @@ const storeSlice = createSlice({
         createStore.fulfilled,
         (state, action: PayloadAction<IStore>) => {
           state.stores.unshift(action.payload);
+          state.current = action.payload;
         }
       )
 

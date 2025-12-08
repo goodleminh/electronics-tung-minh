@@ -9,14 +9,14 @@ import {
   fetchProfile,
 } from "../../redux/features/profile/profileSlice";
 import {
-  fetchStores,
   createStore,
   updateStore,
   fetchStoreBySellerId,
 } from "../../redux/features/store/storeSlice";
-import { Modal, Button, message } from "antd";
+import { Modal, Button } from "antd";
 import { useAddress } from "../../hooks/useAddress";
 import "./style.css";
+import { toast, ToastContainer } from "react-toastify";
 
 const statusMap = {
   processing: { color: "#e67e22", text: "Đang chờ duyệt" },
@@ -34,6 +34,7 @@ const SellerProfilePage: React.FC = () => {
   // ✅ BƯỚC 1: Gọi API lấy dữ liệu mới nhất khi vào trang
   React.useEffect(() => {
     dispatch(fetchProfile() as any);
+
     if (profile?.user_id) {
       dispatch(fetchStoreBySellerId(profile.user_id) as any);
       console.log("Fetching store for seller_id:", profile.user_id);
@@ -131,11 +132,11 @@ const SellerProfilePage: React.FC = () => {
       );
       await dispatch(fetchProfile() as any);
       setEditModal(false);
-      message.success("Cập nhật thành công!");
+      toast.success("Cập nhật thành công!");
       setAvatarPreview(null);
       setNewAvatarFile(null);
     } catch {
-      message.error("Cập nhật thất bại!");
+      toast.error("Cập nhật thất bại!");
     } finally {
       setSaving(false);
     }
@@ -268,7 +269,7 @@ const SellerProfilePage: React.FC = () => {
         if (data && data.image) {
           imageFileName = data.image; // Đảm bảo lấy đúng tên file trả về
         } else {
-          message.error("Lỗi upload ảnh cửa hàng!");
+          toast.error("Lỗi upload ảnh cửa hàng!");
           return;
         }
       }
@@ -280,20 +281,20 @@ const SellerProfilePage: React.FC = () => {
       };
       if (!myStore) {
         await dispatch(createStore(payload) as any);
-        message.success("Tạo cửa hàng thành công!");
+        toast.success("Tạo cửa hàng thành công!");
       } else {
         await dispatch(
           updateStore({ id: myStore.store_id, data: payload }) as any
         );
-        message.success("Cập nhật cửa hàng thành công!");
+        toast.success("Cập nhật cửa hàng thành công!");
       }
       setStoreModal(false);
-      dispatch(fetchStores() as any);
+      // await dispatch(fetchStores() as any);
       setStoreImagePreview(null);
       setNewStoreImageFile(null);
     } catch (error) {
       console.error("STORE SUBMIT ERROR", error);
-      message.error("Có lỗi xảy ra khi lưu cửa hàng!");
+      toast.error("Có lỗi xảy ra khi lưu cửa hàng!");
     }
   };
 
@@ -637,6 +638,7 @@ const SellerProfilePage: React.FC = () => {
                       !storeImg.startsWith("http")
                     ) {
                       storeImg = `${API_URL}/public/store/${storeImg}`;
+                      console.log(storeImg);
                     }
                     return storeImg || "https://i.imgur.com/your-logo.png";
                   })()}
@@ -799,6 +801,7 @@ const SellerProfilePage: React.FC = () => {
           </section>
         </div>
       </section>
+      <ToastContainer position="top-right" autoClose={2000} theme="colored" />
     </main>
   );
 };
