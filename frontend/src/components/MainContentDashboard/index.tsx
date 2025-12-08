@@ -26,7 +26,7 @@ interface ChartData {
 const Dashboard: React.FC = () => {
   const [overview, setOverview] = useState<any>(null);
   const [chartData, setChartData] = useState<ChartData[]>([]);
-
+  console.log(overview);
   useEffect(() => {
     fetchOverview().then((data: any) => {
       // có thể map lại nếu cần
@@ -67,7 +67,11 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-3 gap-4 mb-8">
         <CardMetric
           title="Tổng doanh thu"
-          value={`${overview.revenueThisMonth.toLocaleString("vi-VN")} đ`}
+          value={`${
+            overview?.revenueThisMonth
+              ? overview.revenueThisMonth.toLocaleString("vi-VN")
+              : "0"
+          } đ`}
           icon={<DollarOutlined />}
           bgIcon="bg-[#FF9F45]"
           className="bg-orange-50"
@@ -83,7 +87,7 @@ const Dashboard: React.FC = () => {
         />
         <CardMetric
           title="Tổng người dùng"
-          value={overview.newUsers}
+          value={overview.users}
           bgIcon="bg-white"
           className="bg-gray-100"
           icon={<UserOutlined />}

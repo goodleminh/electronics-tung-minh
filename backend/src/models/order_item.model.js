@@ -1,7 +1,5 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../config/dbConnection.js";
-import { Product } from "./product.model.js";
-import Order from "./order.model.js";
 
 export class OrderItem extends Model {}
 

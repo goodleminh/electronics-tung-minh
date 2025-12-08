@@ -177,13 +177,13 @@ const ContentUsers = () => {
       title: "Số điện thoại",
       dataIndex: "phone",
       key: "phone",
-      render: (text: string) => text || "-", // nếu rỗng thì hiển thị "-"
+      render: (text: string) => text || "-",
     },
     {
       title: "Ngày sinh",
       dataIndex: "birthday",
       key: "birthday",
-      render: (text: string) => text || "-", // nếu rỗng thì hiển thị "-"
+      render: (text: string) => text || "-",
     },
     {
       title: "Trạng thái",

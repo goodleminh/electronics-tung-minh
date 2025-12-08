@@ -73,13 +73,9 @@ const StoreApi = {
   //cập nhật status store và gửi mail cho seller
   sendMailToSeller: async (id: number | string, status: object) => {
     try {
-      const res = await axios.put(
-        `${BASE_URL}/stores/${id}/send-mail`,
-        status,
-        {
-          headers: getAuthHeaders(),
-        }
-      );
+      const res = await axios.put(`${BASE_URL}/stores/${id}/confirm`, status, {
+        headers: getAuthHeaders(),
+      });
       return res.data.store; // lấy từ key store
     } catch (err) {
       if (axios.isAxiosError(err)) {

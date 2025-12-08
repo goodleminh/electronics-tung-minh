@@ -8,6 +8,7 @@ import { orderReducer } from "./features/order/orderSlice";
 import { orderItemReducer } from "./features/order_item/order_itemSlice";
 import profileReducer from "../redux/features/profile/profileSlice";
 import { storeOrderReducer } from "./features/store_order/store_orderSlice"; // Thêm reducer cho store_order
+import reviewReducer from "../redux/features/review/reviewSlice";
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ export const store = configureStore({
     orderItems: orderItemReducer,
     profile: profileReducer,
     storeOrder: storeOrderReducer, // Thêm storeOrder vào store
+    review: reviewReducer,
   },
 });
 

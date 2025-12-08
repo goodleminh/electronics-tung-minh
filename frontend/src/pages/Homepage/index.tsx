@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { actFetchCategories } from "../../redux/features/category/categorySlice";
-import type { AppDispatch } from "../../redux/store";
-import type { IProduct } from "../../redux/features/product/productSlice";
+import type { AppDispatch, RootState } from "../../redux/store";
+import { type IProduct } from "../../redux/features/product/productSlice";
 import {
   SyncOutlined,
   CustomerServiceOutlined,
@@ -15,10 +15,20 @@ import {
 } from "@ant-design/icons";
 import { ProductApi } from "../../apis/productApis";
 import { getFormattedPricing } from "../../utils/price/priceUtil";
+import { Modal, Tooltip } from "antd";
+import { actAddToCart } from "../../redux/features/cart/cartSlice";
+import { toast, ToastContainer } from "react-toastify";
+import { getReviewByProduct } from "../../redux/features/review/reviewSlice";
 
 const Homepage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+
+  // NEW: auth state
+  const { user, isLoggedIn } = useSelector((state: RootState) => state.auth);
+  const { reviewByProductId } = useSelector((state: RootState) => state.review);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [sellerModalOpen, setSellerModalOpen] = useState(false);
 
   // Helper: build image URL from backend /public
   const API_BASE: string | undefined = import.meta.env.VITE_API_URL;
@@ -88,7 +98,15 @@ const Homepage: React.FC = () => {
           page: 1,
           limit: 8,
         });
+
+        // Set danh sách 1 lần
         setBestSellers(best.items || []);
+        // Lặp từng sản phẩm → call review theo product_id
+        best.items.forEach(async (item: any) => {
+          await dispatch(
+            getReviewByProduct({ id: item.product_id, star: null })
+          );
+        });
       } catch (e: any) {
         setBestError(e?.message || "Không thể tải Best Sellers");
       } finally {
@@ -103,6 +121,10 @@ const Homepage: React.FC = () => {
           limit: 8,
         });
         setNewItems(newest.items || []);
+        // // Lặp từng sản phẩm → call review theo product_id
+        newest.items.forEach((item: any) => {
+          dispatch(getReviewByProduct({ id: item.product_id, star: null }));
+        });
       } catch (e: any) {
         setNewError(e?.message || "Không thể tải New Arrivals");
       } finally {
@@ -110,7 +132,88 @@ const Homepage: React.FC = () => {
       }
     };
     fetchSections();
-  }, []);
+  }, [dispatch]);
+
+  const handleAddToCart = async (e: any, productId: number) => {
+    e.stopPropagation();
+    if (user?.role === "seller") {
+      setSellerModalOpen(true);
+      return;
+    }
+    if (!isLoggedIn) {
+      setAuthModalOpen(true);
+      return;
+    }
+    //lấy user_id
+    const getBuyerId = () => {
+      try {
+        const raw = localStorage.getItem("user");
+        if (!raw) return undefined;
+        const parsed = JSON.parse(raw);
+        const id = parsed?.user_id ?? parsed?.id;
+        return typeof id === "number" ? id : undefined;
+      } catch {
+        return undefined;
+      }
+    };
+    const buyerId = getBuyerId();
+
+    if (!buyerId) {
+      toast.error("Bạn cần đăng nhập trước khi thêm vào giỏ hàng");
+      return;
+    }
+
+    try {
+      await dispatch(
+        actAddToCart({
+          buyer_id: buyerId,
+          product_id: productId,
+          quantity: 1,
+        })
+      ).unwrap();
+      toast.success("Đã thêm vào giỏ hàng");
+    } catch (err: any) {
+      toast.error(err?.message || "Không thể thêm vào giỏ hàng");
+    }
+  };
+
+  const handleBuyNow = (
+    e: any,
+    stock: number,
+    unitPrice: number,
+    productId: number
+  ) => {
+    e.stopPropagation();
+    if (user?.role === "seller") {
+      setSellerModalOpen(true);
+      return;
+    }
+    if (!isLoggedIn) {
+      setAuthModalOpen(true);
+      return;
+    }
+    // Chốt số lượng hợp lệ theo tồn kho
+    const max = stock > 0;
+    if (!max) {
+      toast.error("Sản phẩm này đã hết hàng");
+      return;
+    }
+    const total = unitPrice;
+    navigate("/orders", {
+      state: {
+        checkout: {
+          items: [
+            {
+              product_id: productId,
+              quantity: 1,
+              price: Number(unitPrice),
+            },
+          ],
+          total,
+        },
+      },
+    });
+  };
 
   return (
     <main>
@@ -265,6 +368,13 @@ const Homepage: React.FC = () => {
             {bestSellers.map((p: IProduct) => {
               const pricing = getFormattedPricing(p);
               const imgUrl = buildImageUrl(p.image);
+              const r = reviewByProductId[p.product_id];
+              //tính trung bình số sao
+              const avgStar =
+                r?.reviews.length > 0
+                  ? r.reviews.reduce((sum, r) => sum + r.rating, 0) /
+                    r.reviews.length
+                  : 0;
               return (
                 <div
                   key={p.product_id}
@@ -272,7 +382,7 @@ const Homepage: React.FC = () => {
                   className="group border border-gray-200 bg-white rounded-none overflow-hidden transition-all duration-300 transform-gpu hover:-translate-y-2 hover:shadow-2xl hover:border-gray-300 cursor-pointer"
                 >
                   {/* Image */}
-                  <div className="relative bg-white h-72 flex items-center justify-center overflow-hidden">
+                  <div className="relative bg-white h-62 flex items-center justify-center overflow-hidden">
                     {/* Discount badge */}
                     {pricing.isDiscount && pricing.percent !== undefined && (
                       <div className="absolute top-4 left-4 z-10 bg-[#8b2e0f] text-white text-xs font-semibold px-2 py-1">
@@ -291,8 +401,8 @@ const Homepage: React.FC = () => {
                   </div>
 
                   {/* Content */}
-                  <div className="px-6 pt-6 pb-8 text-center">
-                    <h3 className="text-gray-800 group-hover:text-gray-900 transition font-medium mb-2 line-clamp-2 min-h-[3em]">
+                  <div className="px-6 pt-1 pb-4 text-center">
+                    <h3 className="text-gray-800 group-hover:text-gray-900 transition font-medium mb-2 line-clamp-2 min-h-[2em]">
                       {p.name}
                     </h3>
                     <div className="flex items-baseline justify-center gap-3 mb-3">
@@ -306,10 +416,56 @@ const Homepage: React.FC = () => {
                       )}
                     </div>
                     <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-                      <div className="text-amber-400 text-lg leading-none">
-                        ★ ★ ★ ★ ★
-                      </div>
-                      <span>Không có đánh giá</span>
+                      {r ? (
+                        <div className="flex">
+                          <div className="text-amber-400 text-lg leading-none">
+                            {Array(5)
+                              .fill(0)
+                              .map((_, i) => (
+                                <span className="mr-1" key={i}>
+                                  {i < Math.round(avgStar) ? "★" : "☆"}
+                                </span>
+                              ))}
+                          </div>
+                          {r.reviews.length > 0 ? (
+                            <span>({r.reviews.length}) đánh giá</span>
+                          ) : (
+                            <span>Chưa có đánh giá</span>
+                          )}
+                        </div>
+                      ) : (
+                        <p>Đang tải đánh giá...</p>
+                      )}
+                    </div>
+                    {/* ACTIONS on hover under rating */}
+                    <div
+                      className="
+    flex justify-center gap-8 mt-5
+    opacity-0 translate-y-6 scale-95 pointer-events-none
+    group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 
+    group-hover:pointer-events-auto
+    transition-all duration-500 ease-out
+  "
+                    >
+                      <Tooltip title="Thêm vào giỏ hàng">
+                        <button
+                          className="w-10 h-10 rounded bg-[#8b2e0f] shadow hover:bg-[#2b2b2b] flex items-center justify-center cursor-pointer"
+                          onClick={(e) => handleAddToCart(e, p.product_id)}
+                        >
+                          🛒
+                        </button>
+                      </Tooltip>
+
+                      <Tooltip title="Mua ngay">
+                        <button
+                          className="w-10 h-10 rounded bg-[#8b2e0f] hover:bg-[#2b2b2b] text-white shadow flex items-center justify-center cursor-pointer"
+                          onClick={(e) => {
+                            handleBuyNow(e, p.stock, p.price, p.product_id);
+                          }}
+                        >
+                          ⚡
+                        </button>
+                      </Tooltip>
                     </div>
                   </div>
                 </div>
@@ -349,6 +505,13 @@ const Homepage: React.FC = () => {
             {newItems.map((p: IProduct) => {
               const pricing = getFormattedPricing(p);
               const imgUrl = buildImageUrl(p.image);
+              const r = reviewByProductId[p.product_id];
+              //tính trung bình số sao
+              const avgStar =
+                r?.reviews.length > 0
+                  ? r.reviews.reduce((sum, r) => sum + r.rating, 0) /
+                    r.reviews.length
+                  : 0;
               return (
                 <div
                   key={p.product_id}
@@ -356,7 +519,7 @@ const Homepage: React.FC = () => {
                   className="group border border-gray-200 bg-white rounded-none overflow-hidden transition-all duration-300 transform-gpu hover:-translate-y-2 hover:shadow-2xl hover:border-gray-300 cursor-pointer"
                 >
                   {/* Image */}
-                  <div className="relative bg-white h-72 flex items-center justify-center overflow-hidden">
+                  <div className="relative bg-white h-62 flex items-center justify-center overflow-hidden">
                     {/* Discount badge */}
                     {pricing.isDiscount && pricing.percent !== undefined && (
                       <div className="absolute top-4 left-4 z-10 bg-[#8b2e0f] text-white text-xs font-semibold px-2 py-1">
@@ -375,8 +538,8 @@ const Homepage: React.FC = () => {
                   </div>
 
                   {/* Content */}
-                  <div className="px-6 pt-6 pb-8 text-center">
-                    <h3 className="text-gray-800 group-hover:text-gray-900 transition font-medium mb-2 line-clamp-2 min-h-[3em]">
+                  <div className="px-6 pt-1 pb-4 text-center">
+                    <h3 className="text-gray-800 group-hover:text-gray-900 transition font-medium mb-2 line-clamp-2 min-h-[2em]">
                       {p.name}
                     </h3>
                     <div className="flex items-baseline justify-center gap-3 mb-3">
@@ -389,11 +552,58 @@ const Homepage: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-                      <div className="text-amber-400 text-lg leading-none">
-                        ★ ★ ★ ★ ★
-                      </div>
-                      <span>Không có đánh giá</span>
+                    <div className="flex items-center justify-center text-sm text-gray-600">
+                      {r ? (
+                        <div className="flex gap-2">
+                          <div className="text-amber-400 text-lg leading-none">
+                            {Array(5)
+                              .fill(0)
+                              .map((_, i) => (
+                                <span className="mr-1" key={i}>
+                                  {i < Math.round(avgStar) ? "★" : "☆"}
+                                </span>
+                              ))}
+                          </div>
+                          {r.reviews.length > 0 ? (
+                            <span>({r.reviews.length}) đánh giá</span>
+                          ) : (
+                            <span>Chưa có đánh giá</span>
+                          )}
+                        </div>
+                      ) : (
+                        <p>Đang tải đánh giá...</p>
+                      )}
+                    </div>
+
+                    {/* ACTIONS on hover under rating */}
+                    <div
+                      className="
+    flex justify-center gap-8 mt-5
+    opacity-0 translate-y-6 scale-95 pointer-events-none
+    group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 
+    group-hover:pointer-events-auto
+    transition-all duration-500 ease-out
+  "
+                    >
+                      <Tooltip title="Thêm vào giỏ hàng">
+                        <button
+                          className="w-10 h-10 rounded bg-[#8b2e0f] shadow hover:bg-[#2b2b2b] flex items-center justify-center cursor-pointer"
+                          onClick={(e) => handleAddToCart(e, p.product_id)}
+                        >
+                          🛒
+                        </button>
+                      </Tooltip>
+
+                      <Tooltip title="Mua ngay">
+                        <button
+                          className="w-10 h-10 rounded bg-[#8b2e0f] hover:bg-[#2b2b2b] text-white shadow flex items-center justify-center cursor-pointer"
+                          onClick={(e) => {
+                            handleBuyNow(e, p.stock, p.price, p.product_id);
+                          }}
+                        >
+                          ⚡
+                        </button>
+                      </Tooltip>
                     </div>
                   </div>
                 </div>
@@ -440,6 +650,53 @@ const Homepage: React.FC = () => {
           </p>
         </div>
       </section>
+
+      {/* NEW: Login required modal (shown when not logged in) */}
+      <Modal
+        open={authModalOpen}
+        onCancel={() => setAuthModalOpen(false)}
+        onOk={() => {
+          setAuthModalOpen(false);
+          navigate("/login");
+        }}
+        okText="Đăng nhập"
+        cancelText="Để sau"
+        centered
+        title={null}
+        styles={{ content: { borderRadius: 0 } }}
+        className="rounded-none"
+        okButtonProps={{
+          style: { backgroundColor: "#8b2e0f", borderRadius: 0 },
+        }}
+        cancelButtonProps={{ style: { borderRadius: 0 } }}
+      >
+        Bạn cần đăng nhập
+      </Modal>
+
+      {/* NEW: Modal seller không phải là người mua hàng */}
+      <Modal
+        open={sellerModalOpen}
+        onCancel={() => setSellerModalOpen(false)}
+        onOk={() => setSellerModalOpen(false)}
+        okText="Đã hiểu"
+        cancelButtonProps={{ style: { display: "none" } }}
+        centered
+        title={null}
+        styles={{ content: { borderRadius: 0 } }}
+        className="rounded-none"
+        okButtonProps={{
+          style: { backgroundColor: "#8b2e0f", borderRadius: 0 },
+        }}
+      >
+        Bạn không phải là người mua hàng
+      </Modal>
+      <ToastContainer
+        position="top-center"
+        autoClose={1000}
+        toastClassName="my-toast"
+        className="my-toast-body"
+        hideProgressBar
+      />
     </main>
   );
 };

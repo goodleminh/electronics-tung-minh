@@ -55,7 +55,6 @@ export const uploadAvatar = async (req, res) => {
       avatar: profile.avatar,
     });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Lỗi khi upload avatar" });
   }
 };

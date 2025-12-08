@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { fetchOverview } from "../../apis/dashboardApis";
+import { Modal } from "antd";
 
 type ProductItem = {
   name: string;
@@ -11,6 +12,7 @@ type ProductItem = {
 
 const TopProductDoughnut = () => {
   const [data, setData] = useState<ProductItem[]>([]);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     fetchOverview().then((res: any) => {
@@ -31,8 +33,11 @@ const TopProductDoughnut = () => {
     <div className="bg-gray-100 p-6 rounded-xl shadow-sm w-full">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Sản phẩm hàng đầu</h2>
-        <button className="text-sm text-gray-500 hover:text-black">
-          See All
+        <button
+          onClick={() => setOpen(true)}
+          className="text-sm text-gray-500 hover:text-black cursor-pointer"
+        >
+          Xem tất cả
         </button>
       </div>
 
@@ -41,7 +46,7 @@ const TopProductDoughnut = () => {
         <ResponsiveContainer width="80%" height="100%">
           <PieChart>
             <Pie
-              data={data}
+              data={data.slice(0, 4)}
               dataKey="value"
               innerRadius={75}
               outerRadius={100}
@@ -67,7 +72,7 @@ const TopProductDoughnut = () => {
 
       {/* LIST BELOW */}
       <div className="mt-6 space-y-3">
-        {data.map((item, i) => (
+        {data.slice(0, 4).map((item, i) => (
           <div key={i} className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <span
@@ -83,6 +88,39 @@ const TopProductDoughnut = () => {
           </div>
         ))}
       </div>
+
+      {/* ---- modal xem tất cả ---- */}
+      <Modal
+        title="Top Products"
+        open={open}
+        onCancel={() => setOpen(false)}
+        footer={null}
+        centered
+        className="custom-modal"
+      >
+        {/* CONTENT */}
+        <div className="space-y-4 py-3">
+          {data.map((item, i) => (
+            <div
+              key={i}
+              className="flex justify-between items-center border rounded-lg p-3 hover:shadow-md transition-all duration-150"
+            >
+              <div className="flex items-center gap-3">
+                <span
+                  className="w-4 h-4 rounded-sm shadow"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span className="font-medium text-gray-800">{item.name}</span>
+              </div>
+
+              <span className="text-gray-700 font-semibold">
+                {item.value.toLocaleString()}
+                <span className="text-gray-400"> đã bán</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </Modal>
     </div>
   );
 };

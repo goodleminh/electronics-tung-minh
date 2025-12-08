@@ -67,3 +67,27 @@ export const verifySeller = async (req, res, next) => {
     res.status(401).json({ message: "Invalid token" });
   }
 };
+
+export const optionalVerifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    req.user = null;
+    return next();
+  }
+
+  const token = authHeader.split(" ")[1];
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+  } catch (err) {
+    req.user = null; // token sai → vẫn cho xem review
+  }
+
+  next();
+};

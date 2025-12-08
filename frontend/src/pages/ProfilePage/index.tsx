@@ -1,3 +1,4 @@
+import { ToastContainer } from "react-toastify";
 import ProfileForm from "../../components/ProfileForm";
 
 const ProfilePage = () => {
@@ -8,6 +9,8 @@ const ProfilePage = () => {
         Quản lý thông tin hồ sơ để bảo mật tài khoản
       </p>
       <ProfileForm />
+
+      <ToastContainer position="top-right" autoClose={3000} theme="colored" />
     </>
   );
 };

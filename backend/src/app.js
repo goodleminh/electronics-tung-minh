@@ -14,6 +14,7 @@ import profileRouter from "./routes/profile.route.js";
 import paymentRouter from "./routes/payment.route.js";
 import dashBoardRouter from "./routes/dashboard.route.js";
 import storeOrderRouter from "./routes/store_order.route.js"; // Router cho store_order
+import reviewRouter from "./routes/review.route.js";
 
 const app = express();
 
@@ -44,5 +45,6 @@ app.use("/profile", profileRouter);
 app.use("/payment", paymentRouter);
 app.use("/dashboard", dashBoardRouter);
 app.use("/store-orders", storeOrderRouter);
+app.use("/reviews", reviewRouter);
 
 export default app;

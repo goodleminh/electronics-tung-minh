@@ -8,7 +8,7 @@ export const getDashboardMetrics = async () => {
     revenueThisWeek, // 2. Doanh thu tuần này (T2->CN)
     revenueLastWeek, // 3. Doanh thu tuần trước
     orders, // 4. Tổng số đơn hàng đã hoàn thành
-    newUsers, // 5. Số user mới trong tháng hiện tại
+    users, // 5. Số user hiện tại
     topProducts, // 6. Top sản phẩm bán chạy nhất (theo số lượng)
     revenueByDate, // 7. Doanh thu theo ngày (dùng cho biểu đồ)
     recentOrders, // 8. Những đơn hàng gần đây (limit 5)
@@ -56,12 +56,7 @@ export const getDashboardMetrics = async () => {
     models.Order.count({ where: { status: "completed" } }),
 
     // 5. Số user mới trong tháng hiện tại
-    models.User.count({
-      where: sequelize.where(
-        sequelize.fn("MONTH", sequelize.col("created_at")),
-        sequelize.fn("MONTH", sequelize.fn("NOW"))
-      ),
-    }),
+    models.User.count(),
 
     // 6. Top sản phẩm bán chạy
     models.OrderItem.findAll({
@@ -79,7 +74,7 @@ export const getDashboardMetrics = async () => {
       ],
       group: ["product_id"],
       order: [[sequelize.literal("sold"), "DESC"]],
-      limit: 4, // top 4 sản phẩm
+      limit: 10, // top 10 sản phẩm
     }),
 
     // 7. Doanh thu theo ngày
@@ -93,8 +88,9 @@ export const getDashboardMetrics = async () => {
       order: [[sequelize.fn("DATE", sequelize.col("created_at")), "ASC"]],
     }),
 
-    // 8. Những đơn hàng gần đây (limit 5)
+    // 8. Những đơn hàng gần đây đã giao (limit 5)
     models.Order.findAll({
+      where: { status: "completed" },
       limit: 5,
       order: [["created_at", "DESC"]],
       include: [
@@ -201,7 +197,7 @@ export const getDashboardMetrics = async () => {
   // Tính % thay đổi đơn hàng theo tuần
   const ordersChange =
     ordersLastWeek === 0
-      ? 100
+      ? 0
       : ((ordersThisWeek - ordersLastWeek) / ordersLastWeek) * 100;
 
   //Tính % tăng trưởng theo tháng (so tháng này và tháng trước)
@@ -216,7 +212,7 @@ export const getDashboardMetrics = async () => {
     revenueLastWeek,
     revenueChangeWeek: Math.round(revenueChangeWeek),
     orders,
-    newUsers,
+    users,
     topProducts,
     revenueByDate,
     recentOrders,

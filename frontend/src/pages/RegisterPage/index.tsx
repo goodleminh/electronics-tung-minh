@@ -45,13 +45,11 @@ const RegisterPage: React.FC = () => {
     const resultAction = await dispatch(registerUser(formData));
     if (registerUser.fulfilled.match(resultAction)) {
       toast.success(resultAction.payload.message);
-      console.log(resultAction);
       setTimeout(() => {
         navigate("/login"); // chuyển sang trang login
       }, 2000);
     } else {
       toast.error(resultAction.payload);
-      console.log(resultAction);
     }
   };
 

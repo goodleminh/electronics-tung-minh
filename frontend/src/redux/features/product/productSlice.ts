@@ -73,7 +73,6 @@ export const actFetchProducts = createAsyncThunk<IProduct[]>(
   async (_, { rejectWithValue }) => {
     try {
       const products = await ProductApi.getAllProducts();
-      console.log("products in component:", products);
       return products;
     } catch (error: any) {
       return rejectWithValue(

@@ -1,13 +1,27 @@
-import { useSelector } from "react-redux";
-import type { RootState } from "../../redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../redux/store";
 import { UserOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
+import { clearProfile } from "../../redux/features/profile/profileSlice";
+import { clearCurrent } from "../../redux/features/store/storeSlice";
+import { logout } from "../../redux/features/auth/authSlice";
 
 const HeaderDashboard = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
   const { profile } = useSelector((state: RootState) => state.profile);
   const avatarUrl = profile?.Profile?.avatar
     ? `${import.meta.env.VITE_API_URL}/${profile.Profile?.avatar}`
     : null;
+
+  //handle logout
+  const handleLogout = () => {
+    dispatch(logout());
+    dispatch(clearProfile());
+    dispatch(clearCurrent());
+    navigate("/login");
+  };
   return (
     <header
       className="w-full flex items-center justify-between px-6 pb-3 pt-6
@@ -36,19 +50,42 @@ const HeaderDashboard = () => {
 
         {/* User Avatar */}
 
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden border bg-gray-200 flex items-center justify-center text-gray-500">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="Avatar"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <UserOutlined className="text-xl" />
-            )}
+        {/* USER DROPDOWN */}
+        <div className="relative group">
+          <div className="flex items-center space-x-3 cursor-pointer">
+            <div className="w-10 h-10 rounded-full overflow-hidden border bg-gray-200 flex items-center justify-center text-gray-500">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="Avatar"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <UserOutlined className="text-xl" />
+              )}
+            </div>
+            <span>{user?.username}</span>
           </div>
-          <span>{user?.username}</span>
+
+          {/* Dropdown menu ẩn → hiện khi hover vào group */}
+          <div
+            className="absolute right-0 mt-2 w-35 bg-white rounded-sm shadow-lg opacity-0 
+               invisible group-hover:opacity-100 group-hover:visible 
+               transition-all duration-200"
+          >
+            <button
+              className="block w-full text-left px-4 py-2 hover:text-green-400 hover:bg-gray-100 cursor-pointer"
+              onClick={() => navigate("/")}
+            >
+              Trang chủ
+            </button>
+            <button
+              className="block w-full text-left px-4 py-2 hover:text-red-600 hover:bg-gray-100 cursor-pointer"
+              onClick={handleLogout}
+            >
+              Đăng xuất
+            </button>
+          </div>
         </div>
       </div>
     </header>
