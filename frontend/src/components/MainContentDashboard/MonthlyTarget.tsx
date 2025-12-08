@@ -9,27 +9,29 @@ interface Props {
 const getTargetMessage = (growth: number) => {
   if (growth < 10) {
     return {
-      text: `Cố lên! Chỉ mới +${growth}% so với tháng trước thôi! `,
+      text: `Cố lên! Chỉ mới ${growth.toFixed(2)}% so với tháng trước thôi! `,
       color: "#F87171", // đỏ nhạt
     };
   } else if (growth < 40) {
     return {
-      text: ` Bạn đạt +${growth}% so với tháng trước! `,
+      text: ` Bạn đạt ${growth.toFixed(2)}% so với tháng trước! `,
       color: "#FBBF24", // vàng
     };
   } else if (growth < 80) {
     return {
-      text: `Tốt lắm! Đạt được +${growth}% so với tháng trước! `,
+      text: `Tốt lắm! Đạt được ${growth.toFixed(2)}% so với tháng trước! `,
       color: "#03fcd7", // xanh lam
     };
   } else if (growth < 100) {
     return {
-      text: `Xuất sắc! Đạt được +${growth}% mục tiêu so với tháng trước! `,
+      text: `Xuất sắc! Đạt được ${growth.toFixed(
+        2
+      )}% mục tiêu so với tháng trước! `,
       color: "#34D399", // xanh nhạt
     };
   } else {
     return {
-      text: `Hoàn hảo! Đạt  được +${growth}% so với tháng trước! 🎉`,
+      text: `Hoàn hảo! Đạt  được ${growth.toFixed(2)}% so với tháng trước! 🎉`,
       color: "#059669", // xanh đậm
     };
   }
@@ -82,9 +84,9 @@ export default function MonthlyTarget({ growth, target }: Props) {
 
         <div className="bg-orange-50 p-4">
           <p className="text-gray-600 text-sm">Doanh thu</p>
-          <p className="font-medium">{`${revenue.toLocaleString(
-            "vi-VN"
-          )} đ`}</p>
+          <p className="font-medium">{`${
+            revenue ? revenue.toLocaleString("vi-VN") : "0"
+          } đ`}</p>
         </div>
       </div>
     </div>

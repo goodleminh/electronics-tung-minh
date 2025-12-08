@@ -83,7 +83,10 @@ export const loginUser = createAsyncThunk<
     const res = await authApis.login(payload);
     localStorage.setItem("accessToken", res.accessToken);
     localStorage.setItem("refreshToken", res.refreshToken);
-    localStorage.setItem("user", JSON.stringify(res.user));
+    localStorage.setItem(
+      "user",
+      JSON.stringify({ ...res.user, user_id: res.user.id })
+    );
     return res;
   } catch (err: any) {
     return rejectWithValue(err.message);
@@ -320,7 +323,6 @@ const authSlice = createSlice({
       .addCase(editUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        console.log(action.payload);
       })
       //create user
       .addCase(createUser.pending, (state) => {
@@ -329,7 +331,6 @@ const authSlice = createSlice({
       .addCase(createUser.fulfilled, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        console.log(action.payload);
       })
       .addCase(createUser.rejected, (state, action) => {
         state.loading = false;

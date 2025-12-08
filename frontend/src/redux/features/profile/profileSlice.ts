@@ -11,6 +11,7 @@ export interface IProfile {
   user_id: number;
   username: string;
   email: string;
+  address?: string;
   Profile: {
     phone?: string;
     address?: string;
@@ -83,7 +84,6 @@ export const changePasswordThunk = createAsyncThunk(
     } catch (err: any) {
       // Lấy message từ response nếu có
       const message = err.response?.data?.message || "Đã xảy ra lỗi";
-      console.log(message);
       return rejectWithValue(message);
     }
   }

@@ -14,7 +14,10 @@ import { fetchStores } from "../../redux/features/store/storeSlice"; // NEW
 import type { AppDispatch, RootState } from "../../redux/store";
 import "./style.css";
 import { Modal } from "antd";
-import { getActivePricing, getFormattedPricing } from "../../utils/price/priceUtil";
+import {
+  getActivePricing,
+  getFormattedPricing,
+} from "../../utils/price/priceUtil";
 import { useNavigate } from "react-router-dom";
 
 const Cartpage: React.FC = () => {
@@ -106,9 +109,7 @@ const Cartpage: React.FC = () => {
     if (selectedIds.length === 0) return;
     try {
       await Promise.all(
-        selectedIds.map((id) =>
-          dispatch(actRemoveFromCart({ id })).unwrap()
-        )
+        selectedIds.map((id) => dispatch(actRemoveFromCart({ id })).unwrap())
       );
       setSelectedIds([]);
     } catch (e) {
@@ -119,17 +120,24 @@ const Cartpage: React.FC = () => {
 
   // Group rows by seller/shop using real storeList
   const groups = useMemo(() => {
-    type G = { id: number; name: string; avatar?: string | null; items: typeof rows };
+    type G = {
+      id: number;
+      name: string;
+      avatar?: string | null;
+      items: typeof rows;
+    };
     const map = new Map<number, G>();
     rows.forEach((r) => {
       const sidRaw = (r.product as any).store_id;
       const sid = Number(sidRaw);
       if (!sid) return;
       const storeObj = storeList.find((st) => Number(st.store_id) === sid);
-      const fallbackName = (r.product as any).store_name || (r.product as any).store?.name;
+      const fallbackName =
+        (r.product as any).store_name || (r.product as any).store?.name;
       const name = storeObj?.name || fallbackName || "Cửa hàng";
       const avatar = null;
-      if (!map.has(sid)) map.set(sid, { id: sid, name, avatar, items: [] as any });
+      if (!map.has(sid))
+        map.set(sid, { id: sid, name, avatar, items: [] as any });
       map.get(sid)!.items.push(r);
     });
     return Array.from(map.values());
@@ -175,7 +183,7 @@ const Cartpage: React.FC = () => {
         price: Number(active.finalPrice),
       };
     });
-    navigate('/orders', {
+    navigate("/orders", {
       state: {
         checkout: {
           items: payloadItems,
@@ -224,7 +232,11 @@ const Cartpage: React.FC = () => {
                   onClick={deleteSelected}
                   disabled={selectedIds.length === 0}
                   className="ml-4 px-4 py-2 bg-[#8b2e0f] text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#6e260c] transition"
-                  title={selectedIds.length === 0 ? "Chọn sản phẩm để xoá" : "Xoá ngay các sản phẩm đã chọn"}
+                  title={
+                    selectedIds.length === 0
+                      ? "Chọn sản phẩm để xoá"
+                      : "Xoá ngay các sản phẩm đã chọn"
+                  }
                 >
                   Xóa Khỏi Giỏ Hàng
                 </button>
@@ -267,7 +279,9 @@ const Cartpage: React.FC = () => {
                         const pricing = getFormattedPricing(product as any);
                         // NEW: resolve store name per item
                         const sid = Number((product as any).store_id);
-                        const storeObj = storeList.find((st) => Number(st.store_id) === sid);
+                        const storeObj = storeList.find(
+                          (st) => Number(st.store_id) === sid
+                        );
                         const storeName = storeObj?.name || "Cửa hàng";
                         return (
                           <div
@@ -302,7 +316,10 @@ const Cartpage: React.FC = () => {
                               </div>
                               {/* NEW: show store name resolved by store_id */}
                               <div className="text-xs text-gray-500 mt-0.5">
-                                Cửa hàng: <span className="font-medium text-gray-700">{storeName}</span>
+                                Cửa hàng:{" "}
+                                <span className="font-medium text-gray-700">
+                                  {storeName}
+                                </span>
                               </div>
                               <div className="mt-1 flex items-center gap-2">
                                 <span className="text-[#8b2e0f] font-semibold">
@@ -313,19 +330,26 @@ const Cartpage: React.FC = () => {
                                     {pricing.original}
                                   </span>
                                 )}
-                                {pricing.isDiscount && pricing.percent !== undefined && (
-                                  <span className="bg-[#8b2e0f] text-white text-[10px] font-semibold px-2 py-0.5">
-                                    -{pricing.percent}%
-                                  </span>
-                                )}
+                                {pricing.isDiscount &&
+                                  pricing.percent !== undefined && (
+                                    <span className="bg-[#8b2e0f] text-white text-[10px] font-semibold px-2 py-0.5">
+                                      -{pricing.percent}%
+                                    </span>
+                                  )}
                               </div>
                             </div>
                             <div className="w-24 text-center">
-                              <div className="text-sm text-gray-500">Số lượng</div>
-                              <div className="mt-1 font-medium">{item.quantity}</div>
+                              <div className="text-sm text-gray-500">
+                                Số lượng
+                              </div>
+                              <div className="mt-1 font-medium">
+                                {item.quantity}
+                              </div>
                             </div>
                             <div className="w-28 text-right">
-                              <div className="text-sm text-gray-500">Tạm tính</div>
+                              <div className="text-sm text-gray-500">
+                                Tạm tính
+                              </div>
                               <div className="mt-1 font-semibold">
                                 {formatPrice(subTotal)}
                               </div>
@@ -381,7 +405,13 @@ const Cartpage: React.FC = () => {
         centered
         styles={{ content: { borderRadius: 0, padding: 16 } }}
         className="rounded-none"
-        okButtonProps={{ style: { backgroundColor: '#8b2e0f', borderColor: '#8b2e0f', borderRadius: 0 } }}
+        okButtonProps={{
+          style: {
+            backgroundColor: "#8b2e0f",
+            borderColor: "#8b2e0f",
+            borderRadius: 0,
+          },
+        }}
         cancelButtonProps={{ style: { borderRadius: 0 } }}
       >
         {editItem && editProduct && (
@@ -405,12 +435,18 @@ const Cartpage: React.FC = () => {
                 const pr = getFormattedPricing(editProduct as any);
                 return (
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="text-[#8b2e0f] font-semibold">{pr.final}</span>
+                    <span className="text-[#8b2e0f] font-semibold">
+                      {pr.final}
+                    </span>
                     {pr.original && (
-                      <span className="text-gray-400 line-through text-sm">{pr.original}</span>
+                      <span className="text-gray-400 line-through text-sm">
+                        {pr.original}
+                      </span>
                     )}
                     {pr.isDiscount && pr.percent !== undefined && (
-                      <span className="bg-[#8b2e0f] text-white text-[10px] font-semibold px-2 py-0.5">-{pr.percent}%</span>
+                      <span className="bg-[#8b2e0f] text-white text-[10px] font-semibold px-2 py-0.5">
+                        -{pr.percent}%
+                      </span>
                     )}
                   </div>
                 );
@@ -425,7 +461,9 @@ const Cartpage: React.FC = () => {
                   >
                     -
                   </button>
-                  <span className="px-4 min-w-[2rem] text-center">{editQty}</span>
+                  <span className="px-4 min-w-[2rem] text-center">
+                    {editQty}
+                  </span>
                   <button
                     className="px-3 py-1 hover:bg-gray-50"
                     onClick={incEdit}

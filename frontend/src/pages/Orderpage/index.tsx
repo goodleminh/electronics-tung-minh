@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/rules-of-hooks */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -8,6 +10,7 @@ import { Button, Alert, message, Modal } from "antd";
 import { actFetchProducts } from "../../redux/features/product/productSlice";
 import { actSendConfirmationEmail } from "../../redux/features/order/orderSlice";
 import axios from "axios";
+import { fetchProfile } from "../../redux/features/profile/profileSlice";
 
 const formatCurrency = (n?: number) => {
   if (typeof n !== "number") return "0₫";
@@ -20,7 +23,12 @@ const OrderPage: React.FC = () => {
   const location = useLocation();
 
   const auth = useSelector((s: RootState) => s.auth);
+  const { profile } = useSelector((state: RootState) => state.profile);
   const productState = useSelector((s: RootState) => s.product);
+  console.log(profile);
+  useEffect(() => {
+    dispatch(fetchProfile());
+  }, []);
 
   // Build image URL like other pages
   const API_BASE: string | undefined = import.meta.env.VITE_API_URL;
@@ -78,6 +86,57 @@ const OrderPage: React.FC = () => {
   const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [payment, setPayment] = useState<"cash" | "zalopay">("cash");
+  const [addressTouched, setAddressTouched] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
+
+  // === 1. Parse profile address và map tỉnh ===
+  useEffect(() => {
+    if (!profile?.Profile?.address || provinces.length === 0) return;
+
+    const parts = profile.Profile.address
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const provinceName = parts[parts.length - 1];
+
+    const street = parts.slice(0, parts.length - 3).join(", ");
+
+    const provinceObj = provinces.find((p) => p.name === provinceName);
+    if (provinceObj) {
+      setSelectedProvince(String(provinceObj.code));
+    }
+
+    setDetailAddress(street);
+  }, [provinces, profile]);
+
+  // === 2. Map district name -> code sau khi districts load ===
+  useEffect(() => {
+    if (!districts.length || !profile?.Profile?.address) return;
+
+    const parts = profile.Profile.address.split(",").map((s) => s.trim());
+
+    const districtName = parts[parts.length - 2];
+
+    const districtObj = districts.find((d) => d.name === districtName);
+    if (districtObj) {
+      setSelectedDistrict(String(districtObj.code));
+    }
+  }, [districts, profile]);
+
+  // === 3. Map ward name -> code sau khi wards load ===
+  useEffect(() => {
+    if (!wards.length || !profile?.Profile?.address) return;
+
+    const parts = profile.Profile.address.split(",").map((s) => s.trim());
+
+    const wardName = parts[parts.length - 3];
+
+    const wardObj = wards.find((w) => w.name === wardName);
+    if (wardObj) {
+      setSelectedWard(String(wardObj.code));
+    }
+  }, [wards, profile]);
 
   // Fetch provinces on mount
   useEffect(() => {
@@ -121,6 +180,21 @@ const OrderPage: React.FC = () => {
       setAddress("");
     }
   }, [selectedProvince, selectedDistrict, selectedWard, detailAddress]);
+
+  // Auto-fill phone khi profile load xong
+  useEffect(() => {
+    if (!phone) {
+      const phoneFromProfile = profile?.Profile?.phone;
+      if (phoneFromProfile) setPhone(phoneFromProfile);
+    }
+  }, [profile]);
+
+  // Đảm bảo luôn có dữ liệu sản phẩm để hiển thị
+  useEffect(() => {
+    if (!productState.products || productState.products.length === 0) {
+      dispatch(actFetchProducts());
+    }
+  }, [dispatch, productState.products]);
 
   // Dynamic total for checkout flow
   const checkoutTotal = checkoutItems.reduce(
@@ -256,13 +330,6 @@ const OrderPage: React.FC = () => {
     setShowConfirm(false);
   };
 
-  // Đảm bảo luôn có dữ liệu sản phẩm để hiển thị
-  useEffect(() => {
-    if (!productState.products || productState.products.length === 0) {
-      dispatch(actFetchProducts());
-    }
-  }, [dispatch, productState.products]);
-
   // Hiển thị cảnh báo nếu không có dữ liệu checkout
   if (!checkout) {
     return (
@@ -305,8 +372,6 @@ const OrderPage: React.FC = () => {
     selectedWard &&
     detailAddress.trim()
   );
-  const [addressTouched, setAddressTouched] = useState(false);
-  const [phoneTouched, setPhoneTouched] = useState(false);
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
@@ -332,13 +397,13 @@ const OrderPage: React.FC = () => {
             <div className="flex-1">
               <div className="font-semibold mb-1">Số điện thoại</div>
               <div className="text-gray-800">
-                {(auth.user as any)?.phone || "Chưa có"}
+                {profile?.Profile?.phone || "Chưa có"}
               </div>
             </div>
             <div className="flex-1">
               <div className="font-semibold mb-1">Địa chỉ mặc định</div>
               <div className="text-gray-800">
-                {(auth.user as any)?.address || "Chưa có"}
+                {profile?.Profile.address || "Chưa có"}
               </div>
             </div>
           </div>

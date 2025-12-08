@@ -32,7 +32,8 @@ router.get("/:id", storeController.getStore);
 router.post("/", storeController.createStoreController);
 // Cập nhật cửa hàng
 router.put("/:id", verifySeller, storeController.updateStoreController);
-router.put("/:id/send-mail", verifyAdmin, storeController.sendMailToSeller);
+// nếu cửa hàng được approved hoặc bị rejected sẽ gửi mail cho seller đó
+router.put("/:id/confirm", verifyAdmin, storeController.sendMailToSeller);
 // Xoá cửa hàng
 router.delete("/:id", storeController.deleteStoreController);
 // Upload ảnh store

@@ -15,6 +15,9 @@ import {
 } from "../../utils/price/priceUtil";
 import { actAddToCart } from "../../redux/features/cart/cartSlice";
 import { fetchStoreById } from "../../redux/features/store/storeSlice";
+import ReviewForm from "../../components/ReviewForm";
+import { ToastContainer } from "react-toastify";
+import { getReviewByProduct } from "../../redux/features/review/reviewSlice";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -23,6 +26,10 @@ const ProductDetail = () => {
   const { productDetail, loading, error, productRelated } = useSelector(
     (state: RootState) => state.product
   );
+  const { reviews, reviewByProductId } = useSelector(
+    (state: RootState) => state.review
+  );
+
   // NEW: auth state
   const { isLoggedIn, user } = useSelector((state: RootState) => state.auth);
   const [quantity, setQuantity] = useState(1);
@@ -44,6 +51,7 @@ const ProductDetail = () => {
 
   useEffect(() => {
     if (id) dispatch(fetchProductById(Number(id)));
+    dispatch(getReviewByProduct({ id: Number(id), star: null }));
   }, [id, dispatch]);
 
   // Fetch related products when category/id changes (avoid using `loading`)
@@ -65,7 +73,10 @@ const ProductDetail = () => {
   }, [dispatch, productDetail?.store_id]);
 
   useEffect(() => {
-    if (storeState.current && storeState.current.store_id === productDetail?.store_id) {
+    if (
+      storeState.current &&
+      storeState.current.store_id === productDetail?.store_id
+    ) {
       setStoreOwner(storeState.current);
     }
   }, [storeState.current, productDetail?.store_id]);
@@ -188,6 +199,11 @@ const ProductDetail = () => {
       },
     });
   };
+  //tính trung bình số sao
+  const avgStar =
+    reviews.length > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      : 0;
 
   if (loading) return <div>Đang tải...</div>;
   if (error) return <div className="text-red-500">Lỗi: {error}</div>;
@@ -195,7 +211,6 @@ const ProductDetail = () => {
 
   // Helper: clamp stock for display
   // const displayStock = Math.min(productDetail.stock, 99);
-
   return (
     <>
       <div className="grid grid-cols-12 gap-10 max-w-7xl mx-auto px-12 mt-12 mb-12">
@@ -243,53 +258,30 @@ const ProductDetail = () => {
           {/* product description */}
           <p className="mb-3">{productDetail.description}</p>
           {/* product rate */}
-          <div className="flex gap-2 text-sm text-gray-600 mb-3">
-            <div className="text-amber-400 text-lg leading-none">★ ★ ★ ★ ★</div>
-            <span>Không có đánh giá</span>
-          </div>
-          {/* product stock */}
-          {/* {productDetail.stock > 10 && (
-            <div className="flex justify-start items-center mb-3">
-              <svg width="15" height="15" aria-hidden="true">
-                <circle
-                  cx="7.5"
-                  cy="7.5"
-                  r="7.5"
-                  fill="rgb(62,214,96, 0.3)"
-                ></circle>
-                <circle
-                  cx="7.5"
-                  cy="7.5"
-                  r="5"
-                  stroke="rgb(255, 255, 255)"
-                  strokeWidth="1"
-                  fill="rgb(62,214,96)"
-                ></circle>
-              </svg>
-              <span className="ml-1">{productDetail.stock} in stock</span>
+          {reviews.length === 0 && (
+            <div className="flex items-center gap-2 mb-3">
+              <div className="text-amber-400 text-xl leading-none">
+                ☆ ☆ ☆ ☆ ☆
+              </div>
+              <span className="text-sm text-gray-600">Chưa có đánh giá</span>
             </div>
           )}
-          {productDetail.stock <= 10 && (
-            <div className="flex justify-start items-center mb-3">
-              <svg width="15" height="15" aria-hidden="true">
-                <circle
-                  cx="7.5"
-                  cy="7.5"
-                  r="7.5"
-                  fill="rgb(238,148,65, 0.3)"
-                ></circle>
-                <circle
-                  cx="7.5"
-                  cy="7.5"
-                  r="5"
-                  stroke="rgb(255, 255, 255)"
-                  strokeWidth="1"
-                  fill="rgb(238,148,65)"
-                ></circle>
-              </svg>
-              <span className="ml-1">Sắp hết: còn {displayStock} sản phẩm</span>
+          {reviews.length > 0 && (
+            <div className="flex items-center gap-2 mb-3">
+              <div className="text-amber-400 text-xl leading-none">
+                {Array(5)
+                  .fill(0)
+                  .map((_, i) => (
+                    <span className="mr-1" key={i}>
+                      {i < Math.round(avgStar) ? "★" : "☆"}
+                    </span>
+                  ))}
+              </div>
+              <span className="text-sm text-gray-600">
+                ({reviews.length}) Đánh giá
+              </span>
             </div>
-          )} */}
+          )}
 
           {/* Quantity */}
           <div className="flex items-center gap-4 mb-6">
@@ -319,7 +311,7 @@ const ProductDetail = () => {
           {/* Buttons */}
           <div className="flex gap-4 mb-5">
             <button
-              className="flex-1 bg-[#8b2e0f] text-white py-3 hover:bg-[#2b2b2b] cursor-pointer"
+              className="flex-1 bg-[#8b2e0f] hover:bg-[#2b2b2b] text-white py-3  cursor-pointer"
               onClick={openAddModal}
               disabled={productDetail.stock === 0}
               title={
@@ -419,17 +411,34 @@ const ProductDetail = () => {
       {/* Label cửa hàng sở hữu sản phẩm */}
       {storeOwner && (
         <div className="max-w-7xl mx-auto px-4 w-full mb-8">
-          <div className="flex items-center justify-between gap-4 w-full bg-gradient-to-b from-orange-100 to-yellow-50 border-b border-[#8b2e0f] py-8 px-15" style={{ borderRadius: 0, margin: 0 }}>
+          <div
+            className="flex items-center justify-between gap-4 w-full bg-gradient-to-b from-orange-100 to-yellow-50 border-b border-[#8b2e0f] py-8 px-15"
+            style={{ borderRadius: 0, margin: 0 }}
+          >
             <div className="flex items-center gap-4">
-              <div className="w-25 h-25 border-1 border-[#8b2e0f] rounded-full bg-white flex items-center justify-center overflow-hidden" style={{ borderRadius: '50%' }}>
+              <div
+                className="w-25 h-25 border-1 border-[#8b2e0f] rounded-full bg-white flex items-center justify-center overflow-hidden"
+                style={{ borderRadius: "50%" }}
+              >
                 <img
-                  src={storeOwner.image ? `${API_BASE}/public/store/${storeOwner.image}` : "https://i.imgur.com/your-logo.png"}
+                  src={
+                    storeOwner.image
+                      ? `${API_BASE}/public/store/${storeOwner.image}`
+                      : "https://i.imgur.com/your-logo.png"
+                  }
                   alt={storeOwner.name}
                   className="w-full h-full object-cover"
-                  style={{ borderRadius: '50%' }}
+                  style={{ borderRadius: "50%" }}
                 />
               </div>
-              <h2 className="font-bold text-[#8b2e0f] mb-0" style={{ fontSize: '2.2rem', fontStyle: 'italic', borderRadius: 0 }}>
+              <h2
+                className="font-bold text-[#8b2e0f] mb-0"
+                style={{
+                  fontSize: "2.2rem",
+                  fontStyle: "italic",
+                  borderRadius: 0,
+                }}
+              >
                 {storeOwner.name}
               </h2>
             </div>
@@ -449,7 +458,7 @@ const ProductDetail = () => {
       )}
 
       {/* description , review , additional info */}
-      <div className="max-w-7xl mx-auto mt-10 px-12">
+      <div className="max-w-7xl mx-auto mt-10 px-4">
         {/* Tabs */}
         <div className="flex justify-center gap-3 mb-8">
           {[
@@ -472,10 +481,10 @@ const ProductDetail = () => {
         </div>
 
         {/* Tab content */}
-        <div className="text-gray-800 leading-relaxed mb-10">
+        <div className="min-h-[350px] text-gray-800 leading-relaxed mb-10 ">
           {activeTab === "description" && (
             <div>
-              <h2 className="text-lg font-bold mb-4">Chi tiết sản phẩm</h2>
+              <h2 className="text-xl font-bold mb-4">Chi tiết sản phẩm</h2>
               <ul className="list-disc ml-6 space-y-2">
                 <li>Sản phẩm chính hãng, chất lượng đảm bảo.</li>
                 <li>Đổi trả trong 14 ngày nếu có lỗi từ nhà sản xuất.</li>
@@ -484,7 +493,7 @@ const ProductDetail = () => {
                 <li>Liên hệ CSKH để được tư vấn chi tiết.</li>
               </ul>
 
-              <h3 className="text-lg font-bold mt-8 mb-4">
+              <h3 className="text-xl font-bold mt-8 mb-4">
                 Điểm nổi bật của sản phẩm
               </h3>
               <ul className="list-disc ml-6 space-y-2">
@@ -511,7 +520,7 @@ const ProductDetail = () => {
 
           {activeTab === "additional" && (
             <div>
-              <h2 className="text-lg font-bold mb-4">Thông tin bổ sung</h2>
+              <h2 className="text-xl font-bold mb-4">Thông tin bổ sung</h2>
               <p>
                 Trọng lượng: 1.2kg <br />
                 Kích thước: 25 × 15 × 8 cm <br />
@@ -521,15 +530,7 @@ const ProductDetail = () => {
             </div>
           )}
 
-          {activeTab === "reviews" && (
-            <div>
-              <h2 className="text-lg font-bold mb-4">Đánh giá (0)</h2>
-              <p>
-                Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá sản phẩm
-                này!
-              </p>
-            </div>
-          )}
+          {activeTab === "reviews" && <ReviewForm productId={Number(id)} />}
         </div>
       </div>
 
@@ -556,6 +557,13 @@ const ProductDetail = () => {
               {productRelated.map((p: IProduct) => {
                 const pricing = getFormattedPricing(p);
                 const imgUrl = buildImageUrl(p.image);
+                const r = reviewByProductId[p.product_id];
+                //tính trung bình số sao
+                const avgStarRelated =
+                  r?.reviews.length > 0
+                    ? r.reviews.reduce((sum, r) => sum + r.rating, 0) /
+                      r.reviews.length
+                    : 0;
                 return (
                   <div
                     key={p.product_id}
@@ -597,10 +605,26 @@ const ProductDetail = () => {
                         )}
                       </div>
                       <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-                        <div className="text-amber-400 text-lg leading-none">
-                          ★ ★ ★ ★ ★
-                        </div>
-                        <span>Không có đánh giá</span>
+                        {r ? (
+                          <div className="flex gap-2">
+                            <div className="text-amber-400 text-lg leading-none">
+                              {Array(5)
+                                .fill(0)
+                                .map((_, i) => (
+                                  <span className="mr-1" key={i}>
+                                    {i < Math.round(avgStarRelated) ? "★" : "☆"}
+                                  </span>
+                                ))}
+                            </div>
+                            {r.reviews.length > 0 ? (
+                              <span>({r.reviews.length}) đánh giá</span>
+                            ) : (
+                              <span>Chưa có đánh giá</span>
+                            )}
+                          </div>
+                        ) : (
+                          <p>Đang tải đánh giá...</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -732,15 +756,18 @@ const ProductDetail = () => {
         onCancel={() => setSellerModalOpen(false)}
         onOk={() => setSellerModalOpen(false)}
         okText="Đã hiểu"
-        cancelButtonProps={{ style: { display: 'none' } }}
+        cancelButtonProps={{ style: { display: "none" } }}
         centered
         title={null}
         styles={{ content: { borderRadius: 0 } }}
         className="rounded-none"
-        okButtonProps={{ style: { backgroundColor: '#8b2e0f', borderRadius: 0 } }}
+        okButtonProps={{
+          style: { backgroundColor: "#8b2e0f", borderRadius: 0 },
+        }}
       >
         Bạn không phải là người mua hàng
       </Modal>
+      <ToastContainer position="top-right" autoClose={2000} theme="colored" />
     </>
   );
 };

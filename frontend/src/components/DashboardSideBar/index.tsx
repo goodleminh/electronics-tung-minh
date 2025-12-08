@@ -1,13 +1,8 @@
-// ----------------------------------------------------------------------
-
 import { useState } from "react";
 import DashBoardIcon from "../../assets/icons/chart-icon.svg";
 import UserIcon from "../../assets/icons/user-icon.svg";
 import ProductIcon from "../../assets/icons/product-icon.svg";
-
 import StoreIcon from "../../assets/icons/store-icon.svg";
-import SignInIcon from "../../assets/icons/ic-lock.svg";
-import NotFoundIcon from "../../assets/icons/ic-disabled.svg";
 import CreateUserModal from "../UserDashboard/CreateModalUser";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import CreateModalProduct from "../ProductsDashboard/CreateModalProduct";
@@ -49,18 +44,6 @@ export default function DashboardSideBar() {
       label: "Store",
       path: "/dash-board/stores",
       icon: StoreIcon,
-    },
-    {
-      id: "sign-in",
-      label: "Sign in",
-      path: "/sign-in",
-      icon: SignInIcon,
-    },
-    {
-      id: "not-found",
-      label: "Not found",
-      path: "/404",
-      icon: NotFoundIcon,
     },
   ];
 

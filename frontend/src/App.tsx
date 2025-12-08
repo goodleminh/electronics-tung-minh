@@ -27,6 +27,7 @@ import StoreProduct from "./pages/StorePage";
 import Dashboard from "./components/MainContentDashboard";
 import ContentStores from "./components/StoreDashboard";
 import StoreOrderPage from "./pages/Store_Order";
+import ProfileAddress from "./components/ProfileAddress";
 
 function App() {
   return (
@@ -63,6 +64,7 @@ function App() {
             path="/profile/change-password"
             element={<ChangePasswordForm />}
           />
+          <Route path="/profile/address" element={<ProfileAddress />} />
         </Route>
         <Route
           path="/dash-board"

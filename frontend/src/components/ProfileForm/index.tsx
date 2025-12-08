@@ -103,9 +103,11 @@ function ProfileForm() {
     }
 
     try {
+      const addressValue = profile?.Profile?.address || "";
       const resultAction = await dispatch(
-        updateProfileThunk({ ...form, birthday, address: "" })
+        updateProfileThunk({ ...form, birthday, address: addressValue })
       );
+      console.log(resultAction);
 
       if (updateProfileThunk.fulfilled.match(resultAction)) {
         toast.success("Cập nhật profile thành công!");
