@@ -29,8 +29,17 @@ export const getProductById = async (id) => {
 };
 // tạo sản phẩm mới
 export const createProduct = async (data, file) => {
-  const { name, category_id, description, price, stock, status, store_id } =
-    data;
+  const {
+    name,
+    category_id,
+    description,
+    price,
+    stock,
+    status,
+    store_id,
+    discount_price,
+    discount_expiry,
+  } = data;
 
   // Lấy file nếu có
   const imageFileName = file ? file.filename : null;
@@ -44,6 +53,8 @@ export const createProduct = async (data, file) => {
     status,
     store_id,
     image: imageFileName,
+    discount_price,
+    discount_expiry,
   });
   return newProduct;
 };
@@ -97,7 +108,6 @@ export const updateProductByAdmin = async (id, data, file) => {
   if (file) updatedData.image = file.filename;
 
   const updatedProduct = await product.update(updatedData);
-  console.log(updatedProduct);
   return updatedProduct;
 };
 

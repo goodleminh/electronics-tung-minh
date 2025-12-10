@@ -18,6 +18,7 @@ import { fetchStoreById } from "../../redux/features/store/storeSlice";
 import ReviewForm from "../../components/ReviewForm";
 import { ToastContainer } from "react-toastify";
 import { getReviewByProduct } from "../../redux/features/review/reviewSlice";
+import PageBreadcrumb from "../../components/PageBreadCrumb";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -213,6 +214,7 @@ const ProductDetail = () => {
   // const displayStock = Math.min(productDetail.stock, 99);
   return (
     <>
+      <PageBreadcrumb pageTitle={productDetail.name} />
       <div className="grid grid-cols-12 gap-10 max-w-7xl mx-auto px-12 mt-12 mb-12">
         {/* Image */}
         <div className="col-span-12 sm:col-span-12 md:col-span-6 lg:col-span-6">

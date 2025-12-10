@@ -52,15 +52,13 @@ const EditProductModal = ({ visible, onClose, product }: EditProductModal) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
   };
-  console.log(image);
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImage(e.target.files[0]);
       setPreviewImage(URL.createObjectURL(e.target.files[0]));
     }
   };
-  console.log("FormData trước khi gửi:", form);
-  console.log("File image:", image);
+
   useEffect(() => {
     if (product) {
       setForm({

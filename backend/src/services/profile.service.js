@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url";
 import User from "../models/auth.model.js";
 import Profile from "../models/profile.model.js";
 
@@ -65,11 +65,16 @@ export const updateAvatar = async (userId, filePath) => {
   // Xử lý xóa ảnh cũ nếu có
   if (profile.avatar) {
     // Đường dẫn file cũ (giả sử filePath chỉ là tên file, ví dụ: uuid.jpg)
-    const oldPath = path.join(__dirname, "..", "public", "avatar", path.basename(profile.avatar));
+    const oldPath = path.join(
+      __dirname,
+      "..",
+      "public",
+      "avatar",
+      path.basename(profile.avatar)
+    );
     if (fs.existsSync(oldPath)) {
       try {
         fs.unlinkSync(oldPath);
-        console.log("Đã xóa avatar cũ:", oldPath);
       } catch (err) {
         console.error("Lỗi khi xóa ảnh cũ:", err);
       }

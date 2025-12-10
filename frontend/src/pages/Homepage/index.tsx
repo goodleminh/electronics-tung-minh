@@ -29,7 +29,7 @@ const Homepage: React.FC = () => {
   const { reviewByProductId } = useSelector((state: RootState) => state.review);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [sellerModalOpen, setSellerModalOpen] = useState(false);
-
+  const [isDisabled, setIsDisabled] = useState(false);
   // Helper: build image URL from backend /public
   const API_BASE: string | undefined = import.meta.env.VITE_API_URL;
   // If img has no subfolder, assume it's under /public/product
@@ -136,6 +136,9 @@ const Homepage: React.FC = () => {
 
   const handleAddToCart = async (e: any, productId: number) => {
     e.stopPropagation();
+    if (isDisabled) return; // tránh spam
+    setIsDisabled(true);
+    //check role
     if (user?.role === "seller") {
       setSellerModalOpen(true);
       return;
@@ -172,6 +175,8 @@ const Homepage: React.FC = () => {
         })
       ).unwrap();
       toast.success("Đã thêm vào giỏ hàng");
+
+      setTimeout(() => setIsDisabled(false), 3000); // Bật lại sau 3 giây
     } catch (err: any) {
       toast.error(err?.message || "Không thể thêm vào giỏ hàng");
     }
@@ -460,7 +465,12 @@ const Homepage: React.FC = () => {
                         <button
                           className="w-10 h-10 rounded bg-[#8b2e0f] hover:bg-[#2b2b2b] text-white shadow flex items-center justify-center cursor-pointer"
                           onClick={(e) => {
-                            handleBuyNow(e, p.stock, p.price, p.product_id);
+                            handleBuyNow(
+                              e,
+                              p.stock,
+                              p.discount_price ?? p.price,
+                              p.product_id
+                            );
                           }}
                         >
                           ⚡
@@ -598,7 +608,12 @@ const Homepage: React.FC = () => {
                         <button
                           className="w-10 h-10 rounded bg-[#8b2e0f] hover:bg-[#2b2b2b] text-white shadow flex items-center justify-center cursor-pointer"
                           onClick={(e) => {
-                            handleBuyNow(e, p.stock, p.price, p.product_id);
+                            handleBuyNow(
+                              e,
+                              p.stock,
+                              p.discount_price ?? p.price,
+                              p.product_id
+                            );
                           }}
                         >
                           ⚡

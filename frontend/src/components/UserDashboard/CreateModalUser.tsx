@@ -5,6 +5,7 @@ import type { AppDispatch } from "../../redux/store";
 import { Modal } from "antd";
 import { toast } from "react-toastify";
 import { createUser, getAllUsers } from "../../redux/features/auth/authSlice";
+import dayjs from "dayjs";
 
 export interface CreateModalProps {
   visible: boolean;
@@ -37,7 +38,7 @@ const CreateUserModal = ({ visible, onClose }: CreateModalProps) => {
       password: form.password || "123",
       phone: form.phone || null,
       address: form.address || null,
-      birthday: form.birthday || null,
+      birthday: dayjs(form.birthday) || null,
     };
     try {
       await dispatch(createUser(payload)).unwrap();

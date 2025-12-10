@@ -3,13 +3,14 @@ import Header from "../components/HeaderComponent";
 import Footer from "../components/FooterComponent";
 import ProfileSidebar from "../components/ProfileSideBar";
 import { ToastContainer } from "react-toastify";
+import PageBreadcrumb from "../components/PageBreadCrumb";
 
 const ProfileLayout = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
       {/* Header */}
       <Header />
-
+      <PageBreadcrumb pageTitle="Hồ sơ" />
       {/* Main content */}
       <main className="flex-1 container mx-auto px-4 py-8 flex flex-col md:flex-row gap-6">
         <aside className="pt-8">

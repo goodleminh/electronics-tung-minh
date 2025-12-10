@@ -10,7 +10,7 @@ import {
   MoreOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Dropdown, Popconfirm, Table, Tag } from "antd";
+import { Dropdown, Popconfirm, Table, Tag, Tooltip } from "antd";
 import type { TableProps } from "antd";
 
 import { ToastContainer } from "react-toastify";
@@ -42,15 +42,6 @@ const ContentUsers = () => {
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
-  // const [form, setForm] = useState({
-  //   username: "",
-  //   email: "",
-  //   address: "",
-  //   role: "buyer",
-  //   phone: "",
-  //   birthday: "",
-  //   status: "Active",
-  // });
 
   useEffect(() => {
     const formatted = users.map((u) => ({
@@ -83,56 +74,12 @@ const ContentUsers = () => {
       user.email.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  // const handleOk = async () => {
-  //   const payload = {
-  //     username: form.username,
-  //     email: form.email,
-  //     phone: form.phone,
-  //     address: form.address,
-  //     role: form.role,
-  //     status: form.status,
-  //     birthday: form.birthday || null,
-  //   };
-
-  //   try {
-  //     if (modalType === "edit") {
-  //       if (!editingUser) return;
-
-  //       try {
-  //         await dispatch(
-  //           editUser({ id: editingUser.key, data: payload })
-  //         ).unwrap();
-  //         toast.success("Cập nhật thành công!");
-  //       } catch (err: any) {
-  //         toast.error(err); // "Email đã tồn tại"
-  //       }
-  //     }
-
-  //     if (modalType === "create") {
-  //       await dispatch(createUser({ data: payload })).unwrap();
-  //       toast.success("Tạo user thành công!");
-  //     }
-
-  //     // Refresh danh sách sau khi create / edit
-  //     await dispatch(getAllUsers());
-
-  //     setVisible(false);
-  //   } catch (err: any) {
-  //     toast.error(err.message || "Có lỗi xảy ra!");
-  //   }
-  // };
   // delete action
   const handleDelete = async (record: IUserRecord) => {
     await dispatch(deleteUser(record.key)).unwrap();
     await dispatch(getAllUsers());
   };
-  //
-  // const handleChange = (
-  //   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  // ) => {
-  //   const { name, value } = e.target;
-  //   setForm({ ...form, [name]: value });
-  // };
+
   // ===================== TABLE COLUMNS =====================
 
   const columns: TableProps<IUserRecord>["columns"] = [
@@ -166,7 +113,14 @@ const ContentUsers = () => {
       title: "Địa chỉ",
       dataIndex: "address",
       key: "address",
-      render: (text: string) => text || "-", // nếu rỗng thì hiển thị "-"
+      render: (text: string) => {
+        if (!text) return "-"; // nếu rỗng thì hiển thị "-"
+        return (
+          <Tooltip title={text}>
+            {text.length > 20 ? text.slice(0, 20) + "..." : text}
+          </Tooltip>
+        );
+      },
     },
     {
       title: "Role",

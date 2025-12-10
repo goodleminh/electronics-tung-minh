@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable prefer-const */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ProductApi } from "../../apis/productApis";
@@ -27,17 +30,23 @@ const StoreProduct: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [store, setStore] = useState<any>(null);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
-  const [actionModal, setActionModal] = useState<{ open: boolean, product: IProduct | null }>({ open: false, product: null });
+  const [actionModal, setActionModal] = useState<{
+    open: boolean;
+    product: IProduct | null;
+  }>({ open: false, product: null });
   const [editProduct, setEditProduct] = useState<IProduct | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteProductTarget, setDeleteProductTarget] = useState<IProduct | null>(null);
+  const [deleteProductTarget, setDeleteProductTarget] =
+    useState<IProduct | null>(null);
 
   // Lấy profile user hiện tại
   const profile = useSelector((state: RootState) => state.profile.profile);
   const userId = profile?.user_id;
 
   // Lấy danh mục từ redux
-  const categories = useSelector((state: RootState) => state.category.categories);
+  const categories = useSelector(
+    (state: RootState) => state.category.categories
+  );
 
   // Luôn fetch profile và categories khi reload
   useEffect(() => {
@@ -64,7 +73,9 @@ const StoreProduct: React.FC = () => {
         const productRes = await ProductApi.getProductsByStoreId(storeId);
         setProducts(productRes);
       } catch (e: any) {
-        setError(e?.message || "Không thể tải thông tin cửa hàng hoặc sản phẩm");
+        setError(
+          e?.message || "Không thể tải thông tin cửa hàng hoặc sản phẩm"
+        );
       } finally {
         setLoading(false);
       }
@@ -107,17 +118,28 @@ const StoreProduct: React.FC = () => {
 
   // Lọc và sắp xếp sản phẩm
   const filteredProducts = products
-    .filter((p) => !appliedCategory || String(p.category_id) === appliedCategory)
+    .filter(
+      (p) => !appliedCategory || String(p.category_id) === appliedCategory
+    )
     .sort((a, b) => {
       if (appliedSort === "price-asc") return Number(a.price) - Number(b.price);
-      if (appliedSort === "price-desc") return Number(b.price) - Number(a.price);
-      if (appliedSort === "newest") return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      if (appliedSort === "price-desc")
+        return Number(b.price) - Number(a.price);
+      if (appliedSort === "newest")
+        return (
+          new Date(b.created_at || 0).getTime() -
+          new Date(a.created_at || 0).getTime()
+        );
       if (appliedSort === "bestseller") return (b.sold || 0) - (a.sold || 0);
       return 0;
     });
 
   // Xử lý thay đổi input
-  const handleAddProductInput = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleAddProductInput = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value, type, files } = e.target as any;
     if (type === "file") {
       const file = files[0];
@@ -142,7 +164,9 @@ const StoreProduct: React.FC = () => {
     }
   };
 
-  const handleDiscountPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDiscountPriceChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const raw = e.target.value.replace(/\./g, "");
     if (/^\d*$/.test(raw)) {
       setDiscountPriceRaw(raw);
@@ -161,11 +185,24 @@ const StoreProduct: React.FC = () => {
   // Validate từng trường
   const validateForm = () => {
     const errors: any = {};
-    if (!addProductForm.name.trim()) errors.name = "Tên sản phẩm không được để trống.";
-    if (!addProductForm.category_id) errors.category_id = "Vui lòng chọn danh mục.";
-    if (!addProductForm.description.trim()) errors.description = "Mô tả không được để trống.";
-    if (!addProductForm.price || isNaN(Number(addProductForm.price)) || Number(addProductForm.price) <= 0) errors.price = "Giá gốc phải lớn hơn 0.";
-    if (!addProductForm.stock || isNaN(Number(addProductForm.stock)) || Number(addProductForm.stock) < 0) errors.stock = "Số lượng tồn kho phải >= 0.";
+    if (!addProductForm.name.trim())
+      errors.name = "Tên sản phẩm không được để trống.";
+    if (!addProductForm.category_id)
+      errors.category_id = "Vui lòng chọn danh mục.";
+    if (!addProductForm.description.trim())
+      errors.description = "Mô tả không được để trống.";
+    if (
+      !addProductForm.price ||
+      isNaN(Number(addProductForm.price)) ||
+      Number(addProductForm.price) <= 0
+    )
+      errors.price = "Giá gốc phải lớn hơn 0.";
+    if (
+      !addProductForm.stock ||
+      isNaN(Number(addProductForm.stock)) ||
+      Number(addProductForm.stock) < 0
+    )
+      errors.stock = "Số lượng tồn kho phải >= 0.";
     if (!addProductForm.image) errors.image = "Vui lòng chọn ảnh sản phẩm.";
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -180,13 +217,15 @@ const StoreProduct: React.FC = () => {
     formData.append("category_id", addProductForm.category_id);
     formData.append("description", addProductForm.description);
     formData.append("price", addProductForm.price);
-    if (addProductForm.discount_price) formData.append("discount_price", addProductForm.discount_price);
-    if (addProductForm.discount_expiry) formData.append("discount_expiry", addProductForm.discount_expiry);
+    if (addProductForm.discount_price)
+      formData.append("discount_price", addProductForm.discount_price);
+    if (addProductForm.discount_expiry)
+      formData.append("discount_expiry", addProductForm.discount_expiry);
     formData.append("stock", addProductForm.stock);
     if (addProductForm.image) formData.append("image", addProductForm.image);
     formData.append("store_id", String(store?.store_id));
     for (let pair of formData.entries()) {
-      console.log(pair[0] + ':', pair[1]);
+      console.log(pair[0] + ":", pair[1]);
     }
     try {
       if (editProduct) {
@@ -196,16 +235,36 @@ const StoreProduct: React.FC = () => {
       }
       setShowAddProductModal(false);
       setEditProduct(null);
-      setAddProductForm({ name: "", category_id: "", description: "", price: "", discount_price: "", discount_expiry: "", stock: "", image: null });
+      setAddProductForm({
+        name: "",
+        category_id: "",
+        description: "",
+        price: "",
+        discount_price: "",
+        discount_expiry: "",
+        stock: "",
+        image: null,
+      });
+      setPriceRaw("");
+      setDiscountPriceRaw("");
       setPreviewImage(null);
-      setFormErrors({ name: "", category_id: "", description: "", price: "", stock: "", image: "" });
+      setFormErrors({
+        name: "",
+        category_id: "",
+        description: "",
+        price: "",
+        stock: "",
+        image: "",
+      });
       // Reload sản phẩm
       if (store?.store_id) {
         const res = await ProductApi.getProductsByStoreId(store.store_id);
         setProducts(res);
       }
     } catch (err) {
-      alert(editProduct ? "Cập nhật sản phẩm thất bại!" : "Thêm sản phẩm thất bại!");
+      alert(
+        editProduct ? "Cập nhật sản phẩm thất bại!" : "Thêm sản phẩm thất bại!"
+      );
     }
   };
 
@@ -233,21 +292,39 @@ const StoreProduct: React.FC = () => {
     <main className="max-w-7xl mx-auto px-4">
       {/* Banner Store */}
       {store && (
-        <div className="w-full flex flex-row items-center bg-gradient-to-b from-orange-100 to-yellow-50 pt-10 pb-10 px-15 border-b border-[#8b2e0f] relative" style={{ borderRadius: 0, margin: 0 }}>
-          <div className="w-50 h-50 border-1 border-[#8b2e0f] rounded-full bg-white flex items-center justify-center overflow-hidden" style={{ borderRadius: '50%' }}>
+        <div
+          className="w-full flex flex-row items-center bg-gradient-to-b from-orange-100 to-yellow-50 pt-10 pb-10 px-15 border-b border-[#8b2e0f] relative"
+          style={{ borderRadius: 0, margin: 0 }}
+        >
+          <div
+            className="w-50 h-50 border-1 border-[#8b2e0f] rounded-full bg-white flex items-center justify-center overflow-hidden"
+            style={{ borderRadius: "50%" }}
+          >
             <img
               src={getStoreImageUrl(store.image)}
               alt={store.name}
               className="w-full h-full object-cover"
-              style={{ borderRadius: '50%' }}
+              style={{ borderRadius: "50%" }}
             />
           </div>
           <div className="flex flex-col justify-center ml-10">
-            <h2 className="font-bold text-[#8b2e0f] mb-2" style={{ fontSize: '2.5rem', fontStyle: 'italic', borderRadius: 0 }}>
+            <h2
+              className="font-bold text-[#8b2e0f] mb-2"
+              style={{
+                fontSize: "2.5rem",
+                fontStyle: "italic",
+                borderRadius: 0,
+              }}
+            >
               {store.name}
             </h2>
             {store.description && (
-              <p className="text-gray-700 max-w-2xl" style={{ borderRadius: 0 }}>{store.description}</p>
+              <p
+                className="text-gray-700 max-w-2xl"
+                style={{ borderRadius: 0 }}
+              >
+                {store.description}
+              </p>
             )}
           </div>
           {userId === store.seller_id && (
@@ -263,26 +340,35 @@ const StoreProduct: React.FC = () => {
       )}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
         {/* Sidebar filter */}
-        <aside className="md:col-span-3 bg-white border border-gray-200 p-4 sticky self-start h-fit" style={{ top: 0 }}>
+        <aside
+          className="md:col-span-3 bg-white border border-gray-200 p-4 sticky self-start h-fit"
+          style={{ top: 0 }}
+        >
           <form className="space-y-4" onSubmit={handleFilterSubmit}>
             <div>
-              <label className="block text-sm mb-1 text-gray-700">Danh mục</label>
+              <label className="block text-sm mb-1 text-gray-700">
+                Danh mục
+              </label>
               <select
                 value={filterCategory}
-                onChange={e => setFilterCategory(e.target.value)}
+                onChange={(e) => setFilterCategory(e.target.value)}
                 className="w-full bg-white border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#8b2e0f]"
               >
                 <option value="">Tất cả</option>
                 {categories.map((cat: any) => (
-                  <option key={cat.category_id} value={cat.category_id}>{cat.name}</option>
+                  <option key={cat.category_id} value={cat.category_id}>
+                    {cat.name}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm mb-1 text-gray-700">Sắp xếp</label>
+              <label className="block text-sm mb-1 text-gray-700">
+                Sắp xếp
+              </label>
               <select
                 value={sortBy}
-                onChange={e => setSortBy(e.target.value)}
+                onChange={(e) => setSortBy(e.target.value)}
                 className="w-full bg-white border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#8b2e0f]"
               >
                 <option value="newest">Mới nhất</option>
@@ -314,10 +400,14 @@ const StoreProduct: React.FC = () => {
             <div className="text-center py-8">Đang tải dữ liệu...</div>
           )}
           {error && (
-            <div className="text-red-600 border border-red-300 p-3 mb-4 text-center">{error}</div>
+            <div className="text-red-600 border border-red-300 p-3 mb-4 text-center">
+              {error}
+            </div>
           )}
           {!loading && !error && filteredProducts.length === 0 && (
-            <div className="text-center py-8 text-gray-500">Không có sản phẩm nào trong cửa hàng này.</div>
+            <div className="text-center py-8 text-gray-500">
+              Không có sản phẩm nào trong cửa hàng này.
+            </div>
           )}
           <div className="grid [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))] gap-8 py-8">
             {filteredProducts.map((p: IProduct) => {
@@ -384,24 +474,51 @@ const StoreProduct: React.FC = () => {
       {showAddProductModal && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 ">
           <div className="bg-white p-8 w-full max-w-4xl border border-[#8b2e0f] rounded-none shadow-lg">
-            <h2 className="text-2xl font-bold text-[#8b2e0f] mb-6">Thêm sản phẩm mới</h2>
+            <h2 className="text-2xl font-bold text-[#8b2e0f] mb-6">
+              Thêm sản phẩm mới
+            </h2>
             <form onSubmit={handleAddProduct}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <div className="mb-4">
-                    <label className="block font-semibold mb-1">Tên sản phẩm</label>
-                    <input type="text" name="name" required className="w-full border p-2 rounded-none" value={addProductForm.name} onChange={handleAddProductInput} />
-                    {formErrors.name && <div className="text-red-600 text-sm mt-1">{formErrors.name}</div>}
+                    <label className="block font-semibold mb-1">
+                      Tên sản phẩm
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      required
+                      className="w-full border p-2 rounded-none"
+                      value={addProductForm.name}
+                      onChange={handleAddProductInput}
+                    />
+                    {formErrors.name && (
+                      <div className="text-red-600 text-sm mt-1">
+                        {formErrors.name}
+                      </div>
+                    )}
                   </div>
                   <div className="mb-4">
                     <label className="block font-semibold mb-1">Danh mục</label>
-                    <select name="category_id" required className="w-full border p-2 rounded-none" value={addProductForm.category_id} onChange={handleAddProductInput}>
+                    <select
+                      name="category_id"
+                      required
+                      className="w-full border p-2 rounded-none"
+                      value={addProductForm.category_id}
+                      onChange={handleAddProductInput}
+                    >
                       <option value="">-- Chọn danh mục --</option>
                       {categories.map((cat: any) => (
-                        <option key={cat.category_id} value={cat.category_id}>{cat.name}</option>
+                        <option key={cat.category_id} value={cat.category_id}>
+                          {cat.name}
+                        </option>
                       ))}
                     </select>
-                    {formErrors.category_id && <div className="text-red-600 text-sm mt-1">{formErrors.category_id}</div>}
+                    {formErrors.category_id && (
+                      <div className="text-red-600 text-sm mt-1">
+                        {formErrors.category_id}
+                      </div>
+                    )}
                   </div>
                   <div className="mb-4">
                     <label className="block font-semibold mb-1">Giá gốc</label>
@@ -418,10 +535,16 @@ const StoreProduct: React.FC = () => {
                     <div className="text-s text-gray-500 mt-1">
                       {priceRaw && <span>Giá gốc: {formatVND(priceRaw)}đ</span>}
                     </div>
-                    {formErrors.price && <div className="text-red-600 text-sm mt-1">{formErrors.price}</div>}
+                    {formErrors.price && (
+                      <div className="text-red-600 text-sm mt-1">
+                        {formErrors.price}
+                      </div>
+                    )}
                   </div>
                   <div className="mb-4">
-                    <label className="block font-semibold mb-1">Giá sau giảm (tuỳ chọn)</label>
+                    <label className="block font-semibold mb-1">
+                      Giá sau giảm (tuỳ chọn)
+                    </label>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -432,43 +555,108 @@ const StoreProduct: React.FC = () => {
                       placeholder="Nhập giá sau giảm"
                     />
                     <div className="text-s text-gray-500 mt-1">
-                      {discountPriceRaw && <span>Giá sau giảm: {formatVND(discountPriceRaw)}đ</span>}
+                      {discountPriceRaw && (
+                        <span>
+                          Giá sau giảm: {formatVND(discountPriceRaw)}đ
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="mb-4">
                     <label className="block font-semibold mb-1">Mô tả</label>
-                    <textarea name="description" className="w-full border p-2 rounded-none" value={addProductForm.description} onChange={handleAddProductInput} />
-                    {formErrors.description && <div className="text-red-600 text-sm mt-1">{formErrors.description}</div>}
+                    <textarea
+                      name="description"
+                      className="w-full border p-2 rounded-none"
+                      value={addProductForm.description}
+                      onChange={handleAddProductInput}
+                    />
+                    {formErrors.description && (
+                      <div className="text-red-600 text-sm mt-1">
+                        {formErrors.description}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div>
                   <div className="mb-4">
-                    <label className="block font-semibold mb-1">Hạn áp dụng giảm giá (tuỳ chọn)</label>
-                    <input type="datetime-local" name="discount_expiry" className="w-full border p-2 rounded-none" value={addProductForm.discount_expiry} onChange={handleAddProductInput} />
+                    <label className="block font-semibold mb-1">
+                      Hạn áp dụng giảm giá (tuỳ chọn)
+                    </label>
+                    <input
+                      type="datetime-local"
+                      name="discount_expiry"
+                      className="w-full border p-2 rounded-none"
+                      value={addProductForm.discount_expiry}
+                      onChange={handleAddProductInput}
+                    />
                   </div>
                   <div className="mb-4">
-                    <label className="block font-semibold mb-1">Số lượng tồn kho</label>
-                    <input type="number" name="stock" min={0} required className="w-full border p-2 rounded-none" value={addProductForm.stock} onChange={handleAddProductInput} />
-                    {formErrors.stock && <div className="text-red-600 text-sm mt-1">{formErrors.stock}</div>}
+                    <label className="block font-semibold mb-1">
+                      Số lượng tồn kho
+                    </label>
+                    <input
+                      type="number"
+                      name="stock"
+                      min={0}
+                      required
+                      className="w-full border p-2 rounded-none"
+                      value={addProductForm.stock}
+                      onChange={handleAddProductInput}
+                    />
+                    {formErrors.stock && (
+                      <div className="text-red-600 text-sm mt-1">
+                        {formErrors.stock}
+                      </div>
+                    )}
                   </div>
                   <div className="mb-4">
-                    <label className="block font-semibold mb-1">Ảnh sản phẩm</label>
+                    <label className="block font-semibold mb-1">
+                      Ảnh sản phẩm
+                    </label>
                     <div className="flex flex-col gap-2">
-                      <label htmlFor="product-image-upload" className="px-4 py-2 bg-[#8b2e0f] text-white rounded-none cursor-pointer w-fit font-semibold">Chọn ảnh</label>
-                      <input id="product-image-upload" type="file" name="image" accept="image/*" className="hidden" onChange={handleAddProductInput} />
+                      <label
+                        htmlFor="product-image-upload"
+                        className="px-4 py-2 bg-[#8b2e0f] text-white rounded-none cursor-pointer w-fit font-semibold"
+                      >
+                        Chọn ảnh
+                      </label>
+                      <input
+                        id="product-image-upload"
+                        type="file"
+                        name="image"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleAddProductInput}
+                      />
                       {previewImage && (
-                        <img src={previewImage} alt="Preview" className="mt-2 w-45 h-45 object-contain border border-gray-300" style={{ borderRadius: 0 }} />
+                        <img
+                          src={previewImage}
+                          alt="Preview"
+                          className="mt-2 w-45 h-45 object-contain border border-gray-300"
+                          style={{ borderRadius: 0 }}
+                        />
                       )}
-                      {formErrors.image && <div className="text-red-600 text-sm mt-1">{formErrors.image}</div>}
+                      {formErrors.image && (
+                        <div className="text-red-600 text-sm mt-1">
+                          {formErrors.image}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
               <div className="flex justify-end gap-4 mt-6">
-                <button type="button" className="px-6 py-2 bg-gray-200 text-gray-800 rounded-none" onClick={() => setShowAddProductModal(false)}>
+                <button
+                  type="button"
+                  className="px-6 py-2 bg-gray-200 text-gray-800 rounded-none"
+                  onClick={() => setShowAddProductModal(false)}
+                >
                   Hủy
                 </button>
-                <button type="submit" className="px-6 py-2 bg-[#8b2e0f] text-white rounded-none font-semibold hover:bg-[#a9441a]">
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-[#8b2e0f] text-white rounded-none font-semibold hover:bg-[#a9441a]"
+                >
                   {editProduct ? "Cập nhật sản phẩm" : "Thêm sản phẩm"}
                 </button>
               </div>
@@ -483,10 +671,12 @@ const StoreProduct: React.FC = () => {
         footer={null}
         centered
         title={null}
-        styles={{ content: { borderRadius: 0, width: 520, maxWidth: 520} }}
+        styles={{ content: { borderRadius: 0, width: 520, maxWidth: 520 } }}
         className="rounded-none"
       >
-        <h2 className="text-xl font-bold text-[#8b2e0f] mb-4">Bạn muốn hành động nào?</h2>
+        <h2 className="text-xl font-bold text-[#8b2e0f] mb-4">
+          Bạn muốn hành động nào?
+        </h2>
         <div className="flex gap-4">
           <button
             className="flex-1 px-6 py-2 bg-[#8b2e0f] text-white rounded-none font-semibold hover:bg-[#a9441a]"
@@ -508,12 +698,26 @@ const StoreProduct: React.FC = () => {
                   category_id: String(actionModal.product.category_id || ""),
                   description: actionModal.product.description || "",
                   price: String(actionModal.product.price || ""),
-                  discount_price: actionModal.product.discount_price ? String(actionModal.product.discount_price) : "",
-                  discount_expiry: actionModal.product.discount_expiry ? actionModal.product.discount_expiry : "",
+                  discount_price: actionModal.product.discount_price
+                    ? String(actionModal.product.discount_price)
+                    : "",
+                  discount_expiry: actionModal.product.discount_expiry
+                    ? actionModal.product.discount_expiry
+                    : "",
                   stock: String(actionModal.product.stock || ""),
-                  image: null
+                  image: null,
                 });
-                setPreviewImage(actionModal.product.image ? buildImageUrl(actionModal.product.image) : null);
+                setPriceRaw(String(actionModal.product.price || ""));
+                setDiscountPriceRaw(
+                  actionModal.product.discount_price
+                    ? String(actionModal.product.discount_price)
+                    : ""
+                );
+                setPreviewImage(
+                  actionModal.product.image
+                    ? buildImageUrl(actionModal.product.image)
+                    : null
+                );
                 setEditProduct(actionModal.product);
                 setShowAddProductModal(true);
                 setActionModal({ open: false, product: null });
@@ -549,8 +753,13 @@ const StoreProduct: React.FC = () => {
         styles={{ content: { borderRadius: 0, width: 400, maxWidth: 400 } }}
         className="rounded-none"
       >
-        <h2 className="text-xl font-bold text-[#8b2e0f] mb-4">Bạn chắc chắn muốn xóa sản phẩm này?</h2>
-        <div className="mb-4 text-gray-700">Sản phẩm: <span className="font-semibold">{deleteProductTarget?.name}</span></div>
+        <h2 className="text-xl font-bold text-[#8b2e0f] mb-4">
+          Bạn chắc chắn muốn xóa sản phẩm này?
+        </h2>
+        <div className="mb-4 text-gray-700">
+          Sản phẩm:{" "}
+          <span className="font-semibold">{deleteProductTarget?.name}</span>
+        </div>
         <div className="flex gap-4 justify-end">
           <button
             className="px-6 py-2 bg-gray-200 text-gray-800 rounded-none"
@@ -566,12 +775,16 @@ const StoreProduct: React.FC = () => {
             onClick={async () => {
               if (deleteProductTarget) {
                 try {
-                  await ProductApi.deleteProduct(deleteProductTarget.product_id);
+                  await ProductApi.deleteProduct(
+                    deleteProductTarget.product_id
+                  );
                   setShowDeleteModal(false);
                   setDeleteProductTarget(null);
                   // Reload sản phẩm
                   if (store?.store_id) {
-                    const res = await ProductApi.getProductsByStoreId(store.store_id);
+                    const res = await ProductApi.getProductsByStoreId(
+                      store.store_id
+                    );
                     setProducts(res);
                   }
                 } catch {

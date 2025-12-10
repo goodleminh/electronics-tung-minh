@@ -31,24 +31,16 @@ export const getProductById = async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 };
-// create by seller
-// export const createProduct = async (req, res) => {
-//   try {
-//     const productData = req.body;
-//     if (req.file) {
-//       productData.image = req.file.filename;
-//     }
-//     const newProduct = await productService.createProduct(productData);
-//     res.status(201).send(newProduct);
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// };
+
 //create by admin
 export const createProductAdmin = async (req, res) => {
   try {
     const productData = req.body;
     const imageFile = req.file;
+    if (productData.discount_price === "")
+      return (productData.discount_price = null);
+    if (productData.discount_expiry === "")
+      return (productData.discount_expiry = null);
     const newProduct = await productService.createProduct(
       productData,
       imageFile

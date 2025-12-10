@@ -17,6 +17,7 @@ import {
   type IProduct,
 } from "../../redux/features/product/productSlice";
 import { updateOrder } from "../../redux/features/order/orderSlice";
+import PageBreadcrumb from "../../components/PageBreadCrumb";
 
 interface IOrderItemDetailed extends IOrderItem {
   product?: IProduct;
@@ -245,141 +246,150 @@ const TrackOrderPage: React.FC = () => {
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-4 py-8">
-      <Tabs activeKey={tab} onChange={setTab} className="mb-4">
-        <Tabs.TabPane tab="Tất cả" key="all" />
-        <Tabs.TabPane tab="Chờ thanh toán" key="pending" />
-        <Tabs.TabPane tab="Đang đóng gói" key="processing" />
-        <Tabs.TabPane tab="Đang vận chuyển" key="shipping" />
-        <Tabs.TabPane tab="Đã hoàn thành" key="completed" />
-        <Tabs.TabPane tab="Đã hủy" key="cancelled" />
-      </Tabs>
-      <Table
-        dataSource={filterOrders}
-        columns={columns}
-        rowKey="order_id"
-        loading={loading}
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          pageSizeOptions: ["10", "20", "50"],
-        }}
-      />
-      <Modal
-        title={
-          <span className="font-semibold text-lg">
-            Chi tiết đơn hàng: {selectedOrder?.order_code}
-          </span>
-        }
-        open={isModalOpen}
-        onCancel={handleCloseModal}
-        footer={
-          <Button
-            key="close"
-            onClick={handleCloseModal}
-            style={{ borderRadius: 0 }}
-          >
-            Đóng
-          </Button>
-        }
-        width={800}
-        centered
-      >
-        {selectedOrder && (
-          <div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-6">
-              <div>
-                <strong>Ngày đặt:</strong>{" "}
-                {formatDateTime(selectedOrder.created_at)}
-              </div>
-              <div>
-                <strong>Trạng thái:</strong>{" "}
-                <Tag color={statusColor[selectedOrder.status] || "default"}>
-                  {statusLabel[selectedOrder.status] || selectedOrder.status}
-                </Tag>
-              </div>
-              <div className="col-span-2">
-                <strong>Địa chỉ giao hàng:</strong> {selectedOrder.address}
-              </div>
-              <div>
-                <strong>Thanh toán:</strong>{" "}
-                {selectedOrder.payment_method === "zalopay"
-                  ? "ZaloPay"
-                  : "Tiền mặt (COD)"}
-              </div>
-            </div>
-            <h3 className="text-md font-semibold mb-3 border-t pt-4">
-              Danh sách sản phẩm
-            </h3>
-            <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
-              {detailedItems.map((item) => (
-                <div
-                  key={item.order_item_id}
-                  className="flex items-center gap-4"
-                >
-                  <div className="w-20 h-20 flex-shrink-0 bg-gray-100 border rounded-md flex items-center justify-center">
-                    <img
-                      src={buildImageUrl(item.product?.image)}
-                      alt={item.product?.name || "Sản phẩm"}
-                      className="max-w-full max-h-full object-contain"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold line-clamp-2">
-                      {item.product?.name || "Sản phẩm không tìm thấy"}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      Số lượng: {item.quantity}
-                    </div>
-                  </div>
-                  <div className="font-semibold text-gray-800 text-right ml-4">
-                    <div>{formatCurrency(item.price * item.quantity)}</div>
-                    <div className="text-sm font-normal text-gray-500">
-                      ({formatCurrency(item.quantity > 0 ? (item.price * item.quantity) / item.quantity : 0)}/sp)
-                    </div>
-                  </div>
+    <>
+      <PageBreadcrumb pageTitle="Đơn hàng" />
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        <Tabs activeKey={tab} onChange={setTab} className="mb-4">
+          <Tabs.TabPane tab="Tất cả" key="all" />
+          <Tabs.TabPane tab="Chờ thanh toán" key="pending" />
+          <Tabs.TabPane tab="Đang đóng gói" key="processing" />
+          <Tabs.TabPane tab="Đang vận chuyển" key="shipping" />
+          <Tabs.TabPane tab="Đã hoàn thành" key="completed" />
+          <Tabs.TabPane tab="Đã hủy" key="cancelled" />
+        </Tabs>
+        <Table
+          dataSource={filterOrders}
+          columns={columns}
+          rowKey="order_id"
+          loading={loading}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            pageSizeOptions: ["10", "20", "50"],
+          }}
+        />
+        <Modal
+          title={
+            <span className="font-semibold text-lg">
+              Chi tiết đơn hàng: {selectedOrder?.order_code}
+            </span>
+          }
+          open={isModalOpen}
+          onCancel={handleCloseModal}
+          footer={
+            <Button
+              key="close"
+              onClick={handleCloseModal}
+              style={{ borderRadius: 0 }}
+            >
+              Đóng
+            </Button>
+          }
+          width={800}
+          centered
+        >
+          {selectedOrder && (
+            <div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-6">
+                <div>
+                  <strong>Ngày đặt:</strong>{" "}
+                  {formatDateTime(selectedOrder.created_at)}
                 </div>
-              ))}
-            </div>
-            <div className="text-right mt-6 border-t pt-4">
-              <h3 className="text-xl font-bold text-[#8b2e0f]">
-                Tổng cộng: {formatCurrency(modalTotal)}
+                <div>
+                  <strong>Trạng thái:</strong>{" "}
+                  <Tag color={statusColor[selectedOrder.status] || "default"}>
+                    {statusLabel[selectedOrder.status] || selectedOrder.status}
+                  </Tag>
+                </div>
+                <div className="col-span-2">
+                  <strong>Địa chỉ giao hàng:</strong> {selectedOrder.address}
+                </div>
+                <div>
+                  <strong>Thanh toán:</strong>{" "}
+                  {selectedOrder.payment_method === "zalopay"
+                    ? "ZaloPay"
+                    : "Tiền mặt (COD)"}
+                </div>
+              </div>
+              <h3 className="text-md font-semibold mb-3 border-t pt-4">
+                Danh sách sản phẩm
               </h3>
+              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                {detailedItems.map((item) => (
+                  <div
+                    key={item.order_item_id}
+                    className="flex items-center gap-4"
+                  >
+                    <div className="w-20 h-20 flex-shrink-0 bg-gray-100 border rounded-md flex items-center justify-center">
+                      <img
+                        src={buildImageUrl(item.product?.image)}
+                        alt={item.product?.name || "Sản phẩm"}
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold line-clamp-2">
+                        {item.product?.name || "Sản phẩm không tìm thấy"}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Số lượng: {item.quantity}
+                      </div>
+                    </div>
+                    <div className="font-semibold text-gray-800 text-right ml-4">
+                      <div>{formatCurrency(item.price * item.quantity)}</div>
+                      <div className="text-sm font-normal text-gray-500">
+                        (
+                        {formatCurrency(
+                          item.quantity > 0
+                            ? (item.price * item.quantity) / item.quantity
+                            : 0
+                        )}
+                        /sp)
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-right mt-6 border-t pt-4">
+                <h3 className="text-xl font-bold text-[#8b2e0f]">
+                  Tổng cộng: {formatCurrency(modalTotal)}
+                </h3>
+              </div>
             </div>
-          </div>
-        )}
-      </Modal>
-      <Modal
-        title={
-          <span className="font-semibold text-lg">Xác nhận hủy đơn hàng</span>
-        }
-        open={isCancelModalOpen}
-        onCancel={() => setIsCancelModalOpen(false)}
-        footer={[
-          <Button
-            key="cancel"
-            onClick={() => setIsCancelModalOpen(false)}
-            style={{ borderRadius: 0 }}
-          >
-            Hủy
-          </Button>,
-          <Button
-            key="ok"
-            danger
-            style={{ borderRadius: 0 }}
-            onClick={handleConfirmCancelOrder}
-          >
-            Xác nhận
-          </Button>,
-        ]}
-        width={400}
-        centered
-        className="rounded-none"
-        styles={{ content: { borderRadius: 0 } }}
-      >
-        <p>Bạn có chắc chắn muốn hủy đơn hàng này không?</p>
-      </Modal>
-    </main>
+          )}
+        </Modal>
+        <Modal
+          title={
+            <span className="font-semibold text-lg">Xác nhận hủy đơn hàng</span>
+          }
+          open={isCancelModalOpen}
+          onCancel={() => setIsCancelModalOpen(false)}
+          footer={[
+            <Button
+              key="cancel"
+              onClick={() => setIsCancelModalOpen(false)}
+              style={{ borderRadius: 0 }}
+            >
+              Hủy
+            </Button>,
+            <Button
+              key="ok"
+              danger
+              style={{ borderRadius: 0 }}
+              onClick={handleConfirmCancelOrder}
+            >
+              Xác nhận
+            </Button>,
+          ]}
+          width={400}
+          centered
+          className="rounded-none"
+          styles={{ content: { borderRadius: 0 } }}
+        >
+          <p>Bạn có chắc chắn muốn hủy đơn hàng này không?</p>
+        </Modal>
+      </main>
+    </>
   );
 };
 

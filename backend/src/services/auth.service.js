@@ -7,6 +7,7 @@ import crypto from "crypto";
 import { sendMail } from "../config/mailer.js";
 import Profile from "../models/profile.model.js";
 import { Store } from "../models/store.model.js";
+import dayjs from "dayjs";
 
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;

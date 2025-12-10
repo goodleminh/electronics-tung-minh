@@ -26,7 +26,6 @@ interface ChartData {
 const Dashboard: React.FC = () => {
   const [overview, setOverview] = useState<any>(null);
   const [chartData, setChartData] = useState<ChartData[]>([]);
-  console.log(overview);
   useEffect(() => {
     fetchOverview().then((data: any) => {
       // có thể map lại nếu cần

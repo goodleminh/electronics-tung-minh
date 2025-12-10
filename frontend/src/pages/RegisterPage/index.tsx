@@ -5,6 +5,9 @@ import { toast, ToastContainer } from "react-toastify";
 import { registerUser } from "../../redux/features/auth/authSlice.ts";
 import { useDispatch } from "react-redux";
 import { type AppDispatch } from "../../redux/store.ts";
+import { Modal } from "antd";
+import { validatePassword } from "../../utils/mask/mask.ts";
+import PageBreadcrumb from "../../components/PageBreadCrumb/index.tsx";
 
 interface RegisterForm {
   username: string;
@@ -23,6 +26,7 @@ const RegisterPage: React.FC = () => {
     confirmPassword: "",
     agree: false,
   });
+  const [isOpenModal, setIsOpenModal] = useState(false);
   const navigate = useNavigate();
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value, type, checked } = e.target;
@@ -34,6 +38,13 @@ const RegisterPage: React.FC = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate password
+    const error = validatePassword(formData.password);
+    if (error) {
+      toast.error(error);
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       toast.error("Mật khẩu không khớp!");
       return;
@@ -55,6 +66,7 @@ const RegisterPage: React.FC = () => {
 
   return (
     <>
+      <PageBreadcrumb pageTitle="Đăng kí" />
       <div className="register-page max-w-[600px] mx-auto text-center mt-5">
         <h2 className="text-[30px] inline-block mb-4 border-b-2 border-[brown]">
           Đăng ký tài khoản
@@ -107,18 +119,88 @@ const RegisterPage: React.FC = () => {
               onChange={handleChange}
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             <input
-              className="cursor-pointer"
+              className="cursor-pointer mr-2"
               type="checkbox"
               name="agree"
               onChange={handleChange}
             />
-            Tôi đồng ý với các điều khoản
+            Tôi đồng ý với các
+            <span
+              className="cursor-pointer text-[#8b2e0f] ml-1 underline"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpenModal(true);
+              }}
+            >
+              điều khoản
+            </span>
           </div>
           <button className="mx-auto p-5 bg-gray-800 text-white py-2 rounded hover:bg-red-800 cursor-pointer">
             TẠO TÀI KHOẢN
           </button>
+          {/* Modal điều khoản */}
+          <Modal
+            open={isOpenModal}
+            onCancel={() => setIsOpenModal(false)}
+            centered
+            width={700}
+            footer={null}
+          >
+            <h2 className="text-2xl font-bold mb-4">
+              Điều khoản dành cho Người dùng
+            </h2>
+
+            <h3 className="text-xl font-medium mb-4">
+              Áp dụng cho nền tảng thương mại điện tử Electon
+            </h3>
+            {/*  */}
+            <h4 className="text-xl my-2">1. Giới thiệu</h4>
+            <p className="text-md">
+              Chào mừng bạn đến với Electon. Bằng việc truy cập hoặc sử dụng
+              dịch vụ, bạn đồng ý tuân theo các điều khoản sau đây. Nếu bạn
+              không đồng ý, vui lòng ngừng sử dụng nền tảng.
+            </p>
+            {/*  */}
+            <h4 className="text-xl my-2">2. Tài khoản người dùng</h4>
+            <p className="text-md">
+              Người dùng phải cung cấp thông tin chính xác, đầy đủ khi đăng ký.
+              Bạn chịu trách nhiệm bảo mật tài khoản và mật khẩu của mình.
+              Electon không chịu trách nhiệm cho bất kỳ thiệt hại nào phát sinh
+              từ việc chia sẻ tài khoản cho người khác.
+            </p>
+            {/*  */}
+            <h4 className="text-xl my-2">3. Quy định khi mua hàng</h4>
+            <p className="text-md">
+              Người dùng phải đọc kỹ mô tả sản phẩm trước khi đặt hàng. Phải
+              cung cấp địa chỉ giao hàng chính xác và đầy đủ. Mọi hành vi gian
+              lận, đặt hàng giả, spam đơn hàng đều bị xử lý.
+            </p>
+            {/*  */}
+            <h4 className="text-xl my-2">4. Thanh toán</h4>
+            <p className="text-md">
+              Electon hỗ trợ các phương thức: COD, Chuyển khoản ngân hàng, Ví
+              điện tử / Cổng thanh toán. Mọi khoản thanh toán phải được thực
+              hiện hợp lệ.
+            </p>
+            {/*  */}
+            <h4 className="text-xl my-2">5. Hành vi bị cấm</h4>
+            <p className="text-md">
+              Các hành vi bị cấm: gian lận, lừa đảo; đặt hàng không có ý định
+              nhận; viết đánh giá sai sự thật; tấn công hệ thống Electon; quấy
+              rối hoặc xúc phạm người bán/người dùng khác.
+            </p>
+
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setIsOpenModal(false)}
+                className="px-4 py-2 bg-[#8b2e0f] text-white rounded hover:bg-gray-800  cursor-pointer"
+              >
+                Đã hiểu
+              </button>
+            </div>
+          </Modal>
         </form>
         <div className="mb-8">
           <p>

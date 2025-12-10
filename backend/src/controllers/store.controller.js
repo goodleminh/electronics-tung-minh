@@ -30,10 +30,8 @@ export const getStore = async (req, res) => {
 // Tạo cửa hàng mới
 export const createStoreController = async (req, res) => {
   try {
-    console.log("POST /stores BODY:", req.body);
     const { seller_id, name, description, image } = req.body;
     if (!seller_id || !name) {
-      console.log("POST /stores ERROR: thiếu seller_id hoặc name");
       return res.status(400).json({ message: "seller_id và name là bắt buộc" });
     }
     // Kiểm tra seller đã có store chưa (1-1)
@@ -49,10 +47,6 @@ export const createStoreController = async (req, res) => {
       description,
       image,
     });
-    console.log(
-      "POST /stores CREATED:",
-      newStore?.toJSON ? newStore.toJSON() : newStore
-    );
     return res.status(201).json({ store: newStore });
   } catch (error) {
     console.error("POST /stores ERROR:", error);

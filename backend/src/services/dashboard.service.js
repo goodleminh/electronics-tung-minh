@@ -184,7 +184,7 @@ export const getDashboardMetrics = async () => {
 
   // Tính % thay đổi doanh thu theo tuần
   const revenueChangeWeek =
-    revenueLastWeek === 0
+    revenueLastWeek === null
       ? 100
       : ((revenueThisWeek - revenueLastWeek) / revenueLastWeek) * 100;
 
@@ -197,7 +197,7 @@ export const getDashboardMetrics = async () => {
   // Tính % thay đổi đơn hàng theo tuần
   const ordersChange =
     ordersLastWeek === 0
-      ? 0
+      ? 100
       : ((ordersThisWeek - ordersLastWeek) / ordersLastWeek) * 100;
 
   //Tính % tăng trưởng theo tháng (so tháng này và tháng trước)

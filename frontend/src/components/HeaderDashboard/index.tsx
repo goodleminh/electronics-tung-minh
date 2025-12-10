@@ -2,9 +2,13 @@ import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../redux/store";
 import { UserOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import { clearProfile } from "../../redux/features/profile/profileSlice";
+import {
+  clearProfile,
+  fetchProfile,
+} from "../../redux/features/profile/profileSlice";
 import { clearCurrent } from "../../redux/features/store/storeSlice";
 import { logout } from "../../redux/features/auth/authSlice";
+import { useEffect } from "react";
 
 const HeaderDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -12,8 +16,13 @@ const HeaderDashboard = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const { profile } = useSelector((state: RootState) => state.profile);
   const avatarUrl = profile?.Profile?.avatar
-    ? `${import.meta.env.VITE_API_URL}/${profile.Profile?.avatar}`
+    ? `${import.meta.env.VITE_API_URL}/public/avatar/${profile.Profile?.avatar}`
     : null;
+
+  // Load profile
+  useEffect(() => {
+    dispatch(fetchProfile());
+  }, [dispatch]);
 
   //handle logout
   const handleLogout = () => {

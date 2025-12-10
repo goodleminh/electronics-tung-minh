@@ -26,8 +26,6 @@ export const createZaloPayPayment = async ({
   orderId,
   redirectUrl, // = REDIRECT_URL
 }) => {
-  console.log("👉 [Backend] Nhận yêu cầu thanh toán:", { amount, orderId });
-
   if (Number.isNaN(amount) || Number.isNaN(orderId)) {
     return {
       ok: false,
@@ -50,7 +48,9 @@ export const createZaloPayPayment = async ({
     return {
       ok: false,
       status: 400,
-      body: { message: `Order đang ở trạng thái ${order.status}, không thể thanh toán` },
+      body: {
+        message: `Order đang ở trạng thái ${order.status}, không thể thanh toán`,
+      },
     };
   }
 
@@ -81,7 +81,11 @@ export const createZaloPayPayment = async ({
   });
 
   const item = JSON.stringify([
-    { itemid: String(orderId), itemname: "Thanh toan don hang", itemprice: Math.round(amount) },
+    {
+      itemid: String(orderId),
+      itemname: "Thanh toan don hang",
+      itemprice: Math.round(amount),
+    },
   ]);
 
   const orderParams = {
@@ -111,12 +115,10 @@ export const createZaloPayPayment = async ({
     .update(dataToHash)
     .digest("hex");
 
-  console.log("👉 [Backend] Gửi ZaloPay create...", { ...orderParams, mac: "***" });
-
-  const result = await axios.post(ZALO_CONFIG.ENDPOINT, null, { params: orderParams });
+  const result = await axios.post(ZALO_CONFIG.ENDPOINT, null, {
+    params: orderParams,
+  });
   const data = result.data;
-
-  console.log("👈 [Backend] ZaloPay phản hồi:", data);
 
   if (data.return_code === 1) {
     // ✅ chỉ trả link, đơn vẫn pending
@@ -157,11 +159,12 @@ export const handleZaloPayResult = async ({ apptransid, status }) => {
           { where: { order_id: orderId, status: "pending" } } // chỉ đổi nếu đang pending
         );
         paymentResult = "success";
-        console.log(`[ZaloPay] Đơn ${orderId} => processing (payment success)`);
       } else {
         // user hủy / fail -> cancelled
         // Trả lại số lượng sản phẩm vào kho
-        const order = await Order.findOne({ where: { order_id: orderId, status: "pending" } });
+        const order = await Order.findOne({
+          where: { order_id: orderId, status: "pending" },
+        });
         if (order) {
           const items = await getItemsByOrderId(orderId);
           for (const item of items) {
@@ -177,7 +180,6 @@ export const handleZaloPayResult = async ({ apptransid, status }) => {
           { where: { order_id: orderId, status: "pending" } }
         );
         paymentResult = "cancelled";
-        console.log(`[ZaloPay] Đơn ${orderId} => cancelled (payment cancel/fail)`);
       }
     }
   } catch (err) {
